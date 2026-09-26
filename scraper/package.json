@@ -1,0 +1,14 @@
+{
+  "name": "fut-terminal-scraper",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "probe":     "node probe.mjs",
+    "fast":      "node scrape.mjs fast",
+    "slow":      "node scrape.mjs slow",
+    "validate":  "node validate.mjs data.json",
+    "calibrate": "node calibrate.mjs"
+  },
+  "dependencies": { "playwright": "^1.47.0" }
+}

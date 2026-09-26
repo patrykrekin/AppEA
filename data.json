@@ -1,0 +1,425 @@
+{
+  "at": 1790456100,
+  "index": {
+    "ps": {
+      "value": "124,01",
+      "change": "+3,73%"
+    },
+    "pc": {
+      "value": "113,05",
+      "change": "+2,68%"
+    }
+  },
+  "momentum": {
+    "ps": "56,49",
+    "pc": "48,15"
+  },
+  "mood": {
+    "ps": "The market is starting to wake up",
+    "pc": "The market is chillin"
+  },
+  "verdict": {
+    "word": "NEUTRALNIE",
+    "text": "Momentum <strong>56,49</strong>, Index 100 <strong>124,01</strong> przy <strong>+3,73%</strong> na dobę — środek pasma, więc ani nie gonisz cen, ani nie wyprzedajesz wszystkiego. Najważniejsze dziś nie siedzi w indeksie: kalendarz klubowy stoi do <strong>9–11 października</strong>, więc liczniki goli i asyst przy Destined for Glory nie tykają przez dwa tygodnie — cały ten segment leci <strong>−10 do −16% w dobę</strong>, a Bohaterowie razem z nim. Fodder pod SBC obracasz normalnie (83+ Upgrade wygasa 28.09, Marquee Matchups 30.09, TOTW Upgrade 01.10), a w DFG i Bohaterów wchodzisz pod koniec przerwy, nie dziś."
+  },
+  "movers": [
+    [
+      "Abdulhamid 85 CM",
+      "42 000",
+      "−16,24%",
+      "−6 821"
+    ],
+    [
+      "Veerman 85 CM",
+      "46 500",
+      "−13,20%",
+      "−6 138"
+    ],
+    [
+      "Kökçü 86 CM",
+      "50 500",
+      "−10,81%",
+      "−5 459"
+    ],
+    [
+      "Kluivert 87 ST",
+      "79 000",
+      "−10,17%",
+      "−8 034"
+    ],
+    [
+      "Bisseck 85 CB",
+      "107 000",
+      "−9,83%",
+      "−10 518"
+    ],
+    [
+      "Hernández 86 ST",
+      "146 000",
+      "−8,78%",
+      "−12 819"
+    ],
+    [
+      "Donovan 86 CAM",
+      "115 000",
+      "−7,56%",
+      "−8 694"
+    ]
+  ],
+  "open": {
+    "name": "Bruno Fernandes 89 CAM · Premier League",
+    "pill": "bierz zysk",
+    "pillClass": "sell",
+    "kv": [
+      [
+        "Wejście",
+        "19 000",
+        ""
+      ],
+      [
+        "Rynek teraz",
+        "23 500",
+        "up"
+      ],
+      [
+        "Wystaw po",
+        "23 250",
+        "acc"
+      ],
+      [
+        "Na konto",
+        "+3 087",
+        "up"
+      ]
+    ],
+    "note": "Najniższy BIN stoi na <strong>23 500</strong> i był odświeżony 13 sekund przed odczytem, a tape schodzi po 24 000 — momentum <strong>+5,62%</strong> w dobę. Jeśli masz kartę wystawioną równo z rynkiem albo wyżej — <strong>poczekaj, aż aukcja wygaśnie</strong>, bo wystawienia nie da się cofnąć. Po wygaśnięciu wystaw po <strong>23 250</strong>: jeden krok siatki (250) pod najniższym BIN-em stawia cię na początku kolejki, a nie w jej środku."
+  },
+  "snipe": {
+    "ps": {
+      "label": "konsola · 26.09 22:55",
+      "rows": [
+        [
+          "Tah 87 CB",
+          5600,
+          4700,
+          5500
+        ],
+        [
+          "Barella 87 CM",
+          5600,
+          4700,
+          5500
+        ],
+        [
+          "Miedema 87 CAM",
+          5700,
+          4800,
+          5600
+        ],
+        [
+          "Hampton 87 GK",
+          5700,
+          4800,
+          5600
+        ],
+        [
+          "Irene Paredes 87 CB",
+          5800,
+          4800,
+          5700
+        ],
+        [
+          "Saka 87 RW",
+          5800,
+          4800,
+          5700
+        ],
+        [
+          "Fabián Ruiz 86 CM",
+          3700,
+          3100,
+          3600
+        ],
+        [
+          "Heaps 86 CM",
+          3700,
+          3100,
+          3600
+        ],
+        [
+          "Weir 86 CAM",
+          3700,
+          3100,
+          3600
+        ],
+        [
+          "Carnesecchi 86 GK",
+          3700,
+          3100,
+          3600
+        ],
+        [
+          "Dimarco 86 LB",
+          3800,
+          3100,
+          3700
+        ],
+        [
+          "Diogo Costa 86 GK",
+          3800,
+          3100,
+          3700
+        ]
+      ]
+    },
+    "pc": {
+      "label": "PC · 26.09 22:55",
+      "rows": [
+        [
+          "Rúben Dias 87 CB",
+          5800,
+          4900,
+          5700
+        ],
+        [
+          "Saka 87 RW",
+          5800,
+          4900,
+          5700
+        ],
+        [
+          "Berger 87 GK",
+          5900,
+          4900,
+          5800
+        ],
+        [
+          "Harder 87 CAM",
+          5900,
+          4900,
+          5800
+        ],
+        [
+          "Tah 87 CB",
+          6000,
+          5000,
+          5900
+        ],
+        [
+          "Barella 87 CM",
+          6000,
+          5000,
+          5900
+        ],
+        [
+          "Bruno Guimarães 86 CM",
+          3700,
+          3100,
+          3600
+        ],
+        [
+          "Dimarco 86 LB",
+          3800,
+          3100,
+          3700
+        ],
+        [
+          "Fabián Ruiz 86 CM",
+          3800,
+          3100,
+          3700
+        ],
+        [
+          "Katoto 86 ST",
+          3900,
+          3200,
+          3800
+        ],
+        [
+          "Carnesecchi 86 GK",
+          3900,
+          3200,
+          3800
+        ],
+        [
+          "McCabe 86 LB",
+          3900,
+          3200,
+          3800
+        ]
+      ]
+    }
+  },
+  "tier": {
+    "p83": "650",
+    "p84": "700",
+    "p85": "1 700 – 1 900",
+    "s86": "Fabián Ruiz 3 700, Carnesecchi 3 700, Dimarco 3 800",
+    "s87": "5 600 – 5 800",
+    "mid": "Oblak 88 GK 13 250, Russo 88 ST 16 250, Gabriel 89 CB 16 750, Bruno Fernandes 89 CAM 23 500",
+    "hero": "Cahill 85 CM 31 500, Šašic 89 ST 48 000, Kluivert 87 ST 79 000",
+    "dfg": "od ok. 42 000 (Abdulhamid 85 CM)",
+    "iconfloor": "237 000"
+  },
+  "pos": {
+    "short": [
+      {
+        "name": "Fodder 83",
+        "conf": "mid",
+        "price": "650",
+        "entry": 650,
+        "sellPrice": 750,
+        "when": "dziś 26.09 wieczorem i niedziela 27.09 do południa",
+        "sell": "poniedziałek 28.09 · 750",
+        "why": "Katalizator z datą: <strong>83+ Upgrade</strong> jest powtarzalny i wygasa 28.09, koszt składu 2 150. To najtańszy próg, który ta SBC zjada, a kapitał obraca się najszybciej z całej drabiny.",
+        "exit": "Pasmo schodzi pod 600 albo SBC wygasa bez następcy — to fala podaży, nie okazja."
+      },
+      {
+        "name": "Fodder 84",
+        "conf": "mid",
+        "price": "700",
+        "entry": 700,
+        "sellPrice": 800,
+        "when": "niedziela 27.09, 20:00–23:00",
+        "sell": "środa 30.09 · 800",
+        "why": "<strong>Marquee Matchups</strong> (powtarzalna, 0/4, koszt 10 450) wygasa 30.09, a <strong>TOTW Upgrade</strong> biegnie do 01.10. 84 to standardowe wypełnienie obu składów i najtańsza karta powyżej progu 83.",
+        "exit": "Pasmo spada pod 650 — wychodzisz tego samego dnia."
+      },
+      {
+        "name": "Fodder 85",
+        "conf": "mid",
+        "price": "1 700 – 1 900",
+        "entry": 1800,
+        "sellPrice": 2100,
+        "when": "niedziela 27.09, 20:00–23:00",
+        "sell": "czwartek 01.10 · 2 100",
+        "why": "Ten sam zestaw SBC, ale <strong>TOTW Upgrade</strong> (01.10, koszt 10 700) ciągnie wyższy próg. Dno pasma stało dziś na 1 700 (Roord), więc marzą w coinach jest dwa i pół raza większa niż na 84.",
+        "exit": "Zejście dna pasma pod 1 600."
+      },
+      {
+        "name": "Pasmo 86",
+        "conf": "mid",
+        "price": "3 700 – 3 900",
+        "entry": 3100,
+        "sellPrice": 3600,
+        "when": "niedziela 27.09 wieczorem, limit 3 100",
+        "sell": "czwartek 01.10 · 3 600",
+        "why": "Dno pasma 86 — karty wrzucane po cenie fodderu, a wchodzące w SBC z progiem 85+. Zmierzone na fut.gg: Bruno Guimarães 86 ma najniższy BIN 3 600 sprzed minuty i <strong>44 sprzedaże w 10 minut</strong>, więc płynność nie jest problemem.",
+        "exit": "Dno pasma podchodzi nad 3 500 — nie ma już z czego brać marży."
+      },
+      {
+        "name": "Pasmo 87",
+        "conf": "mid",
+        "price": "5 600 – 5 800",
+        "entry": 4800,
+        "sellPrice": 5500,
+        "when": "niedziela 27.09 wieczorem, limit 4 800",
+        "sell": "czwartek 01.10 · 5 500",
+        "why": "Ten sam mechanizm co przy 86, marża na sztukę o połowę wyższa. Barella 87 ma BIN 5 700 sprzed 31 sekund, tape schodzi po 5 200–6 200 i <strong>40 sprzedaży w 10 minut</strong>.",
+        "exit": "Dno pasma podchodzi nad 5 200."
+      },
+      {
+        "name": "Meta 88",
+        "conf": "mid",
+        "price": "Oblak 88 GK 13 250, Russo 88 ST 16 250",
+        "entry": 13250,
+        "sellPrice": 15000,
+        "when": "niedziela 27.09 wieczorem, po zamknięciu okna 48h",
+        "sell": "czwartek 01.10 · 15 000",
+        "why": "Katalizator: SBC na <strong>Nusę</strong> wymaga składu o Item Score 75 000 i wygasa 01.10 przy koszcie 64 750. To ciągnie z rynku dokładnie ten segment. Karty 88 wracają po crashu najszybciej, bo ludzie ich faktycznie używają.",
+        "exit": "Dwa dni bez odbicia po zamknięciu SBC Nusy — teza się nie realizuje, schodzisz."
+      },
+      {
+        "name": "Meta 89",
+        "conf": "mid",
+        "price": "Gabriel 89 CB 16 750, Bruno Fernandes 89 CAM 23 500",
+        "entry": 23250,
+        "sellPrice": 26000,
+        "when": "niedziela 27.09 wieczorem, limit 23 250",
+        "sell": "czwartek 01.10 · 26 000",
+        "why": "Najwyższa półka, która schodzi w kilka dni, i jedyny segment z dodatnim momentum: Bruno Fernandes <strong>+5,62%</strong> w dobę przy 38 sprzedażach na 10 minut. SBC Nusy (Item Score 75 000, 01.10) zjada wprost te ratingi.",
+        "exit": "Płynność siada — jeżeli karta nie schodzi przez dwie aukcje po cenie o krok pod BIN-em, obniżasz albo wychodzisz."
+      }
+    ],
+    "long": [
+      {
+        "name": "Fodder 85 przez cykl",
+        "conf": "spec",
+        "price": "1 700 – 1 900",
+        "entry": 1900,
+        "when": "niedziela 27.09 wieczorem, limit 1 900",
+        "sell": "przed dużym promo, gdy wymagania SBC podejdą wyżej — warunek, nie data",
+        "why": "Wraz z sezonem składy ludzi rosną, a EA podnosi progi w SBC. Popyt przesuwa się z 83–84 na 85+, więc dolne pasma drożeją przez cały cykl.",
+        "note": "Tego mechanizmu NIE zweryfikowaliśmy jeszcze w tej edycji — to jedyna pozycja na tej stronie oparta na wzorcu z poprzednich lat, nie na zmierzonych danych. Traktuj jako test, nie jako pewnik.",
+        "exit": "Pasmo 85 stoi w miejscu przez dwa tygodnie przy rosnącym Index 100 — teza nie działa."
+      },
+      {
+        "name": "Pasmo 86–87 po crashu",
+        "conf": "mid",
+        "price": "3 100 – 4 800",
+        "entry": 4800,
+        "when": "niedziela 27.09 wieczorem, po zamknięciu okna 48h",
+        "sell": "gdy pasmo wróci do poziomu sprzed promo — warunek, nie data",
+        "why": "Destined for Glory zbiło całe pasmo podażą z paków. Popyt wraca przy każdej kolejnej serii SBC 84+ i 85+, a podaż z promo wysycha po tygodniu. Ta sama karta co w zakładce Krótkie, tylko trzymana przez cykl, a nie przez tydzień.",
+        "exit": "EA wypuszcza powtarzalną SBC z kartą 86+ w nagrodę — dochodzi nowa podaż i pasmo nie wraca."
+      },
+      {
+        "name": "Meta 88–89 po crashu",
+        "conf": "mid",
+        "price": "13 250 – 23 500",
+        "entry": 13250,
+        "when": "przy momentum pod 50",
+        "sell": "przed startem kolejnego dużego promo, gdy momentum przekroczy 70",
+        "why": "Segment jest najbardziej zmienny, bo to karty do realnej gry — sprzedawane pod SBC, odkupowane pod weekend. Dziś Bruno Fernandes 89 jako jedyny z listy ma dodatnie momentum (+5,62%), reszta półki stoi.",
+        "exit": "Nowe promo wypuszcza karty na tych ratingach w pakach — podaż przebija popyt."
+      },
+      {
+        "name": "Bohaterowie",
+        "conf": "spec",
+        "price": "Cahill 85 CM 31 500, Šašic 89 ST 48 000, Kluivert 87 ST 79 000",
+        "entry": 31500,
+        "when": "niedziela 27.09 – wtorek 29.09, w trakcie przerwy reprezentacyjnej",
+        "sell": "brak daty — to teza na tygodnie, nie na dni",
+        "why": "Cały segment jest dziś wyprzedawany: Kluivert 87 <strong>−10,17%</strong>, Hernández 86 −8,78%, Donovan 86 −7,56%, Dudek 86 −7,50%, a Cahill 85 ma momentum <strong>−18,18%</strong> przy BIN 31 500, podczas gdy tape schodzi po 33 000–40 000. Stare gwiazdy z paków ludzie spieniężają na skład zaraz po premierze; popyt na nie przychodzi później w sezonie.",
+        "note": "To Bohaterowie, nie ikony. Prawdziwe ikony to osobna półka — dno stoi dziś na 237 000 (Jones 89 CB), Moore 90 CB 247 000.",
+        "exit": "EA wypuszcza SBC albo objective z Bohaterem w nagrodę — dochodzi nowa podaż i dno się przesuwa."
+      },
+      {
+        "name": "Karty Destined for Glory",
+        "conf": "mid",
+        "price": "od ok. 42 000",
+        "entry": 42000,
+        "when": "środa 30.09 – czwartek 08.10, w dołku przerwy reprezentacyjnej",
+        "sell": "po restarcie kalendarza 9–11.10, gdy liczniki goli i asyst zaczną tykać",
+        "why": "Katalizator jest w terminarzu, nie w cenniku. Sprawdzone karta po karcie na fut.gg: Kökçü (Beşiktaş) gra dopiero <strong>11.10</strong>, Abdulhamid (RC Lens) <strong>09.10</strong>, Bisseck (Serie A) <strong>10.10</strong>. Przez dwa tygodnie żaden licznik nie ruszy, więc segment leci −10 do −27% i to jest dołek do kupowania. Progi są mechaniczne (3 / 6 / 10 / 20 goli lub asyst, albo 2 / 4 / 6 / 10 czystych kont), EA podbija je automatycznie, a mecz ma datę w kalendarzu. Bot skanujący cenniki nie czyta terminarza — to jest dokładnie ta przewaga, której na flipach nie masz.",
+        "note": "Nie wchodzisz dziś w całości — przerwa trwa jeszcze dwa tygodnie i cena może zjechać niżej. Rozkładasz zakup na kilka wejść do 08.10.",
+        "exit": "Kontuzja albo ławka. Cała teza wisi na tym, że zawodnik gra — sprawdź skład przed zakupem."
+      },
+      {
+        "name": "Ikony w tyle za rynkiem",
+        "conf": "spec",
+        "price": "Jones 89 CB 237 000, Moore 90 CB 247 000",
+        "entry": 237000,
+        "when": "teraz — segment został z tyłu",
+        "sell": "brak daty — teza na tygodnie",
+        "why": "Index 100 zrobił dziś <strong>+3,73%</strong>, a Index Icons tylko <strong>+1,09%</strong> (40,85). Segment nie uczestniczył w odbiciu, a dno realnych ikon zjechało z 270 000 do 237 000.",
+        "note": "Przy limicie 10% na kartę w prawdziwe ikony wchodzisz dopiero od banku ok. 2,37 mln. Poniżej tego progu ta półka nie jest dla ciebie — zostań przy Bohaterach i DFG.",
+        "exit": "EA wypuszcza SBC albo objective z ikoną w nagrodę."
+      }
+    ]
+  },
+  "top": {
+    "label": "",
+    "rows": []
+  },
+  "record": {
+    "open": [],
+    "closed": [],
+    "summary": {
+      "n": 0,
+      "hit": 0,
+      "avg": 0,
+      "note": "Brak rozliczonych pozycji. Pierwsze wyniki po trzech dniach."
+    }
+  }
+}
