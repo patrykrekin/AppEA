@@ -1,0 +1,84 @@
+name: Odświeżenie cen
+
+# Cykl szybki i wolny odpalają ten sam job z innym argumentem.
+# Wartości startowe — popraw po `node calibrate.mjs 180`.
+on:
+  schedule:
+    - cron: "*/30 * * * *"    # fast: puls rynku, pasma, snajpy
+    - cron: "11 5,17 * * *"   # slow: okna dobowe i tezy (UTC — 07:11 i 19:11 w PL)
+  workflow_dispatch:
+    inputs:
+      cycle:
+        description: "fast albo slow"
+        default: fast
+        type: choice
+        options: [fast, slow]
+
+# Push robi wbudowany GITHUB_TOKEN — żadnego własnego tokena, żadnego sekretu w repo.
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh
+  cancel-in-progress: false      # dwa cykle nie mogą pisać naraz
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Który cykl
+        id: c
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "cycle=${{ inputs.cycle }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event.schedule }}" = "11 5,17 * * *" ]; then
+            echo "cycle=slow" >> "$GITHUB_OUTPUT"
+          else
+            echo "cycle=fast" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Zależności
+        working-directory: scraper
+        run: npm install --no-audit --no-fund
+
+      # Chromium waży ~150 MB. Cache oszczędza minuty i ruch przy każdym przebiegu.
+      - uses: actions/cache@v4
+        id: pw
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}
+
+      - name: Chromium
+        working-directory: scraper
+        run: npx playwright install --with-deps chromium
+
+      - name: Pobierz ceny
+        working-directory: scraper
+        env:
+          FUT_DATA: ${{ github.workspace }}/data.json
+        run: node scrape.mjs ${{ steps.c.outputs.cycle }}
+
+      # Walidacja jest już w scrape.mjs i przy błędzie plik nie jest ruszany,
+      # ale sprawdzamy jeszcze raz to, co faktycznie ląduje w repo.
+      - name: Sprawdź plik
+        working-directory: scraper
+        run: node validate.mjs ${{ github.workspace }}/data.json
+
+      - name: Wyślij, jeśli się zmienił
+        run: |
+          git config user.name  "Terminal FUT"
+          git config user.email "bot@terminal.fut"
+          git add data.json
+          if git diff --cached --quiet; then
+            echo "Ceny bez zmian — nic nie wysyłam."
+            exit 0
+          fi
+          git commit -q -m "ceny $(TZ=Europe/Warsaw date '+%d.%m %H:%M')"
+          git push
