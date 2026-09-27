@@ -43,11 +43,11 @@
   .section-head h3{font-size:17px;margin:0}.section-head span{font-size:12px;color:var(--soft)}
   .section{margin-top:24px}
   .trade-list{overflow:hidden;background:var(--panel);border:1px solid var(--line);border-radius:var(--r)}
-  .trade-head,.trade{display:grid;grid-template-columns:minmax(190px,1.4fr) repeat(3,minmax(100px,.8fr));align-items:center;gap:12px;padding:12px 16px}
+  .trade-head,.trade{display:grid;grid-template-columns:minmax(155px,1.35fr) repeat(5,minmax(90px,.8fr));align-items:center;gap:10px;padding:12px 16px}
   .trade-head{font:500 10px "IBM Plex Mono",monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--soft);border-bottom:1px solid var(--line)}
   .trade{border-bottom:1px solid var(--line)}.trade:last-child{border-bottom:0}
   .trade-player{font-weight:600}.trade-value{font:500 14px "IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}
-  .trade-value small{display:none}.trade-buy{color:var(--blue)}.trade-sell{color:var(--green)}
+  .trade-value small{display:none}.trade-buy{color:var(--blue)}.trade-sell{color:var(--green)}.trade-time{font:12px/1.35 "DM Sans",sans-serif;color:var(--muted)}.trade-net{font:12px "IBM Plex Mono",monospace;color:var(--green)}
   .trade-empty{padding:17px;color:var(--muted);font-size:14px}
   .plans{margin-top:25px}.plan-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
   .plan{padding:15px 16px;background:var(--panel);border:1px solid var(--line);border-radius:11px}
@@ -120,11 +120,12 @@
   </section>
 
   <section class="section">
-    <div class="section-head"><h3>Karty do kupienia</h3><span id="trade-caption">Konsola · aktualny odczyt</span></div>
+    <div class="section-head"><h3>Karty do kupienia z planu</h3><span id="trade-caption">Konsola · aktualny odczyt</span></div>
     <div class="trade-list">
-      <div class="trade-head"><span>Zawodnik</span><span>Rynek teraz</span><span>Kup maks.</span><span>Wystaw za</span></div>
+      <div class="trade-head"><span>Zawodnik</span><span>Najniższy BIN</span><span>Kup maks.</span><span>Cel sprzedaży</span><span>Kiedy</span><span>Netto / szt.</span></div>
       <div id="trade-list"><div class="trade-empty">Wczytuję listę kart…</div></div>
     </div>
+    <p class="budget-note">Lista imienna obejmuje teraz pasma 86–87. Dla 83–85 projekt zapisuje ceny pasm, bez nazw kart. Cel i termin są scenariuszem, nie gwarancją; netto uwzględnia 5% podatku EA.</p>
   </section>
 
   <section class="moves">
@@ -210,12 +211,15 @@
     label.textContent = labels[platform] + " · " + coins(bank) + " monet";
     if (rows.length){
       var first = rows[0];
-      title.textContent = "Sprawdź " + first[0] + " do " + coins(first[2]);
-      text.textContent = "Na tej platformie " + rows.length + " kart z listy mieści się w twoim limicie. Wystawienie: " + coins(first[3]) + ". Nie kupuj powyżej ceny granicznej.";
+      var plan = planFor(first), cap = buyLimit(first,plan), net = Math.floor(Number(plan.sellPrice)*0.95-cap);
+      title.textContent = first[0] + ": kupuj do " + coins(cap);
+      text.textContent = "Cel sprzedaży " + coins(plan.sellPrice) + " · " + plan.sell + " · około " + (net>0?"+":"") + coins(net) + " monet netto za sztukę po podatku, jeśli cena docelowa zostanie osiągnięta.";
     } else if (allRows.length){
-      var cheapest = allRows.reduce(function(best,row){ return Number(row[2]) < Number(best[2]) ? row : best; });
+      var candidates = allRows.filter(function(row){return planFor(row);});
+      if (!candidates.length){ title.textContent="Brak kart z aktywnym planem wyjścia"; text.textContent="Projekt zapisuje teraz indywidualne ceny dla pasm 86–87. Pozostałe pozycje nie mają tu nazw kart i aktualnych cen."; return; }
+      var cheapest = candidates.reduce(function(best,row){ return buyLimit(row,planFor(row)) < buyLimit(best,planFor(best)) ? row : best; });
       title.textContent = "Na ten budżet nie ma teraz pasującej karty";
-      text.textContent = "Najniższy limit zakupu na liście to " + coins(cheapest[2]) + ". Nie podnoś swojego limitu tylko po to, żeby wejść w pozycję.";
+      text.textContent = "Najniższy limit z planu to " + coins(buyLimit(cheapest,planFor(cheapest))) + ". Nie podnoś swojego limitu tylko po to, żeby wejść w pozycję.";
     } else {
       title.textContent = "Brak aktualnych kart na tej platformie";
       text.textContent = "Lista pojawi się po kolejnym udanym odczycie rynku.";
@@ -224,26 +228,29 @@
 
   function showTrades(){
     var target = document.getElementById("trade-list");
-    document.getElementById("trade-caption").textContent = labels[platform] + " · limit na kartę " + coins(Math.floor(budget() * 0.10));
+    document.getElementById("trade-caption").textContent = "Fut.gg · " + labels[platform] + " · " + priceTimestamp() + " · limit na kartę " + coins(Math.floor(budget() * 0.10));
     target.replaceChildren();
     if (loadError){ setEmpty(target, "Nie udało się pobrać data.json."); showAdvice([],[]); return; }
     if (!data){ setEmpty(target, "Wczytuję listę kart…"); showAdvice([],[]); return; }
     var allRows = data.snipe && data.snipe[platform] && Array.isArray(data.snipe[platform].rows) ? data.snipe[platform].rows : [];
     var bank = budget();
-    var rows = allRows.filter(function(row){ return bank > 0 && Number(row[2]) <= bank * 0.10; });
-    rows.sort(function(a,b){ return Number(a[2]) - Number(b[2]); });
+    var rows = allRows.filter(function(row){ var plan=planFor(row); return bank > 0 && plan && buyLimit(row,plan) <= bank * 0.10; });
+    rows.sort(function(a,b){ return buyLimit(a,planFor(a)) - buyLimit(b,planFor(b)); });
     showAdvice(rows, allRows);
     if (!bank){ setEmpty(target, "Wpisz budżet, żeby zobaczyć pasujące karty."); return; }
     if (!rows.length){
       if (!allRows.length) { setEmpty(target, "Brak kart z aktualnego odczytu dla tego rynku."); return; }
-      var cheapest = allRows.reduce(function(best,row){ return Number(row[2]) < Number(best[2]) ? row : best; });
-      setEmpty(target, "Żadna karta nie mieści się w limicie. Najniższy limit zakupu: " + coins(cheapest[2]) + ".");
+      var candidates = allRows.filter(function(row){return planFor(row);});
+      if (!candidates.length){ setEmpty(target,"Brak kart z aktywnym celem sprzedaży w planie."); return; }
+      var cheapest = candidates.reduce(function(best,row){ return buyLimit(row,planFor(row)) < buyLimit(best,planFor(best)) ? row : best; });
+      setEmpty(target, "Żadna karta nie mieści się w limicie. Najniższy limit zakupu z planu: " + coins(buyLimit(cheapest,planFor(cheapest))) + ".");
       return;
     }
     rows.forEach(function(row){
       var line = document.createElement("div");
       line.className = "trade";
-      [[row[0],"", "trade-player"],[coins(row[1]),"Rynek teraz","trade-value"],[coins(row[2]),"Kup maks.","trade-value trade-buy"],[coins(row[3]),"Wystaw za","trade-value trade-sell"]].forEach(function(item){
+      var plan=planFor(row), cap=buyLimit(row,plan), targetPrice=Number(plan.sellPrice), net=Math.floor(targetPrice*0.95-cap);
+      [[row[0],"", "trade-player"],[coins(row[1]),"Najniższy BIN","trade-value"],[coins(cap),"Kup maks.","trade-value trade-buy"],[coins(targetPrice),"Cel sprzedaży","trade-value trade-sell"],[plan.sell || "warunkowo","Kiedy","trade-value trade-time"],[(net>0?"+":"")+coins(net),"Netto / szt.","trade-value trade-net"]].forEach(function(item){
         var cell = document.createElement("span");
         cell.className = item[2];
         cell.textContent = item[0];
@@ -344,8 +351,9 @@
   function updateTimestamp(){
     var target = document.getElementById("updated");
     var badge = document.getElementById("freshness");
-    if (!data || !Number(data.at)) { target.textContent = "Brak czasu odświeżenia danych."; return; }
-    var stamp = new Date(Number(data.at) * 1000);
+    var priceAt = data && Number(data.atFast || data.at);
+    if (!priceAt) { target.textContent = "Brak czasu odświeżenia danych."; return; }
+    var stamp = new Date(priceAt * 1000);
     var minutes = Math.max(0, Math.floor((Date.now() - stamp.getTime()) / 60000));
     var time = stamp.toLocaleString("pl-PL", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" });
     var age = minutes < 1 ? "przed chwilą"
@@ -356,12 +364,17 @@
     if (minutes >= 90) target.textContent += " · odczyt może być nieaktualny";
   }
 
+  function priceTimestamp(){
+    var priceAt=data && Number(data.atFast || data.at);
+    return priceAt ? new Date(priceAt*1000).toLocaleString("pl-PL",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}) : "brak czasu odczytu";
+  }
+
   function showPlans(){
     var target = document.getElementById("plan-list"), calendar = document.getElementById("calendar-list");
     target.replaceChildren(); calendar.replaceChildren();
     if (!data || !data.pos){ setEmpty(target,"Brak zapisanych pozycji w danych projektu.","plan-empty"); setEmpty(calendar,"Brak terminów w planie.","plan-empty"); return; }
     var bank = budget(), all = (data.pos.short || []).concat(data.pos.long || []);
-    var matching = all.filter(function(item){ return Number(item.entry) <= bank * 0.10; });
+    var matching = all.filter(function(item){ return Number(item.entry) <= bank * 0.10 && planIsActive(item); });
     if (!matching.length){ setEmpty(target,"Brak pozycji z planu mieszczących się w limicie 10% budżetu na jedną kartę.","plan-empty"); }
     matching.forEach(function(item){
       var card = document.createElement("article"); card.className="plan";
@@ -393,6 +406,14 @@
     });
     if (!entries.length) setEmpty(calendar,"Plan nie zawiera już przyszłych dat. Warunki sprzedaży bez daty znajdziesz przy pozycjach.","plan-empty");
   }
+
+  function planFor(row){
+    var match=String(row && row[0] || "").match(/\b(86|87)\b/);
+    if (!match || !data || !data.pos || !Array.isArray(data.pos.short)) return null;
+    return data.pos.short.find(function(item){return item.name === "Pasmo " + match[1] && Number(item.sellPrice)>0 && planIsActive(item);}) || null;
+  }
+  function buyLimit(row,plan){return plan ? Math.min(Number(row[2]),Number(plan.entry)) : Number(row && row[2]);}
+  function planIsActive(item){var dates=planDates(item.sell);return !dates.length || dates.some(function(date){return date>=new Date(new Date().setHours(0,0,0,0));});}
 
   function plainText(value){ var node=document.createElement("div"); node.innerHTML=String(value); return (node.textContent || "").trim(); }
   function brief(value){ var text=plainText(value); return text.length>190 ? text.slice(0,187).replace(/\s+\S*$/,"…") : text; }
