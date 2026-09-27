@@ -1,5 +1,5 @@
 {
-  "at": 1790505041,
+  "at": 1790507225,
   "index": {
     "ps": {
       "value": "124,01",
@@ -96,10 +96,10 @@
   },
   "snipe": {
     "ps": {
-      "label": "konsola · 27.09, 09:45",
+      "label": "konsola · 27.09, 11:07",
       "rows": [
         [
-          "Bruno Guimarães 86 CM",
+          "Katoto 86 ST",
           3700,
           3100,
           3600
@@ -118,54 +118,54 @@
         ],
         [
           "McTominay 86 CM",
-          3900,
-          3300,
-          3800
+          3800,
+          3200,
+          3700
         ],
         [
-          "Diogo Costa 86 GK",
-          3900,
-          3300,
-          3800
+          "Bruno Guimarães 86 CM",
+          3800,
+          3200,
+          3700
         ],
         [
-          "Cucurella 86 LB",
-          3900,
-          3300,
-          3800
+          "Heaps 86 CM",
+          3800,
+          3200,
+          3700
         ],
         [
           "Barella 87 CM",
-          5600,
-          4700,
-          5500
+          5800,
+          4900,
+          5700
         ],
         [
-          "Miedema 87 CAM",
+          "Irene Paredes 87 CB",
           6100,
           5100,
           6000
         ],
         [
-          "Irene Paredes 87 CB",
-          6200,
-          5200,
-          6100
+          "Martínez 87 ST",
+          6100,
+          5100,
+          6000
         ],
         [
-          "Hampton 87 GK",
-          6200,
-          5200,
-          6100
-        ],
-        [
-          "Ona Batlle 87 RB",
-          6200,
-          5200,
-          6100
+          "Rúben Dias 87 CB",
+          6100,
+          5100,
+          6000
         ],
         [
           "Hemp 87 LM",
+          6100,
+          5100,
+          6000
+        ],
+        [
+          "Lavelle 87 CAM",
           6300,
           5300,
           6200
@@ -173,46 +173,46 @@
       ]
     },
     "pc": {
-      "label": "PC · 27.09, 09:45",
+      "label": "PC · 27.09, 11:07",
       "rows": [
         [
-          "McCabe 86 LB",
+          "Bruno Guimarães 86 CM",
           3800,
           3200,
           3700
         ],
         [
-          "McTominay 86 CM",
+          "Heaps 86 CM",
           3900,
           3300,
           3800
         ],
         [
-          "Heaps 86 CM",
+          "Fernández 86 CM",
+          3900,
+          3300,
+          3800
+        ],
+        [
+          "Reiten 86 LB",
           4100,
           3400,
           4000
         ],
         [
-          "Reiten 86 LB",
-          4000,
-          3400,
-          3900
-        ],
-        [
           "Diogo Costa 86 GK",
-          4000,
+          4100,
           3400,
-          3900
+          4000
         ],
         [
-          "Ødegaard 86 CM",
-          4000,
+          "Katoto 86 ST",
+          4100,
           3400,
-          3900
+          4000
         ],
         [
-          "Hemp 87 LM",
+          "Berger 87 GK",
           6100,
           5100,
           6000
@@ -224,38 +224,38 @@
           6100
         ],
         [
-          "Saka 87 RW",
+          "Tah 87 CB",
           6200,
           5200,
           6100
         ],
         [
-          "Irene Paredes 87 CB",
-          6300,
-          5300,
-          6200
+          "Hemp 87 LM",
+          6200,
+          5200,
+          6100
         ],
         [
-          "Barella 87 CM",
+          "Saka 87 RW",
           6300,
           5300,
           6200
         ],
         [
           "Harder 87 CAM",
-          6300,
-          5300,
-          6200
+          6400,
+          5400,
+          6300
         ]
       ]
     }
   },
   "tier": {
-    "p83": "550",
+    "p83": "650",
     "p84": "650",
-    "p85": "1500",
-    "s86": "Bruno Guimarães 3700, Fernández 3700, Reiten 3800",
-    "s87": "Barella 5600, Berger 6000, Rúben Dias 6000",
+    "p85": "1400",
+    "s86": "Katoto 3700, Fernández 3700, Reiten 3800",
+    "s87": "Barella 5800, Berger 5900, Hampton 5900",
     "mid": "Oblak 88 GK 13 250, Russo 88 ST 16 250, Gabriel 89 CB 16 750, Bruno Fernandes 89 CAM 23 500",
     "hero": "Cahill 85 CM 31 500, Šašic 89 ST 48 000, Kluivert 87 ST 79 000",
     "dfg": "od ok. 42 000 (Abdulhamid 85 CM)",
@@ -422,7 +422,7 @@
       "note": "Brak rozliczonych pozycji. Pierwsze wyniki po trzech dniach."
     }
   },
-  "indexAt": 1790499654,
+  "indexAt": 1790456100,
   "hist": {
     "ps": [
       {
@@ -435,6 +435,18 @@
           "87": 5600,
           "88": 8700,
           "89": 18250
+        }
+      },
+      {
+        "at": 1790507225,
+        "floors": {
+          "83": 650,
+          "84": 650,
+          "85": 1400,
+          "86": 3700,
+          "87": 5800,
+          "88": 8800,
+          "89": 18500
         }
       }
     ],
@@ -450,11 +462,48 @@
           "88": 9500,
           "89": 18000
         }
+      },
+      {
+        "at": 1790507225,
+        "floors": {
+          "83": 650,
+          "84": 650,
+          "85": 1700,
+          "86": 3800,
+          "87": 5900,
+          "88": 9400,
+          "89": 17750
+        }
       }
     ]
   },
   "nasz": {
-    "ps": null,
-    "pc": null
-  }
+    "ps": {
+      "wartosc": 102.52,
+      "zmiana": 2.52,
+      "okno": "1 h",
+      "szerokosc": {
+        "gora": 4,
+        "dol": 1,
+        "plask": 2,
+        "razem": 7
+      },
+      "pomiarow": 2,
+      "odKiedy": 1790502330
+    },
+    "pc": {
+      "wartosc": 99.18,
+      "zmiana": -0.82,
+      "okno": "1 h",
+      "szerokosc": {
+        "gora": 0,
+        "dol": 3,
+        "plask": 4,
+        "razem": 7
+      },
+      "pomiarow": 2,
+      "odKiedy": 1790502330
+    }
+  },
+  "atFast": 1790507225
 }
