@@ -32,6 +32,8 @@
   .market{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:16px;padding:16px 20px;border:1px solid var(--line);border-radius:var(--r);background:var(--panel);margin-bottom:16px}
   .market .label{font:500 11px "IBM Plex Mono",monospace;letter-spacing:.11em;text-transform:uppercase;color:var(--soft)}
   .market strong{font-size:18px}.market .change{font:600 16px "IBM Plex Mono",monospace;white-space:nowrap}
+  .freshness{margin:-7px 0 17px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;color:var(--muted);font-size:12px}
+  .freshness strong{color:var(--ink);font-weight:600}.freshness.stale{border-color:#71543a;color:var(--gold)}
   .up{color:var(--green)}.down{color:var(--red)}.flat{color:var(--gold)}
   .lead{padding:21px 24px;background:linear-gradient(120deg,#1b2a31,#18212a);border:1px solid #30433f;border-radius:var(--r);margin-bottom:26px}
   .eyebrow{font:500 11px "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--green)}
@@ -47,6 +49,14 @@
   .trade-player{font-weight:600}.trade-value{font:500 14px "IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}
   .trade-value small{display:none}.trade-buy{color:var(--blue)}.trade-sell{color:var(--green)}
   .trade-empty{padding:17px;color:var(--muted);font-size:14px}
+  .plans{margin-top:25px}.plan-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .plan{padding:15px 16px;background:var(--panel);border:1px solid var(--line);border-radius:11px}
+  .plan-top{display:flex;justify-content:space-between;gap:10px;align-items:start}.plan h4{margin:0;font-size:15px}.plan .conf{font:10px "IBM Plex Mono",monospace;color:var(--soft);text-transform:uppercase}
+  .plan p{margin:8px 0 0;color:var(--muted);font-size:13px}.plan .plan-prices{color:var(--ink);font:12px "IBM Plex Mono",monospace}
+  .plan-empty{padding:14px 0;color:var(--muted);font-size:14px}
+  .calendar{margin-top:25px;padding:17px 19px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r)}
+  .calendar-list{display:grid;gap:0}.calendar-row{display:grid;grid-template-columns:98px 1fr auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+  .calendar-date{font:12px "IBM Plex Mono",monospace;color:var(--blue)}.calendar-action{font-size:13px;color:var(--muted)}.calendar-action strong{color:var(--ink)}.calendar-price{font:12px "IBM Plex Mono",monospace;color:var(--green);white-space:nowrap}
   .moves{margin-top:24px;padding:18px 20px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r)}
   .moves-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
   .move-group h4{font-size:13px;font-weight:600;color:var(--muted);margin:0 0 5px}
@@ -59,7 +69,7 @@
   .sell{display:grid;grid-template-columns:1fr;gap:4px;padding:16px 18px;margin-top:14px;background:var(--panel2);border-radius:var(--r)}
   .sell h3{margin:0 0 3px;font-size:15px}.sell p{color:var(--muted);margin:0;font-size:14px}
   footer{margin-top:18px;color:var(--soft);font-size:12px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
-  @media(max-width:620px){.wrap{width:min(100% - 22px,960px);padding-top:22px}header{align-items:flex-start;flex-direction:column;margin-bottom:18px}.controls{grid-template-columns:1fr}.platform{width:max-content}.market{grid-template-columns:1fr auto;gap:3px 12px;padding:14px}.market .label{grid-column:1/-1}.market strong{font-size:16px}.lead{padding:18px}.moves-grid{grid-template-columns:1fr;gap:16px}.trade-head{display:none}.trade{grid-template-columns:1fr 1fr;gap:7px 12px;padding:13px}.trade-player{grid-column:1/-1;padding-bottom:4px}.trade-value{display:flex;flex-direction:column;gap:1px;font-size:13px}.trade-value small{display:block;font:10px "IBM Plex Mono",monospace;text-transform:uppercase;letter-spacing:.05em;color:var(--soft)}}
+  @media(max-width:620px){.wrap{width:min(100% - 22px,960px);padding-top:22px}header{align-items:flex-start;flex-direction:column;margin-bottom:18px}.controls{grid-template-columns:1fr}.platform{width:max-content}.market{grid-template-columns:1fr auto;gap:3px 12px;padding:14px}.market .label{grid-column:1/-1}.market strong{font-size:16px}.lead{padding:18px}.moves-grid{grid-template-columns:1fr;gap:16px}.plan-grid{grid-template-columns:1fr}.calendar-row{grid-template-columns:78px 1fr;gap:5px 10px}.calendar-price{grid-column:2}.trade-head{display:none}.trade{grid-template-columns:1fr 1fr;gap:7px 12px;padding:13px}.trade-player{grid-column:1/-1;padding-bottom:4px}.trade-value{display:flex;flex-direction:column;gap:1px;font-size:13px}.trade-value small{display:block;font:10px "IBM Plex Mono",monospace;text-transform:uppercase;letter-spacing:.05em;color:var(--soft)}}
 </style>
 </head>
 <body>
@@ -91,11 +101,22 @@
     <strong id="market-state">Wczytuję dane…</strong>
     <span id="market-change" class="change"></span>
   </section>
+  <div class="freshness" id="freshness" aria-live="polite"><strong id="updated">Wczytuję czas odświeżenia…</strong></div>
 
   <section class="lead">
     <div class="eyebrow" id="advice-label">Dopasowane do budżetu</div>
     <h2 id="advice-title">Sprawdzam, co mieści się w budżecie…</h2>
     <p id="advice-text">Ceny i limity zakupu pobieram z aktualnych danych projektu.</p>
+  </section>
+
+  <section class="plans section">
+    <div class="section-head"><h3>Plan kupna i sprzedaży</h3><span>Pozycje z analizy projektu · dopasowane do budżetu</span></div>
+    <div class="plan-grid" id="plan-list"><div class="plan-empty">Wczytuję plan…</div></div>
+  </section>
+
+  <section class="calendar">
+    <div class="section-head"><h3>Najbliższe terminy i eventy</h3><span>Daty zapisane w analizie · scraper odświeża ceny, nie kalendarz</span></div>
+    <div class="calendar-list" id="calendar-list"><div class="plan-empty">Wczytuję terminy…</div></div>
   </section>
 
   <section class="section">
@@ -118,7 +139,7 @@
     <h3>Jak użyć cen z listy</h3>
     <p>Kupuj po cenie „Kup maks.” albo niżej. Wystawiaj za podaną cenę sprzedaży. Jeśli nie ma karty w twoim budżecie, poczekaj na kolejny odczyt — nie podnoś limitu na siłę.</p>
   </section>
-  <footer><span id="updated">Wczytuję czas odświeżenia…</span><span>Ceny i listy zawodników pochodzą z danych projektu.</span></footer>
+  <footer><span>Plan i kalendarz pochodzą z analizy zapisanej w projekcie.</span><span>Ceny kart i ruchy rynku są pobierane osobno.</span></footer>
 </main>
 <script>
 (function(){
@@ -291,7 +312,7 @@
     });
   }
 
-  function render(){ showMarket(); showTrades(); showMoves(); updateBudgetControls(); }
+  function render(){ showMarket(); showTrades(); showMoves(); showPlans(); updateBudgetControls(); }
 
   ["ps","pc"].forEach(function(value){
     var button = document.getElementById(value);
@@ -313,7 +334,7 @@
   render();
   fetch("data.json", { cache:"no-store" })
     .then(function(response){ if (!response.ok) throw new Error("data.json unavailable"); return response.json(); })
-    .then(function(result){ data = result; render(); updateTimestamp(); })
+    .then(function(result){ data = result; render(); updateTimestamp(); setInterval(updateTimestamp, 60000); })
     .catch(function(){
       loadError = true;
       document.getElementById("updated").textContent = "Nie udało się wczytać czasu ani danych.";
@@ -322,6 +343,7 @@
 
   function updateTimestamp(){
     var target = document.getElementById("updated");
+    var badge = document.getElementById("freshness");
     if (!data || !Number(data.at)) { target.textContent = "Brak czasu odświeżenia danych."; return; }
     var stamp = new Date(Number(data.at) * 1000);
     var minutes = Math.max(0, Math.floor((Date.now() - stamp.getTime()) / 60000));
@@ -329,7 +351,60 @@
     var age = minutes < 1 ? "przed chwilą"
       : minutes < 60 ? minutes + " min temu"
       : Math.floor(minutes / 60) + " godz. temu";
-    target.textContent = "Dane z " + time + " · " + age;
+    target.textContent = "Dane cenowe: " + time + " · " + age;
+    badge.classList.toggle("stale", minutes >= 90);
+    if (minutes >= 90) target.textContent += " · odczyt może być nieaktualny";
+  }
+
+  function showPlans(){
+    var target = document.getElementById("plan-list"), calendar = document.getElementById("calendar-list");
+    target.replaceChildren(); calendar.replaceChildren();
+    if (!data || !data.pos){ setEmpty(target,"Brak zapisanych pozycji w danych projektu.","plan-empty"); setEmpty(calendar,"Brak terminów w planie.","plan-empty"); return; }
+    var bank = budget(), all = (data.pos.short || []).concat(data.pos.long || []);
+    var matching = all.filter(function(item){ return Number(item.entry) <= bank * 0.10; });
+    if (!matching.length){ setEmpty(target,"Brak pozycji z planu mieszczących się w limicie 10% budżetu na jedną kartę.","plan-empty"); }
+    matching.forEach(function(item){
+      var card = document.createElement("article"); card.className="plan";
+      var top = document.createElement("div"); top.className="plan-top";
+      var title = document.createElement("h4"); title.textContent=item.name;
+      var conf = document.createElement("span"); conf.className="conf"; conf.textContent=item.conf === "spec" ? "do obserwacji" : "plan";
+      top.append(title,conf); card.appendChild(top);
+      var prices = document.createElement("p"); prices.className="plan-prices";
+      prices.textContent="Kup do " + coins(item.entry) + (item.sellPrice ? " · sprzedaj w okolicy " + coins(item.sellPrice) : ""); card.appendChild(prices);
+      var timing = document.createElement("p"); timing.textContent="Kupno: " + (item.when || "brak terminu") + "\nSprzedaż: " + (item.sell || "brak terminu"); timing.style.whiteSpace="pre-line"; card.appendChild(timing);
+      var reason = document.createElement("p"); reason.textContent=brief(item.why || item.note || ""); card.appendChild(reason);
+      if (item.exit){ var exit=document.createElement("p"); exit.textContent="Wyjdź, gdy: " + plainText(item.exit); card.appendChild(exit); }
+      if (item.note){ var note=document.createElement("p"); note.textContent=plainText(item.note); note.style.color="var(--gold)"; card.appendChild(note); }
+      target.appendChild(card);
+    });
+    var entries=[];
+    all.forEach(function(item){
+      [{label:"Kupno",text:item.when,price:item.entry},{label:"Sprzedaż",text:item.sell,price:item.sellPrice}].forEach(function(action){
+        planDates(action.text).forEach(function(parsed){ if (parsed >= new Date(new Date().setHours(0,0,0,0))) entries.push({date:parsed,label:action.label,item:item,price:action.price,text:action.text}); });
+      });
+    });
+    entries.sort(function(a,b){return a.date-b.date;});
+    entries.forEach(function(entry){
+      var row=document.createElement("div"); row.className="calendar-row";
+      var date=document.createElement("span"); date.className="calendar-date"; date.textContent=entry.date.toLocaleDateString("pl-PL",{weekday:"short",day:"2-digit",month:"2-digit"});
+      var action=document.createElement("span"); action.className="calendar-action"; action.textContent=entry.label + ": "; var strong=document.createElement("strong"); strong.textContent=entry.item.name; action.appendChild(strong); action.append(" · " + brief(entry.item.why || ""));
+      var price=document.createElement("span"); price.className="calendar-price"; price.textContent=entry.price ? coins(entry.price)+" monet" : "";
+      row.append(date,action,price); calendar.appendChild(row);
+    });
+    if (!entries.length) setEmpty(calendar,"Plan nie zawiera już przyszłych dat. Warunki sprzedaży bez daty znajdziesz przy pozycjach.","plan-empty");
+  }
+
+  function plainText(value){ var node=document.createElement("div"); node.innerHTML=String(value); return (node.textContent || "").trim(); }
+  function brief(value){ var text=plainText(value); return text.length>190 ? text.slice(0,187).replace(/\s+\S*$/,"…") : text; }
+  function planDates(value){
+    var matches=String(value || "").matchAll(/(?:^|\D)(\d{1,2})\.(\d{2})(?:\.(\d{4}))?/g), now=new Date(), dates=[];
+    for (var match of matches){
+      var year=match[3] ? Number(match[3]) : now.getFullYear();
+      var date=new Date(year,Number(match[2])-1,Number(match[1]));
+      if (!match[3] && date.getTime() < new Date(now.getFullYear(),now.getMonth()-1,1).getTime()) date.setFullYear(year+1);
+      if (!dates.some(function(existing){return existing.getTime()===date.getTime()})) dates.push(date);
+    }
+    return dates;
   }
 })();
 </script>
