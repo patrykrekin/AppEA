@@ -1,14 +1,8 @@
 name: Odświeżenie cen
 
-# Cykl szybki i wolny odpalają ten sam job z innym argumentem.
-# Wartości startowe — popraw po `node calibrate.mjs 180`.
-# Jeden cron, dziwne minuty. GitHub opóźnia harmonogram przy obciążeniu, a najgorsze
-# są pełne godziny — :00 i :30 to dokładnie te, w które celował poprzedni "*/30".
-# Który cykl pójdzie, decyduje cykl.mjs po tym, co jest przeterminowane, a nie po tym,
-# którego crona GitHub akurat dostarczył (27.09 dostarczył ten z 05:11 o 10:30).
+# Harmonogram wywołuje zewnętrzny cron przez workflow_dispatch.
+# Aby wrócić do harmonogramu GitHuba, przywróć blok schedule.
 on:
-  schedule:
-    - cron: "7,37 * * * *"
   workflow_dispatch:
     inputs:
       cycle:
