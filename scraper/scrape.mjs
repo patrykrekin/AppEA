@@ -153,6 +153,19 @@ function toSnipeRows(bands){
   return rows.sort((a, b) => a[2] - b[2]).slice(0, 12);
 }
 
+/* Strona potrzebuje nazw konkretnych kart do kalendarza, nie samej ceny pasma.
+   Bierzemy kilku najtańszych graczy z każdego ratingu i platformy. */
+function cardsForCalendar(bands){
+  const cards = {};
+  for (const rating of [83, 84, 85, 86, 87, 88, 89]){
+    cards[rating] = (bands[rating] || []).slice(0, 5).map(c => ({
+      name: `${c.name} ${rating}${c.pos ? ` ${c.pos}` : ""}`.trim(),
+      price: c.price
+    }));
+  }
+  return cards;
+}
+
 /* ---------- fut.gg: dno pasm, obie platformy ----------
    Futbin odpada dla serwerów — Cloudflare zwraca "Just a moment...".
    fut.gg przepuszcza. Format cen tutaj to "1,700" i "19,000", nie "1.7K".
@@ -297,6 +310,7 @@ try {
                pc: { label: `PC · ${stamp}`,      rows: pc } },
       tier: {
         ...prev.tier,
+        cards: { ps: cardsForCalendar(bands.ps), pc: cardsForCalendar(bands.pc) },
         p83: String(bands.ps[83]?.[0]?.price ?? ""),
         p84: String(bands.ps[84]?.[0]?.price ?? ""),
         p85: String(bands.ps[85]?.[0]?.price ?? ""),

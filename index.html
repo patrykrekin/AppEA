@@ -55,8 +55,8 @@
   .plan p{margin:8px 0 0;color:var(--muted);font-size:13px}.plan .plan-prices{color:var(--ink);font:12px "IBM Plex Mono",monospace}
   .plan-empty{padding:14px 0;color:var(--muted);font-size:14px}
   .calendar{margin-top:25px;padding:17px 19px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r)}
-  .calendar-list{display:grid;gap:0}.calendar-row{display:grid;grid-template-columns:98px 1fr auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
-  .calendar-date{font:12px "IBM Plex Mono",monospace;color:var(--blue)}.calendar-action{font-size:13px;color:var(--muted)}.calendar-action strong{color:var(--ink)}.calendar-price{font:12px "IBM Plex Mono",monospace;color:var(--green);white-space:nowrap}
+  .calendar-list{display:grid;gap:0}.calendar-row{display:grid;grid-template-columns:98px 1fr;gap:12px;align-items:start;padding:12px 0;border-top:1px solid var(--line)}
+  .calendar-date{font:12px "IBM Plex Mono",monospace;color:var(--blue);padding-top:2px}.calendar-detail{display:grid;gap:4px;font-size:13px;color:var(--muted)}.calendar-detail strong{color:var(--ink)}.calendar-buy{color:var(--blue)}.calendar-sell{color:var(--green)}.calendar-event{font-size:11px;color:var(--soft)}
   .moves{margin-top:24px;padding:18px 20px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r)}
   .moves-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
   .move-group h4{font-size:13px;font-weight:600;color:var(--muted);margin:0 0 5px}
@@ -69,7 +69,7 @@
   .sell{display:grid;grid-template-columns:1fr;gap:4px;padding:16px 18px;margin-top:14px;background:var(--panel2);border-radius:var(--r)}
   .sell h3{margin:0 0 3px;font-size:15px}.sell p{color:var(--muted);margin:0;font-size:14px}
   footer{margin-top:18px;color:var(--soft);font-size:12px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
-  @media(max-width:620px){.wrap{width:min(100% - 22px,960px);padding-top:22px}header{align-items:flex-start;flex-direction:column;margin-bottom:18px}.controls{grid-template-columns:1fr}.platform{width:max-content}.market{grid-template-columns:1fr auto;gap:3px 12px;padding:14px}.market .label{grid-column:1/-1}.market strong{font-size:16px}.lead{padding:18px}.moves-grid{grid-template-columns:1fr;gap:16px}.plan-grid{grid-template-columns:1fr}.calendar-row{grid-template-columns:78px 1fr;gap:5px 10px}.calendar-price{grid-column:2}.trade-head{display:none}.trade{grid-template-columns:1fr 1fr;gap:7px 12px;padding:13px}.trade-player{grid-column:1/-1;padding-bottom:4px}.trade-value{display:flex;flex-direction:column;gap:1px;font-size:13px}.trade-value small{display:block;font:10px "IBM Plex Mono",monospace;text-transform:uppercase;letter-spacing:.05em;color:var(--soft)}}
+  @media(max-width:620px){.wrap{width:min(100% - 22px,960px);padding-top:22px}header{align-items:flex-start;flex-direction:column;margin-bottom:18px}.controls{grid-template-columns:1fr}.platform{width:max-content}.market{grid-template-columns:1fr auto;gap:3px 12px;padding:14px}.market .label{grid-column:1/-1}.market strong{font-size:16px}.lead{padding:18px}.moves-grid{grid-template-columns:1fr;gap:16px}.plan-grid{grid-template-columns:1fr}.calendar-row{grid-template-columns:78px 1fr;gap:5px 10px}.trade-head{display:none}.trade{grid-template-columns:1fr 1fr;gap:7px 12px;padding:13px}.trade-player{grid-column:1/-1;padding-bottom:4px}.trade-value{display:flex;flex-direction:column;gap:1px;font-size:13px}.trade-value small{display:block;font:10px "IBM Plex Mono",monospace;text-transform:uppercase;letter-spacing:.05em;color:var(--soft)}}
 </style>
 </head>
 <body>
@@ -115,7 +115,7 @@
   </section>
 
   <section class="calendar">
-    <div class="section-head"><h3>Najbliższe terminy i eventy</h3><span>Daty zapisane w analizie · scraper odświeża ceny, nie kalendarz</span></div>
+    <div class="section-head"><h3>Kalendarz kupna i sprzedaży</h3><span>Zawodnik · limit wejścia · termin lub warunek wyjścia</span></div>
     <div class="calendar-list" id="calendar-list"><div class="plan-empty">Wczytuję terminy…</div></div>
   </section>
 
@@ -385,26 +385,76 @@
       var prices = document.createElement("p"); prices.className="plan-prices";
       prices.textContent="Kup do " + coins(item.entry) + (item.sellPrice ? " · sprzedaj w okolicy " + coins(item.sellPrice) : ""); card.appendChild(prices);
       var timing = document.createElement("p"); timing.textContent="Kupno: " + (item.when || "brak terminu") + "\nSprzedaż: " + (item.sell || "brak terminu"); timing.style.whiteSpace="pre-line"; card.appendChild(timing);
-      var reason = document.createElement("p"); reason.textContent=brief(item.why || item.note || ""); card.appendChild(reason);
+      var reason = document.createElement("p"); reason.textContent="Powód: " + eventForPlan(item); card.appendChild(reason);
       if (item.exit){ var exit=document.createElement("p"); exit.textContent="Wyjdź, gdy: " + plainText(item.exit); card.appendChild(exit); }
       if (item.note){ var note=document.createElement("p"); note.textContent=plainText(item.note); note.style.color="var(--gold)"; card.appendChild(note); }
       target.appendChild(card);
     });
     var entries=[];
-    all.forEach(function(item){
-      [{label:"Kupno",text:item.when,price:item.entry},{label:"Sprzedaż",text:item.sell,price:item.sellPrice}].forEach(function(action){
-        planDates(action.text).forEach(function(parsed){ if (parsed >= new Date(new Date().setHours(0,0,0,0))) entries.push({date:parsed,label:action.label,item:item,price:action.price,text:action.text}); });
+    var calendarPlans=all.filter(function(item){return Number(item.entry)<=bank*0.10 && planIsActive(item);});
+    calendarPlans.forEach(function(item){
+      var cards=cardsForPlan(item);
+      planDates(item.when).forEach(function(parsed){
+        if (parsed < new Date(new Date().setHours(0,0,0,0)) || !isBuyDateActive(item,parsed)) return;
+        cards.forEach(function(card){ entries.push({date:parsed,item:item,card:card}); });
       });
     });
     entries.sort(function(a,b){return a.date-b.date;});
     entries.forEach(function(entry){
       var row=document.createElement("div"); row.className="calendar-row";
       var date=document.createElement("span"); date.className="calendar-date"; date.textContent=entry.date.toLocaleDateString("pl-PL",{weekday:"short",day:"2-digit",month:"2-digit"});
-      var action=document.createElement("span"); action.className="calendar-action"; action.textContent=entry.label + ": "; var strong=document.createElement("strong"); strong.textContent=entry.item.name; action.appendChild(strong); action.append(" · " + brief(entry.item.why || ""));
-      var price=document.createElement("span"); price.className="calendar-price"; price.textContent=entry.price ? coins(entry.price)+" monet" : "";
-      row.append(date,action,price); calendar.appendChild(row);
+      var detail=document.createElement("div"); detail.className="calendar-detail";
+      var event=document.createElement("span"); event.className="calendar-event"; event.textContent=eventForPlan(entry.item)+" · okno kupna: "+entry.item.when; detail.appendChild(event);
+      var buy=document.createElement("span"); buy.className="calendar-buy"; buy.textContent="Kup: "; var player=document.createElement("strong"); player.textContent=entry.card.name; buy.append(player," · maks. "+coins(entry.card.buy)+" monet");
+      if (entry.card.current && entry.card.market) buy.append(" · BIN teraz "+coins(entry.card.market));
+      else buy.append(" · limit z zapisanej analizy; brak świeżego BIN-u dla tej karty");
+      detail.appendChild(buy);
+      var sell=document.createElement("span"); sell.className="calendar-sell";
+      var sellDates=planDates(entry.item.sell);
+      if (Number(entry.item.sellPrice)>0 && sellDates.length){
+        var dateText=sellDates.map(function(d){return d.toLocaleDateString("pl-PL",{weekday:"short",day:"2-digit",month:"2-digit"});}).join("–");
+        var net=Math.floor(Number(entry.item.sellPrice)*0.95-entry.card.buy);
+        sell.textContent="Sprzedaż planowana: "+dateText+" · cel "+coins(entry.item.sellPrice)+" monet · po podatku ok. "+(net>0?"+":"")+coins(net)+" monet / karta";
+      } else {
+        sell.textContent="Sprzedaż: "+(entry.item.sell || "brak terminu w planie")+(entry.item.exit ? " · wyjdź, gdy: "+plainText(entry.item.exit) : "");
+      }
+      detail.appendChild(sell); row.append(date,detail); calendar.appendChild(row);
     });
-    if (!entries.length) setEmpty(calendar,"Plan nie zawiera już przyszłych dat. Warunki sprzedaży bez daty znajdziesz przy pozycjach.","plan-empty");
+    var missing=calendarPlans.filter(function(item){return planDates(item.when).some(function(date){return date>=new Date(new Date().setHours(0,0,0,0)) && isBuyDateActive(item,date);}) && !cardsForPlan(item).length;});
+    if (missing.length){ var notice=document.createElement("div"); notice.className="plan-empty"; notice.textContent="Bez konkretnej karty w bieżącym odczycie: "+missing.map(function(item){return item.name;}).join(", ")+". Te punkty nie są pokazane jako rekomendacje."; calendar.appendChild(notice); }
+    if (!entries.length && !missing.length) setEmpty(calendar,"Brak przyszłych punktów, dla których projekt ma jednocześnie nazwisko karty i limit zakupu. Po kolejnym odczycie cen scraper uzupełni listę graczy dla pasm 83–89.","plan-empty");
+  }
+
+  function cardsForPlan(item){
+    var ratingMatch=String(item.name || "").match(/\b(\d{2})\b/), rating=ratingMatch && ratingMatch[1];
+    var saved=data && data.tier && data.tier.cards && data.tier.cards[platform] && rating ? data.tier.cards[platform][rating] : null;
+    if (Array.isArray(saved) && saved.length) return saved.slice(0,5).map(function(c){return {name:c.name,market:Number(c.price),buy:Number(item.entry),current:true};});
+    var live=data && data.snipe && data.snipe[platform] && data.snipe[platform].rows;
+    if (Array.isArray(live) && rating && (rating==="86" || rating==="87")){
+      var candidates=live.filter(function(row){return new RegExp("\\b"+rating+"\\b").test(row[0]);});
+      if (candidates.length) return candidates.slice(0,5).map(function(row){return {name:row[0],market:Number(row[1]),buy:Number(item.entry),current:true};});
+    }
+    var names=[];
+    String(item.price || "").split(",").forEach(function(part){
+      var tokens=part.trim().split(/\s+/), idx=tokens.findIndex(function(token){return /^\d{2}$/.test(token);});
+      if (idx<1 || !tokens[idx+1] || !/^[A-Z]{2,3}$/.test(tokens[idx+1])) return;
+      var market=Number(tokens.slice(idx+2).join(""));
+      if (Number.isFinite(market) && market>0 && market<=Number(item.entry)) names.push({name:tokens.slice(0,idx+2).join(" "),market:market,buy:market,current:false});
+    });
+    return names.slice(0,5);
+  }
+
+  function eventForPlan(item){
+    var name=String(item.name || "");
+    if (name==="Fodder 83") return "83+ Upgrade";
+    if (name==="Fodder 84") return "Marquee Matchups · TOTW Upgrade";
+    if (name==="Fodder 85") return "TOTW Upgrade";
+    if (name==="Pasmo 86" || name==="Pasmo 87") return "SBC wymagające wysokiego składu";
+    if (name==="Meta 88" || name==="Meta 89") return "SBC na Nusę";
+    if (name==="Bohaterowie") return "Przerwa reprezentacyjna";
+    if (name.indexOf("Destined for Glory")>=0) return "Terminarz meczów Destined for Glory";
+    if (name.indexOf("Ikony")>=0) return "Rynek ikon";
+    return name;
   }
 
   function planFor(row){
@@ -414,6 +464,14 @@
   }
   function buyLimit(row,plan){return plan ? Math.min(Number(row[2]),Number(plan.entry)) : Number(row && row[2]);}
   function planIsActive(item){var dates=planDates(item.sell);return !dates.length || dates.some(function(date){return date>=new Date(new Date().setHours(0,0,0,0));});}
+  function isBuyDateActive(item,date){
+    if (date.toDateString()!==new Date().toDateString()) return true;
+    var now=new Date(), text=String(item.when || "");
+    if (/do południa/i.test(text) && now.getHours()>=12) return false;
+    var range=text.match(/(\d{1,2}):(\d{2})\s*[–-]\s*(\d{1,2}):(\d{2})/);
+    if (range){var end=Number(range[3])*60+Number(range[4]);if(now.getHours()*60+now.getMinutes()>end)return false;}
+    return true;
+  }
 
   function plainText(value){ var node=document.createElement("div"); node.innerHTML=String(value); return (node.textContent || "").trim(); }
   function brief(value){ var text=plainText(value); return text.length>190 ? text.slice(0,187).replace(/\s+\S*$/,"…") : text; }
