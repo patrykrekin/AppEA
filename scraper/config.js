@@ -23,6 +23,7 @@ export const SOURCES = {
   /* UWAGA: to lecą do page.evaluate, więc muszą być ZWYKŁYMI STRINGAMI.
      Funkcja przekazana do evaluate serializuje się do tekstu i nie da się jej
      wywołać po stronie przeglądarki. Platformę wstawiamy przez .replace("{p}", …). */
+export const SEL = {
   market: {
     summary:  ".market-main-index-summary.platform-{p}-only",
     change:   ".day-change-percentage",
