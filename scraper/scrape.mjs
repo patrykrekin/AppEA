@@ -279,7 +279,7 @@ try {
     const histPc = dopisz(histPrev.pc, at, floorsZPasm(bands.pc));
 
     fields = {
-      at,
+      at, atFast: at,
       hist: { ps: histPs, pc: histPc },
       nasz: { ps: policz(histPs), pc: policz(histPc) },
       /* Index 100 i Momentum są tylko na Futbinie, a ten blokuje serwerownie.
@@ -322,7 +322,7 @@ try {
     });
 
     fields = {
-      at,
+      at, atTop: at,
       /* checked jedzie razem z wierszami, żeby strona umiała odróżnić
          "jeszcze nie sprawdzaliśmy" od "sprawdziliśmy i nic nie przeszło". */
       top: { label: stamp, checked, rows: picks.map(p => ({
@@ -335,7 +335,7 @@ try {
   } else {
     const movers = await readMovers(page);
     if (movers.length < 5) throw new Error(`tylko ${movers.length} wierszy ruchów — nie nadpisuję`);
-    fields = { at, movers };
+    fields = { at, atSlow: at, movers };
   }
 
   const { err, warn } = validate({ ...read(OUT), ...fields });
