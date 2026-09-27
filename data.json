@@ -1,5 +1,5 @@
 {
-  "at": 1790513497,
+  "at": 1790514086,
   "index": {
     "ps": {
       "value": "124,01",
@@ -96,22 +96,16 @@
   },
   "snipe": {
     "ps": {
-      "label": "konsola · 27.09, 12:51",
+      "label": "konsola · 27.09, 13:01",
       "rows": [
         [
-          "Fernández 86 CM",
-          3400,
-          2800,
-          3300
+          "Katoto 86 ST",
+          3700,
+          3100,
+          3600
         ],
         [
-          "Diogo Costa 86 GK",
-          3600,
-          3000,
-          3500
-        ],
-        [
-          "Fabián Ruiz 86 CM",
+          "Heaps 86 CM",
           3700,
           3100,
           3600
@@ -123,19 +117,31 @@
           3700
         ],
         [
-          "Carnesecchi 86 GK",
+          "Reiten 86 LB",
           3800,
           3200,
           3700
         ],
         [
-          "Heaps 86 CM",
+          "McCabe 86 LB",
           3800,
           3200,
           3700
         ],
         [
-          "Rúben Dias 87 CB",
+          "Bruno Guimarães 86 CM",
+          3800,
+          3200,
+          3700
+        ],
+        [
+          "Saka 87 RW",
+          5800,
+          4900,
+          5700
+        ],
+        [
+          "Barella 87 CM",
           5800,
           4900,
           5700
@@ -147,34 +153,34 @@
           5800
         ],
         [
-          "Irene Paredes 87 CB",
+          "Rúben Dias 87 CB",
           5900,
           5000,
           5800
         ],
         [
           "Hampton 87 GK",
-          5900,
-          5000,
-          5800
+          6100,
+          5100,
+          6000
         ],
         [
           "Hemp 87 LM",
           6100,
           5100,
           6000
-        ],
-        [
-          "Martínez 87 ST",
-          6300,
-          5300,
-          6200
         ]
       ]
     },
     "pc": {
-      "label": "PC · 27.09, 12:51",
+      "label": "PC · 27.09, 13:01",
       "rows": [
+        [
+          "Diogo Costa 86 GK",
+          3700,
+          3100,
+          3600
+        ],
         [
           "Bastoni 86 CB",
           3700,
@@ -189,18 +195,6 @@
         ],
         [
           "McTominay 86 CM",
-          3800,
-          3200,
-          3700
-        ],
-        [
-          "Ødegaard 86 CM",
-          3800,
-          3200,
-          3700
-        ],
-        [
-          "Heaps 86 CM",
           3900,
           3300,
           3800
@@ -212,31 +206,37 @@
           3800
         ],
         [
-          "Barella 87 CM",
+          "Cucurella 86 LB",
+          4000,
+          3400,
+          3900
+        ],
+        [
+          "Hampton 87 GK",
           6100,
           5100,
           6000
         ],
         [
-          "Irene Paredes 87 CB",
+          "Rúben Dias 87 CB",
+          6100,
+          5100,
+          6000
+        ],
+        [
+          "Saka 87 RW",
+          6100,
+          5100,
+          6000
+        ],
+        [
+          "Lavelle 87 CAM",
           6200,
           5200,
           6100
         ],
         [
-          "Tah 87 CB",
-          6200,
-          5200,
-          6100
-        ],
-        [
-          "Hampton 87 GK",
-          6200,
-          5200,
-          6100
-        ],
-        [
-          "Hemp 87 LM",
+          "Harder 87 CAM",
           6200,
           5200,
           6100
@@ -253,9 +253,9 @@
   "tier": {
     "p83": "650",
     "p84": "650",
-    "p85": "1500",
-    "s86": "Fernández 3400, Diogo Costa 3600, Fabián Ruiz 3700",
-    "s87": "Rúben Dias 5800, Miedema 5900, Irene Paredes 5900",
+    "p85": "1800",
+    "s86": "Katoto 3700, Heaps 3700, Cucurella 3800",
+    "s87": "Saka 5800, Barella 5800, Miedema 5900",
     "mid": "Oblak 88 GK 13 250, Russo 88 ST 16 250, Gabriel 89 CB 16 750, Bruno Fernandes 89 CAM 23 500",
     "hero": "Cahill 85 CM 31 500, Šašic 89 ST 48 000, Kluivert 87 ST 79 000",
     "dfg": "od ok. 42 000 (Abdulhamid 85 CM)",
@@ -484,6 +484,18 @@
           "88": 8500,
           "89": 18000
         }
+      },
+      {
+        "at": 1790514086,
+        "floors": {
+          "83": 650,
+          "84": 650,
+          "85": 1800,
+          "86": 3700,
+          "87": 5800,
+          "88": 8700,
+          "89": 18750
+        }
       }
     ],
     "pc": [
@@ -546,36 +558,48 @@
           "88": 9300,
           "89": 19000
         }
+      },
+      {
+        "at": 1790514086,
+        "floors": {
+          "83": 650,
+          "84": 650,
+          "85": 1500,
+          "86": 3700,
+          "87": 5500,
+          "88": 9200,
+          "89": 19000
+        }
       }
     ]
   },
   "nasz": {
     "ps": {
-      "wartosc": 101.43,
-      "zmiana": 1.43,
+      "wartosc": 106.36,
+      "zmiana": 6.36,
       "okno": "3 h",
       "szerokosc": {
-        "gora": 2,
-        "dol": 3,
-        "plask": 2,
+        "gora": 4,
+        "dol": 0,
+        "plask": 3,
         "razem": 7
       },
-      "pomiarow": 5,
+      "pomiarow": 6,
       "odKiedy": 1790502330
     },
     "pc": {
-      "wartosc": 99.32,
-      "zmiana": -0.68,
+      "wartosc": 96.88,
+      "zmiana": -3.12,
       "okno": "3 h",
       "szerokosc": {
-        "gora": 2,
-        "dol": 3,
+        "gora": 1,
+        "dol": 4,
         "plask": 2,
         "razem": 7
       },
-      "pomiarow": 5,
+      "pomiarow": 6,
       "odKiedy": 1790502330
     }
   },
-  "atFast": 1790513497
+  "atFast": 1790514086
 }
