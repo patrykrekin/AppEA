@@ -55,10 +55,10 @@
   .plan p{margin:8px 0 0;color:var(--muted);font-size:13px}.plan .plan-prices{color:var(--ink);font:12px "IBM Plex Mono",monospace}
   .plan-empty{padding:14px 0;color:var(--muted);font-size:14px}
   .calendar{margin-top:25px;padding:17px 19px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r)}
-  .calendar-list{display:grid;gap:0}.calendar-row{border-top:1px solid var(--line)}
-  .calendar-trigger{display:grid;grid-template-columns:98px 1fr 24px;gap:12px;align-items:center;padding:13px 0;cursor:pointer;list-style:none}.calendar-trigger::-webkit-details-marker{display:none}
-  .calendar-date{font:12px "IBM Plex Mono",monospace;color:var(--blue)}.calendar-summary{display:grid;gap:4px;font-size:13px;color:var(--ink)}.calendar-event{font-size:11px;color:var(--soft)}.calendar-arrow{justify-self:end;color:var(--blue);font-size:20px;line-height:1;transition:transform .15s}.calendar-row[open] .calendar-arrow{transform:rotate(180deg)}
-  .calendar-picks{display:grid;gap:0;padding:0 34px 12px 110px}.calendar-pick{display:grid;grid-template-columns:minmax(150px,1fr) minmax(210px,1.2fr) minmax(250px,1.6fr);gap:14px;padding:11px 0;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}.calendar-pick strong{color:var(--ink)}.calendar-buy{color:var(--blue)}.calendar-sell{color:var(--green)}.calendar-note{grid-column:1/-1;color:var(--soft);font-size:11px}
+  .calendar-list{display:grid;gap:0}.calendar-row{display:grid;grid-template-columns:98px 1fr auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+  .calendar-date{font:12px "IBM Plex Mono",monospace;color:var(--blue)}.calendar-action{font-size:13px;color:var(--muted)}.calendar-action strong{color:var(--ink)}.calendar-price{font:12px "IBM Plex Mono",monospace;color:var(--green);white-space:nowrap}
+  details.calendar-row{display:grid;grid-template-columns:1fr;gap:0}.calendar-trigger{display:grid;grid-template-columns:98px 1fr auto 22px;gap:12px;align-items:center;padding:10px 0;cursor:pointer;list-style:none}.calendar-trigger::-webkit-details-marker{display:none}.calendar-action{min-width:0}.calendar-arrow{justify-self:end;color:var(--blue);font-size:18px;line-height:1;transition:transform .15s}.calendar-row[open] .calendar-arrow{transform:rotate(180deg)}
+  .calendar-picks{display:grid;gap:0;padding:0 34px 8px 110px}.calendar-pick{display:grid;grid-template-columns:minmax(150px,1fr) minmax(210px,1.2fr) minmax(250px,1.6fr);gap:14px;padding:10px 0;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}.calendar-pick strong{color:var(--ink)}.calendar-buy{color:var(--blue)}.calendar-sell{color:var(--green)}.calendar-note{grid-column:1/-1;color:var(--soft);font-size:11px}
   .moves{margin-top:24px;padding:18px 20px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r)}
   .moves-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
   .move-group h4{font-size:13px;font-weight:600;color:var(--muted);margin:0 0 5px}
@@ -71,7 +71,7 @@
   .sell{display:grid;grid-template-columns:1fr;gap:4px;padding:16px 18px;margin-top:14px;background:var(--panel2);border-radius:var(--r)}
   .sell h3{margin:0 0 3px;font-size:15px}.sell p{color:var(--muted);margin:0;font-size:14px}
   footer{margin-top:18px;color:var(--soft);font-size:12px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
-  @media(max-width:620px){.wrap{width:min(100% - 22px,960px);padding-top:22px}header{align-items:flex-start;flex-direction:column;margin-bottom:18px}.controls{grid-template-columns:1fr}.platform{width:max-content}.market{grid-template-columns:1fr auto;gap:3px 12px;padding:14px}.market .label{grid-column:1/-1}.market strong{font-size:16px}.lead{padding:18px}.moves-grid{grid-template-columns:1fr;gap:16px}.plan-grid{grid-template-columns:1fr}.calendar-trigger{grid-template-columns:78px 1fr 20px;gap:8px}.calendar-picks{padding:0 0 10px}.calendar-pick{grid-template-columns:1fr 1fr;gap:7px 12px}.calendar-sell{grid-column:1/-1}.calendar-note{grid-column:1/-1}.trade-head{display:none}.trade{grid-template-columns:1fr 1fr;gap:7px 12px;padding:13px}.trade-player{grid-column:1/-1;padding-bottom:4px}.trade-value{display:flex;flex-direction:column;gap:1px;font-size:13px}.trade-value small{display:block;font:10px "IBM Plex Mono",monospace;text-transform:uppercase;letter-spacing:.05em;color:var(--soft)}}
+  @media(max-width:620px){.wrap{width:min(100% - 22px,960px);padding-top:22px}header{align-items:flex-start;flex-direction:column;margin-bottom:18px}.controls{grid-template-columns:1fr}.platform{width:max-content}.market{grid-template-columns:1fr auto;gap:3px 12px;padding:14px}.market .label{grid-column:1/-1}.market strong{font-size:16px}.lead{padding:18px}.moves-grid{grid-template-columns:1fr;gap:16px}.plan-grid{grid-template-columns:1fr}.calendar-row,.calendar-trigger{grid-template-columns:78px minmax(0,1fr) auto;gap:5px 8px}.calendar-trigger .calendar-arrow{grid-column:3;grid-row:1}.calendar-trigger .calendar-price{grid-column:3;grid-row:2}.calendar-trigger .calendar-action{grid-column:2;grid-row:1 / span 2}.calendar-row:not(details){align-items:start}.calendar-picks{padding:0 0 8px}.calendar-pick{grid-template-columns:1fr 1fr;gap:7px 12px}.calendar-sell{grid-column:1/-1}.calendar-note{grid-column:1/-1}.trade-head{display:none}.trade{grid-template-columns:1fr 1fr;gap:7px 12px;padding:13px}.trade-player{grid-column:1/-1;padding-bottom:4px}.trade-value{display:flex;flex-direction:column;gap:1px;font-size:13px}.trade-value small{display:block;font:10px "IBM Plex Mono",monospace;text-transform:uppercase;letter-spacing:.05em;color:var(--soft)}}
 </style>
 </head>
 <body>
@@ -117,7 +117,7 @@
   </section>
 
   <section class="calendar">
-    <div class="section-head"><h3>Kalendarz kupna i sprzedaży</h3><span>Zawodnik · limit wejścia · termin lub warunek wyjścia</span></div>
+    <div class="section-head"><h3>Najbliższe terminy i eventy</h3><span>Daty zapisane w analizie · scraper odświeża ceny, nie kalendarz</span></div>
     <div class="calendar-list" id="calendar-list"><div class="plan-empty">Wczytuję terminy…</div></div>
   </section>
 
@@ -392,66 +392,50 @@
       if (item.note){ var note=document.createElement("p"); note.textContent=plainText(item.note); note.style.color="var(--gold)"; card.appendChild(note); }
       target.appendChild(card);
     });
-    var groups=new Map();
-    var calendarPlans=all.filter(function(item){return Number(item.entry)<=bank*0.10 && planIsActive(item);});
-    calendarPlans.forEach(function(item){
-      var cards=cardsForPlan(item);
-      planDates(item.when).forEach(function(parsed){
-        if (parsed < new Date(new Date().setHours(0,0,0,0)) || !isBuyDateActive(item,parsed)) return;
-        var event=eventForPlan(item), window=calendarWindow(item.when);
-        var key=parsed.toISOString().slice(0,10)+"|"+event+"|"+window;
-        if (!groups.has(key)) groups.set(key,{date:parsed,event:event,window:window,plans:[],cards:[]});
-        var group=groups.get(key);
-        if (group.plans.indexOf(item)<0) group.plans.push(item);
-        cards.forEach(function(card){group.cards.push({card:card,item:item});});
+    var entries=[];
+    all.forEach(function(item){
+      [{label:"Kupno",text:item.when,price:item.entry,canExpand:true},{label:"Sprzedaż",text:item.sell,price:item.sellPrice,canExpand:false}].forEach(function(action){
+        planDates(action.text).forEach(function(parsed){
+          if (parsed < new Date(new Date().setHours(0,0,0,0))) return;
+          var cards=action.canExpand && Number(item.entry)<=bank*0.10 && planIsActive(item) ? cardsForPlan(item).slice(0,3) : [];
+          entries.push({date:parsed,label:action.label,item:item,price:action.price,text:action.text,cards:cards});
+        });
       });
     });
-    var entries=Array.from(groups.values()).sort(function(a,b){return a.date-b.date;});
+    entries.sort(function(a,b){return a.date-b.date;});
     entries.forEach(function(entry){
-      var row=document.createElement("details"); row.className="calendar-row";
-      var trigger=document.createElement("summary"); trigger.className="calendar-trigger";
+      var hasCards=entry.cards.length>0;
+      var row=document.createElement(hasCards ? "details" : "div"); row.className="calendar-row";
       var date=document.createElement("span"); date.className="calendar-date"; date.textContent=entry.date.toLocaleDateString("pl-PL",{weekday:"short",day:"2-digit",month:"2-digit"});
-      var summary=document.createElement("span"); summary.className="calendar-summary";
-      var title=document.createElement("strong");
-      var names=entry.plans.map(function(item){return item.name;});
-      title.textContent="Kupno: "+(names.length>1 ? entry.event : names[0]);
-      var event=document.createElement("span"); event.className="calendar-event"; event.textContent=(names.length>1 ? names.join(" · ")+" · " : "")+entry.event+" · okno: "+entry.window;
-      var arrow=document.createElement("span"); arrow.className="calendar-arrow"; arrow.setAttribute("aria-hidden","true"); arrow.textContent="⌄";
-      summary.append(title,event); trigger.append(date,summary,arrow); row.appendChild(trigger);
-      var picks=document.createElement("div"); picks.className="calendar-picks";
-      var seen=new Set();
-      entry.cards.sort(function(a,b){
-        if (!!a.card.current!==!!b.card.current) return a.card.current?-1:1;
-        var ar=String(a.item.name).match(/\b(\d{2})\b/), br=String(b.item.name).match(/\b(\d{2})\b/);
-        var av=ar?Number(ar[1]):0,bv=br?Number(br[1]):0;
-        if (av!==bv) return av-bv;
-        return Number(a.card.buy||Infinity)-Number(b.card.buy||Infinity);
-      }).forEach(function(candidate){
-        var card=candidate.card,item=candidate.item;
-        if (seen.has(card.name) || seen.size>=3) return;
-        seen.add(card.name);
-        var pick=document.createElement("div"); pick.className="calendar-pick";
-        var name=document.createElement("strong"); name.textContent=card.name;
-        var buy=document.createElement("span"); buy.className="calendar-buy";
-        buy.textContent=card.current ? "Kupuj maks. "+coins(card.buy)+" monet" : "Poluj maks. "+coins(card.buy)+" monet";
-        var sell=document.createElement("span"); sell.className="calendar-sell";
-        var sellDates=planDates(item.sell);
-        if (Number(item.sellPrice)>0 && sellDates.length){
-          var dateText=sellDates.map(function(d){return d.toLocaleDateString("pl-PL",{weekday:"short",day:"2-digit",month:"2-digit"});}).join("–");
-          sell.textContent="Sprzedaj około "+dateText+" za "+coins(item.sellPrice)+" monet";
-        } else {
-          sell.textContent="Sprzedaż: "+(item.sell || "termin nieustalony")+(item.exit ? " · warunek: "+plainText(item.exit) : "");
-        }
-        pick.append(name,buy,sell);
-        if (!card.current && !card.buyVerified){ var note=document.createElement("span"); note.className="calendar-note"; note.textContent="Limit oparty na cenie z zapisanej analizy, nie na świeżym BIN-ie. W planie nie ma jeszcze liczbowego celu sprzedaży dla tej karty."; pick.appendChild(note); }
-        picks.appendChild(pick);
-      });
-      if (!seen.size){ var empty=document.createElement("div"); empty.className="plan-empty"; empty.textContent="W tym punkcie plan nie ma jeszcze nazwanych kart z limitem kupna."; picks.appendChild(empty); }
-      row.appendChild(picks); calendar.appendChild(row);
+      var action=document.createElement("span"); action.className="calendar-action";
+      action.textContent=entry.label+": "; var strong=document.createElement("strong"); strong.textContent=entry.item.name; action.appendChild(strong); action.append(" · "+cleanCalendarText(entry.item.why || entry.item.note || ""));
+      var price=document.createElement("span"); price.className="calendar-price"; price.textContent=entry.price ? coins(entry.price)+" monet" : "";
+      if (hasCards){
+        var trigger=document.createElement("summary"); trigger.className="calendar-trigger";
+        var arrow=document.createElement("span"); arrow.className="calendar-arrow"; arrow.setAttribute("aria-hidden","true"); arrow.textContent="⌄";
+        trigger.append(date,action,price,arrow); row.appendChild(trigger);
+        var picks=document.createElement("div"); picks.className="calendar-picks";
+        entry.cards.forEach(function(card){
+          var pick=document.createElement("div"); pick.className="calendar-pick";
+          var name=document.createElement("strong"); name.textContent=card.name;
+          var buy=document.createElement("span"); buy.className="calendar-buy"; buy.textContent=(card.current ? "Kup maks. " : "Poluj do ")+coins(card.buy)+" monet";
+          var sell=document.createElement("span"); sell.className="calendar-sell";
+          var sellDates=planDates(entry.item.sell);
+          if (Number(entry.item.sellPrice)>0 && sellDates.length){
+            var dateText=sellDates.map(function(d){return d.toLocaleDateString("pl-PL",{weekday:"short",day:"2-digit",month:"2-digit"});}).join("–");
+            sell.textContent="Sprzedaj około "+dateText+" za "+coins(entry.item.sellPrice)+" monet";
+          } else {
+            sell.textContent="Sprzedaż: "+(entry.item.sell || "termin nieustalony")+(entry.item.exit ? " · warunek: "+cleanCalendarText(entry.item.exit) : "");
+          }
+          pick.append(name,buy,sell);
+          if (!card.current && !card.buyVerified){ var note=document.createElement("span"); note.className="calendar-note"; note.textContent="Limit oparty na zapisanej analizie; sprawdź aktualną cenę rynku przed zakupem."; pick.appendChild(note); }
+          picks.appendChild(pick);
+        });
+        row.appendChild(picks);
+      } else row.append(date,action,price);
+      calendar.appendChild(row);
     });
-    var missing=calendarPlans.filter(function(item){return planDates(item.when).some(function(date){return date>=new Date(new Date().setHours(0,0,0,0)) && isBuyDateActive(item,date);}) && !cardsForPlan(item).length;});
-    if (missing.length){ var notice=document.createElement("div"); notice.className="plan-empty"; notice.textContent="Bez konkretnej karty w bieżącym odczycie: "+missing.map(function(item){return item.name;}).join(", ")+". Te punkty nie są pokazane jako rekomendacje."; calendar.appendChild(notice); }
-    if (!entries.length && !missing.length) setEmpty(calendar,"Brak przyszłych punktów z aktywnego planu dla wybranego budżetu.","plan-empty");
+    if (!entries.length) setEmpty(calendar,"Plan nie zawiera już przyszłych dat. Warunki sprzedaży bez daty znajdziesz przy pozycjach.","plan-empty");
   }
 
   function cardsForPlan(item){
@@ -485,7 +469,7 @@
     if (name.indexOf("Ikony")>=0) return "Rynek ikon";
     return name;
   }
-  function calendarWindow(text){return String(text||"brak terminu").replace(/,?\s*limit\s+[^,]+/i,"").trim();}
+  function cleanCalendarText(value){return brief(value).replace(/[+−-]?\d+(?:[,.]\d+)?\s*%/g,"").replace(/\s{2,}/g," ").replace(/\s+([,.;])/g,"$1").trim();}
 
   function planFor(row){
     var match=String(row && row[0] || "").match(/\b(86|87)\b/);
