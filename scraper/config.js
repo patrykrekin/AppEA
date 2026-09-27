@@ -20,14 +20,16 @@ export const SOURCES = {
   poolGG:   "https://www.fut.gg/cheapest-by-rating/"
 };
 
-export const SEL = {
+  /* UWAGA: to lecą do page.evaluate, więc muszą być ZWYKŁYMI STRINGAMI.
+     Funkcja przekazana do evaluate serializuje się do tekstu i nie da się jej
+     wywołać po stronie przeglądarki. Platformę wstawiamy przez .replace("{p}", …). */
   market: {
-    summary:  p => `.market-main-index-summary.platform-${p}-only`,
+    summary:  ".market-main-index-summary.platform-{p}-only",
     change:   ".day-change-percentage",
-    momentum: p => `.market-momentum.platform-${p}-only`
+    momentum: ".market-momentum.platform-{p}-only"
   },
   cheapest: {
-    column: p => `.stc-player-column.hide-not-${p}`,
+    column: ".stc-player-column.hide-not-{p}",
     head:   ".stc-column-head",
     row:    ".stc-player-wrapper",
     name:   ".stc-surname",
