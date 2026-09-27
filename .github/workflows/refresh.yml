@@ -2,18 +2,20 @@ name: Odświeżenie cen
 
 # Cykl szybki i wolny odpalają ten sam job z innym argumentem.
 # Wartości startowe — popraw po `node calibrate.mjs 180`.
+# Jeden cron, dziwne minuty. GitHub opóźnia harmonogram przy obciążeniu, a najgorsze
+# są pełne godziny — :00 i :30 to dokładnie te, w które celował poprzedni "*/30".
+# Który cykl pójdzie, decyduje cykl.mjs po tym, co jest przeterminowane, a nie po tym,
+# którego crona GitHub akurat dostarczył (27.09 dostarczył ten z 05:11 o 10:30).
 on:
   schedule:
-    - cron: "*/30 * * * *"    # fast: puls rynku, pasma, snajpy
-    - cron: "11 5,17 * * *"   # slow: ruchy dobowe (UTC — 07:11 i 19:11 w PL)
-    - cron: "23 6,16 * * *"   # top:  ranking "Kup teraz" + rozliczenie picków (08:23 i 18:23 w PL)
+    - cron: "7,37 * * * *"
   workflow_dispatch:
     inputs:
       cycle:
-        description: "fast albo slow"
-        default: fast
+        description: "auto = wybierz po przeterminowaniu"
+        default: auto
         type: choice
-        options: [fast, slow, top]
+        options: [auto, fast, slow, top]
 
 # Push robi wbudowany GITHUB_TOKEN — żadnego własnego tokena, żadnego sekretu w repo.
 permissions:
@@ -36,16 +38,18 @@ jobs:
 
       - name: Który cykl
         id: c
+        working-directory: scraper
+        env:
+          FUT_DATA: ${{ github.workspace }}/data.json
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "cycle=${{ inputs.cycle }}" >> "$GITHUB_OUTPUT"
-          elif [ "${{ github.event.schedule }}" = "11 5,17 * * *" ]; then
-            echo "cycle=slow" >> "$GITHUB_OUTPUT"
-          elif [ "${{ github.event.schedule }}" = "23 6,16 * * *" ]; then
-            echo "cycle=top" >> "$GITHUB_OUTPUT"
+          WYBOR="${{ github.event_name == 'workflow_dispatch' && inputs.cycle || 'auto' }}"
+          if [ "$WYBOR" = "auto" ]; then
+            WYBOR=$(node cykl.mjs)
+            echo "auto → $WYBOR"
           else
-            echo "cycle=fast" >> "$GITHUB_OUTPUT"
+            echo "ręcznie → $WYBOR"
           fi
+          echo "cycle=$WYBOR" >> "$GITHUB_OUTPUT"
 
       - name: Zależności
         working-directory: scraper
