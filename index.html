@@ -57,6 +57,17 @@
   .okazje-teraz{margin:0 0 12px;font:18px/1.35 "DM Sans",sans-serif;color:var(--ink)}
   .okazje-teraz strong{color:var(--green)}
   .okazje-teraz small{display:block;margin-top:3px;font:12px "IBM Plex Mono",monospace;color:var(--muted)}
+  .moje-row{display:grid;grid-template-columns:1fr 92px 92px 96px 28px;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+  .moje-row:last-child{border-bottom:0}
+  .moje-row.head span{font:10px "IBM Plex Mono",monospace;text-transform:uppercase;letter-spacing:.06em;color:var(--soft)}
+  .moje-nazwa{color:var(--ink);font-size:14px}
+  .moje-nazwa small{display:block;font:11px "IBM Plex Mono",monospace;color:var(--soft)}
+  .moje-val{font:12px "IBM Plex Mono",monospace;text-align:right;white-space:nowrap;color:var(--muted)}
+  .moje-val.zysk{color:var(--green)} .moje-val.strata{color:var(--down)}
+  .moje-cena{width:78px;padding:3px 5px;border:1px solid var(--line);border-radius:5px;background:transparent;
+    color:var(--ink);font:12px "IBM Plex Mono",monospace;text-align:right}
+  .moje-usun{border:0;background:transparent;color:var(--soft);font-size:15px;cursor:pointer;line-height:1}
+  .moje-usun:hover{color:var(--down)}
   .pol-row{display:grid;grid-template-columns:1fr 78px 78px 88px;align-items:baseline;gap:10px;padding:7px 0;border-bottom:1px solid var(--line)}
   .pol-row:last-child{border-bottom:0}
   .pol-row.head{border-bottom:1px solid var(--line);padding-bottom:5px}
@@ -160,6 +171,12 @@
       <div id="trade-list"><div class="trade-empty">Wczytuję listę kart…</div></div>
     </div>
     <p class="budget-note">Zwykłe okazje trzymają dotychczasowy limit na kartę. Droższe kandydatury do 200 000 monet trafiają tu tylko po przejściu analizy taśmy; traktuj je jako alternatywy i wybierz najwyżej jedną. Sprzedaż i zysk są szacunkiem opartym na ostatnich transakcjach, nie gwarancją.</p>
+  </section>
+
+  <section class="moves" id="moje-box">
+    <div class="section-head"><h3>Moje pozycje</h3><span id="moje-caption"></span></div>
+    <div id="moje-list"></div>
+    <p class="budget-note" style="margin-top:10px">Zapisane w tej przeglądarce, nigdzie nie wysyłane. Przy każdym odświeżeniu przeliczamy, ile zostałoby na rękę po 5% podatku, gdybyś wystawił teraz krok pod aktualnym dnem.</p>
   </section>
 
   <section class="moves" id="sbc-box">
@@ -389,7 +406,7 @@
       var line = document.createElement("div");
       line.className = "trade";
       var cap=buyLimit(row), targetPrice=sellTarget(row), net=Math.floor(targetPrice*0.95-cap);
-      [[nazwaZPrzyciskiem(row[0]),"", "trade-player"],[coins(row[1]),"Najniższy BIN","trade-value"],[coins(cap),"Kup maks.","trade-value trade-buy"],[coins(targetPrice),"Cel sprzedaży","trade-value trade-sell"],["od razu po kupnie","Kiedy","trade-value trade-time"],[(net>0?"+":"")+coins(net),"Netto / szt.","trade-value trade-net"]].forEach(function(item){
+      [[nazwaZPrzyciskiem(row[0], cap),"", "trade-player"],[coins(row[1]),"Najniższy BIN","trade-value"],[coins(cap),"Kup maks.","trade-value trade-buy"],[coins(targetPrice),"Cel sprzedaży","trade-value trade-sell"],["od razu po kupnie","Kiedy","trade-value trade-time"],[(net>0?"+":"")+coins(net),"Netto / szt.","trade-value trade-net"]].forEach(function(item){
         var cell = document.createElement("span");
         cell.className = item[2];
         /* Pierwsza kolumna dostaje gotowy węzeł z przyciskiem, reszta zwykły tekst. */
@@ -405,7 +422,7 @@
     });
     expensiveRows.forEach(function(row){
       var line=document.createElement("div"); line.className="trade";
-      [[nazwaZPrzyciskiem(row.name),"Analiza taśmy · maks. 1 szt.","trade-player"],[coins(row.market),"Najniższy BIN","trade-value"],[coins(row.buy),"Kup maks.","trade-value trade-buy"],[coins(row.sell),"Cel sprzedaży","trade-value trade-sell"],["do "+row.sellBy,"Kiedy","trade-value trade-time"],[(row.net>0?"+":"")+coins(row.net),"Netto / szt.","trade-value trade-net"]].forEach(function(item){
+      [[nazwaZPrzyciskiem(row.name, row.buy),"Analiza taśmy · maks. 1 szt.","trade-player"],[coins(row.market),"Najniższy BIN","trade-value"],[coins(row.buy),"Kup maks.","trade-value trade-buy"],[coins(row.sell),"Cel sprzedaży","trade-value trade-sell"],["do "+row.sellBy,"Kiedy","trade-value trade-time"],[(row.net>0?"+":"")+coins(row.net),"Netto / szt.","trade-value trade-net"]].forEach(function(item){
         var cell=document.createElement("span"); cell.className=item[2];
         if(item[0] instanceof Node) cell.appendChild(item[0]); else cell.textContent=item[0];
         if(item[1]){var small=document.createElement("small");small.textContent=item[1];cell.appendChild(small);}
@@ -475,7 +492,111 @@
     });
   }
 
-  function render(){ showMarket(); showTrades(); showMoves(); showSbc(); showOkazje(); showPolowanie(); showPlans(); updateBudgetControls(); }
+  function render(){ showMarket(); showTrades(); showMoves(); showMoje(); showSbc(); showOkazje(); showPolowanie(); showPlans(); updateBudgetControls(); }
+
+  /* ── Moje pozycje ─────────────────────────────────────────────────────────
+     Do tej pory strona mówiła, po ile kupić i po ile wystawić, a potem gracz
+     zostawał sam z kartką. Tu trzymamy, co kupił i za ile, i przy każdym
+     odświeżeniu liczymy, ile zostanie na rękę, gdyby wystawił teraz.
+     Wszystko w localStorage tej przeglądarki — żadnego konta, żadnego serwera. */
+  var KLUCZ_POZ = "fut.pozycje";
+  var SIATKA = [[1000,50],[10000,100],[50000,250],[100000,500],[Infinity,1000]];
+  function krokSiatki(c){ for (var i=0;i<SIATKA.length;i++) if (c <= SIATKA[i][0]) return SIATKA[i][1]; return 1000; }
+  function wDol(c){ var k = krokSiatki(c); return Math.floor(c / k) * k; }
+  function wystawPod(bin){ return wDol(bin) - krokSiatki(bin); }
+  function ratingZNazwy(n){ var m = String(n||"").match(/\b(\d{2})\b/); return m ? +m[1] : null; }
+
+  function pozycje(){
+    try { var x = JSON.parse(storage.get(KLUCZ_POZ) || "[]"); return Array.isArray(x) ? x : []; }
+    catch (e) { return []; }
+  }
+  function zapiszPozycje(lista){ try { storage.set(KLUCZ_POZ, JSON.stringify(lista)); } catch (e) {} }
+  function dodajPozycje(nazwa, cena){
+    var lista = pozycje();
+    lista.push({ id: String(Date.now()) + Math.random().toString(36).slice(2,6),
+                 nazwa: nazwa, rating: ratingZNazwy(nazwa), platforma: platform,
+                 cena: Number(cena) || 0, at: Math.floor(Date.now()/1000) });
+    zapiszPozycje(lista); showMoje();
+  }
+
+  /* Ile ta karta jest teraz warta. Najpierw dokładny BIN z listy snajperskiej,
+     a gdy karty tam nie ma — dno jej pasma, i mówimy o tym wprost. */
+  function kursKarty(nazwa, rating, platforma){
+    var rows = (data && data.snipe && data.snipe[platforma] && data.snipe[platforma].rows) || [];
+    for (var i=0;i<rows.length;i++) if (rows[i][0] === nazwa && Number(rows[i][1]) > 0)
+      return { cena: Number(rows[i][1]), zrodlo: "BIN karty" };
+    var h = (data && data.hist && data.hist[platforma]) || [];
+    var f = h.length ? h[h.length-1].floors : null;
+    if (f && rating && Number(f[rating]) > 0) return { cena: Number(f[rating]), zrodlo: "dno pasma " + rating };
+    return null;
+  }
+
+  function showMoje(){
+    var box = document.getElementById("moje-list");
+    var cap = document.getElementById("moje-caption");
+    var lista = pozycje().filter(function(p){ return p.platforma === platform; });
+    cap.textContent = lista.length ? labels[platform] + " · " + lista.length + " " + plPozycje(lista.length) : "";
+    if (!lista.length){
+      setEmpty(box, "Nic nie śledzisz. Kliknij \u201Eśledzę\u201D przy karcie z listy wyżej, gdy ją kupisz.", "empty-moves");
+      return;
+    }
+    box.replaceChildren();
+    var head = document.createElement("div"); head.className = "moje-row head";
+    ["Karta","Kupione po","Rynek teraz","Gdybyś wystawił",""].forEach(function(t){
+      var x = document.createElement("span"); x.textContent = t; head.appendChild(x);
+    });
+    box.appendChild(head);
+
+    lista.forEach(function(p){
+      var row = document.createElement("div"); row.className = "moje-row";
+      var n = document.createElement("span"); n.className = "moje-nazwa";
+      n.append(document.createTextNode(p.nazwa));
+      var kurs = kursKarty(p.nazwa, p.rating, p.platforma);
+      var meta = document.createElement("small");
+      meta.textContent = kurs ? kurs.zrodlo : "brak notowania";
+      n.appendChild(meta);
+
+      var wej = document.createElement("input");
+      wej.className = "moje-cena"; wej.type = "text"; wej.inputMode = "numeric";
+      wej.value = coins(p.cena); wej.title = "Ile naprawdę zapłaciłeś";
+      wej.addEventListener("change", function(){
+        var v = Number(String(wej.value).replace(/[\s\u00A0]/g,""));
+        if (Number.isFinite(v) && v > 0){
+          var all = pozycje();
+          for (var i=0;i<all.length;i++) if (all[i].id === p.id) all[i].cena = Math.floor(v);
+          zapiszPozycje(all);
+        }
+        showMoje();
+      });
+
+      var r = document.createElement("span"); r.className = "moje-val";
+      r.textContent = kurs ? coins(kurs.cena) : "—";
+
+      var w = document.createElement("span"); w.className = "moje-val";
+      if (kurs && p.cena > 0){
+        var cel = wystawPod(kurs.cena);
+        var netto = Math.floor(cel * 0.95 - p.cena);
+        w.classList.add(netto > 0 ? "zysk" : "strata");
+        w.textContent = (netto > 0 ? "+" : "") + coins(netto);
+        w.title = "Wystaw po " + coins(cel) + ", zostaje " + coins(netto) + " po podatku";
+      } else { w.textContent = "—"; }
+
+      var usun = document.createElement("button");
+      usun.type = "button"; usun.className = "moje-usun"; usun.textContent = "×";
+      usun.title = "Usuń pozycję";
+      usun.addEventListener("click", function(){
+        zapiszPozycje(pozycje().filter(function(x){ return x.id !== p.id; })); showMoje();
+      });
+
+      row.append(n, wej, r, w, usun); box.appendChild(row);
+    });
+  }
+  function plPozycje(n){
+    if (n === 1) return "pozycja";
+    var d2 = n % 100, d1 = n % 10;
+    if (d2 >= 12 && d2 <= 14) return "pozycji";
+    return (d1 >= 2 && d1 <= 4) ? "pozycje" : "pozycji";
+  }
 
   /* Przeżywalność: ile razy karta oznaczona jako tania była tania ZNOWU przy
      następnym odczycie. To nasza miara konkurencji — czego nie ma w żadnym
@@ -653,9 +774,20 @@
   function samoNazwisko(pelna){
     return String(pelna || "").replace(/\s+\d{2}(\s+[A-Z]{2,3})?\s*$/, "").trim() || String(pelna || "");
   }
-  function nazwaZPrzyciskiem(pelna){
+  function nazwaZPrzyciskiem(pelna, cenaWejscia){
     var wrap = document.createElement("span");
     wrap.append(document.createTextNode(pelna));
+    if (Number(cenaWejscia) > 0){
+      var s = document.createElement("button");
+      s.type = "button"; s.className = "kopiuj sledze"; s.textContent = "śledzę";
+      s.title = "Dodaj do moich pozycji z ceną " + coins(cenaWejscia);
+      s.addEventListener("click", function(){
+        dodajPozycje(pelna, cenaWejscia);
+        s.textContent = "dodane"; s.dataset.ok = "1";
+        setTimeout(function(){ s.textContent = "śledzę"; delete s.dataset.ok; }, 1400);
+      });
+      wrap.appendChild(s);
+    }
     var b = document.createElement("button");
     b.type = "button"; b.className = "kopiuj"; b.textContent = "kopiuj";
     b.title = "Skopiuj nazwisko do wyszukiwarki";
@@ -819,7 +951,7 @@
           var pick=document.createElement("div"); pick.className="calendar-pick";
           var name=document.createElement("strong"); name.textContent=card.name;
           var buy=document.createElement("span"); buy.className="calendar-buy";
-          buy.textContent=card.current ? "Kup maks. "+coins(card.buy)+" monet · okno: "+(entry.item.when || "brak terminu") : (card.buyVerified ? "Poluj maks. "+coins(card.buy)+" monet · okno: " : "Odczyt ceny: "+coins(card.market)+" monet · limit kupna nieustalony · okno: ")+(entry.item.when || "brak terminu");
+          buy.textContent=card.current ? "Kup maks. "+coins(card.buy)+" monet · okno: "+freshenWhen(entry.item.when) : (card.buyVerified ? "Poluj maks. "+coins(card.buy)+" monet · okno: " : "Odczyt ceny: "+coins(card.market)+" monet · limit kupna nieustalony · okno: ")+freshenWhen(entry.item.when);
           var sell=document.createElement("span"); sell.className="calendar-sell";
           var sellDates=planDates(entry.item.sell);
           if (Number(entry.item.sellPrice)>0 && sellDates.length){
