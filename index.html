@@ -397,7 +397,7 @@
       [{label:"Kupno",text:item.when,price:item.entry,canExpand:true},{label:"Sprzedaż",text:item.sell,price:item.sellPrice,canExpand:false}].forEach(function(action){
         planDates(action.text).forEach(function(parsed){
           if (parsed < new Date(new Date().setHours(0,0,0,0))) return;
-          var cards=action.canExpand && Number(item.entry)<=bank*0.10 && planIsActive(item) ? cardsForPlan(item).slice(0,3) : [];
+          var cards=action.canExpand && planIsActive(item) ? cardsForPlan(item).slice(0,3) : [];
           entries.push({date:parsed,label:action.label,item:item,price:action.price,text:action.text,cards:cards});
         });
       });
@@ -418,7 +418,8 @@
         entry.cards.forEach(function(card){
           var pick=document.createElement("div"); pick.className="calendar-pick";
           var name=document.createElement("strong"); name.textContent=card.name;
-          var buy=document.createElement("span"); buy.className="calendar-buy"; buy.textContent=(card.current ? "Kup maks. " : "Poluj do ")+coins(card.buy)+" monet";
+          var buy=document.createElement("span"); buy.className="calendar-buy";
+          buy.textContent=card.current ? "Kup maks. "+coins(card.buy)+" monet · okno: "+(entry.item.when || "brak terminu") : (card.buyVerified ? "Poluj maks. "+coins(card.buy)+" monet · okno: " : "Odczyt ceny: "+coins(card.market)+" monet · limit kupna nieustalony · okno: ")+(entry.item.when || "brak terminu");
           var sell=document.createElement("span"); sell.className="calendar-sell";
           var sellDates=planDates(entry.item.sell);
           if (Number(entry.item.sellPrice)>0 && sellDates.length){
@@ -428,7 +429,7 @@
             sell.textContent="Sprzedaż: "+(entry.item.sell || "termin nieustalony")+(entry.item.exit ? " · warunek: "+cleanCalendarText(entry.item.exit) : "");
           }
           pick.append(name,buy,sell);
-          if (!card.current && !card.buyVerified){ var note=document.createElement("span"); note.className="calendar-note"; note.textContent="Limit oparty na zapisanej analizie; sprawdź aktualną cenę rynku przed zakupem."; pick.appendChild(note); }
+          if (!card.current){ var note=document.createElement("span"); note.className="calendar-note"; note.textContent=(Number(entry.item.entry)>bank*0.10 ? "Ta karta przekracza limit jednej karty przy obecnym budżecie. " : "")+"Cena pochodzi z zapisanej analizy, nie ze świeżego BIN-u."; pick.appendChild(note); }
           picks.appendChild(pick);
         });
         row.appendChild(picks);
