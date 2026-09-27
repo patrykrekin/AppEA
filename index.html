@@ -46,7 +46,7 @@
   .trade-head,.trade{display:grid;grid-template-columns:minmax(155px,1.35fr) repeat(5,minmax(90px,.8fr));align-items:center;gap:10px;padding:12px 16px}
   .trade-head{font:500 10px "IBM Plex Mono",monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--soft);border-bottom:1px solid var(--line)}
   .trade{border-bottom:1px solid var(--line)}.trade:last-child{border-bottom:0}
-  .trade-player{font-weight:600}.trade-value{font:500 14px "IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}
+  .trade-player{font-weight:600}.trade-player small{display:block;margin-top:3px;color:var(--soft);font:11px "DM Sans",sans-serif}.trade-value{font:500 14px "IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}
   .trade-value small{display:none}.trade-buy{color:var(--blue)}.trade-sell{color:var(--green)}.trade-time{font:12px/1.35 "DM Sans",sans-serif;color:var(--muted)}.trade-net{font:12px "IBM Plex Mono",monospace;color:var(--green)}
   .trade-empty{padding:17px;color:var(--muted);font-size:14px}
   .plans{margin-top:25px}.plan-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
@@ -122,12 +122,12 @@
   </section>
 
   <section class="section">
-    <div class="section-head"><h3>Karty do kupienia z planu</h3><span id="trade-caption">Konsola · aktualny odczyt</span></div>
+    <div class="section-head"><h3>Karty do kupienia</h3><span id="trade-caption">Konsola · aktualny odczyt</span></div>
     <div class="trade-list">
       <div class="trade-head"><span>Zawodnik</span><span>Najniższy BIN</span><span>Kup maks.</span><span>Cel sprzedaży</span><span>Kiedy</span><span>Netto / szt.</span></div>
       <div id="trade-list"><div class="trade-empty">Wczytuję listę kart…</div></div>
     </div>
-    <p class="budget-note">Lista imienna obejmuje teraz pasma 86–87. Dla 83–85 projekt zapisuje ceny pasm, bez nazw kart. Cel i termin są scenariuszem, nie gwarancją; netto uwzględnia 5% podatku EA.</p>
+    <p class="budget-note">Zwykłe okazje trzymają dotychczasowy limit na kartę. Droższe kandydatury do 200 000 monet trafiają tu tylko po przejściu analizy taśmy; traktuj je jako alternatywy i wybierz najwyżej jedną. Sprzedaż i zysk są szacunkiem opartym na ostatnich transakcjach, nie gwarancją.</p>
   </section>
 
   <section class="moves">
@@ -192,7 +192,7 @@
     change.className = "change " + (move > 0.15 ? "up" : move < -0.15 ? "down" : "flat");
   }
 
-  function showAdvice(rows, allRows){
+  function showAdvice(rows, allRows, highRows){
     var label = document.getElementById("advice-label");
     var title = document.getElementById("advice-title");
     var text = document.getElementById("advice-text");
@@ -216,6 +216,10 @@
       var plan = planFor(first), cap = buyLimit(first,plan), net = Math.floor(Number(plan.sellPrice)*0.95-cap);
       title.textContent = first[0] + ": kupuj do " + coins(cap);
       text.textContent = "Cel sprzedaży " + coins(plan.sellPrice) + " · " + plan.sell + " · około " + (net>0?"+":"") + coins(net) + " monet netto za sztukę po podatku, jeśli cena docelowa zostanie osiągnięta.";
+    } else if (highRows && highRows.length){
+      var candidate=highRows[0];
+      title.textContent=candidate.name+": poluj do "+coins(candidate.buy);
+      text.textContent="BIN "+coins(candidate.market)+" · cel "+coins(candidate.sell)+" do "+candidate.sellBy+" · taśma: "+candidate.plynnosc+" sprzedaży w 10 min · około "+(candidate.net>0?"+":"")+coins(candidate.net)+" monet netto. To alternatywa dla tanich flipów; maksymalnie jedna sztuka.";
     } else if (allRows.length){
       var candidates = allRows.filter(function(row){return planFor(row);});
       if (!candidates.length){ title.textContent="Brak kart z aktywnym planem wyjścia"; text.textContent="Projekt zapisuje teraz indywidualne ceny dla pasm 86–87. Pozostałe pozycje nie mają tu nazw kart i aktualnych cen."; return; }
@@ -230,22 +234,31 @@
 
   function showTrades(){
     var target = document.getElementById("trade-list");
-    document.getElementById("trade-caption").textContent = "Fut.gg · " + labels[platform] + " · " + priceTimestamp() + " · limit na kartę " + coins(Math.floor(budget() * 0.10));
+    var bank=budget(), standardCap=Math.floor(bank*0.10), expensiveCap=Math.min(bank,200000);
+    var tapeAt=Number(data && data.atTop), tapeStamp=tapeAt?new Date(tapeAt*1000).toLocaleString("pl-PL",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"brak odczytu";
+    document.getElementById("trade-caption").textContent = "Fut.gg · " + labels[platform] + " · ceny " + priceTimestamp() + " · taśma " + tapeStamp + " · standardowo do " + coins(standardCap) + " / karta · taśma do " + coins(expensiveCap);
     target.replaceChildren();
-    if (loadError){ setEmpty(target, "Nie udało się pobrać data.json."); showAdvice([],[]); return; }
-    if (!data){ setEmpty(target, "Wczytuję listę kart…"); showAdvice([],[]); return; }
+    if (loadError){ setEmpty(target, "Nie udało się pobrać data.json."); showAdvice([],[],[]); return; }
+    if (!data){ setEmpty(target, "Wczytuję listę kart…"); showAdvice([],[],[]); return; }
     var allRows = data.snipe && data.snipe[platform] && Array.isArray(data.snipe[platform].rows) ? data.snipe[platform].rows : [];
-    var bank = budget();
     var rows = allRows.filter(function(row){ var plan=planFor(row); return bank > 0 && plan && buyLimit(row,plan) <= bank * 0.10; });
     rows.sort(function(a,b){ return buyLimit(a,planFor(a)) - buyLimit(b,planFor(b)); });
-    showAdvice(rows, allRows);
+    var topSet=data.top && data.top[platform];
+    var topRows=topSet && Array.isArray(topSet.rows) ? topSet.rows : (platform==="ps" && data.top && Array.isArray(data.top.rows) ? data.top.rows : []);
+    var highCandidates=topSet && Array.isArray(topSet.high) ? topSet.high : topRows;
+    var topAgeHours=data.atTop ? (Date.now()/1000-Number(data.atTop))/3600 : Infinity;
+    var expensiveRows=topAgeHours<=12 ? highCandidates.filter(function(row){
+      return bank>0 && Number(row.bin)>20000 && Number(row.bin)<=200000 && Number(row.sufit)>0 && Number(row.sufit)<=expensiveCap && Number(row.listAt)>0 && Number(row.zysk)>0 && Number(row.plynnosc)>=3 && Number(row.rozrzut)>=12;
+    }).sort(function(a,b){return Number(b.score||b.zysk)-Number(a.score||a.zysk);}).slice(0,3).map(function(row){return {name:row.name,market:Number(row.bin),buy:Number(row.sufit),sell:Number(row.listAt),sellBy:row.sellBy||"około 3 dni",net:Number(row.zysk),plynnosc:Number(row.plynnosc),source:"tape"};}) : [];
+    showAdvice(rows, allRows, expensiveRows);
     if (!bank){ setEmpty(target, "Wpisz budżet, żeby zobaczyć pasujące karty."); return; }
-    if (!rows.length){
+    if (!rows.length && !expensiveRows.length){
+      if (!allRows.length && topAgeHours>12) { setEmpty(target, "Brak świeżej analizy taśmy dla droższych kart. Pojawią się po cyklu TOP, jeśli przejdą filtry."); return; }
       if (!allRows.length) { setEmpty(target, "Brak kart z aktualnego odczytu dla tego rynku."); return; }
       var candidates = allRows.filter(function(row){return planFor(row);});
       if (!candidates.length){ setEmpty(target,"Brak kart z aktywnym celem sprzedaży w planie."); return; }
       var cheapest = candidates.reduce(function(best,row){ return buyLimit(row,planFor(row)) < buyLimit(best,planFor(best)) ? row : best; });
-      setEmpty(target, "Żadna karta nie mieści się w limicie. Najniższy limit zakupu z planu: " + coins(buyLimit(cheapest,planFor(cheapest))) + ".");
+      setEmpty(target, "Brak okazji mieszczących się w obecnym budżecie. Najniższy limit zwykłego zakupu z planu: " + coins(buyLimit(cheapest,planFor(cheapest))) + ".");
       return;
     }
     rows.forEach(function(row){
@@ -265,6 +278,16 @@
       });
       target.appendChild(line);
     });
+    expensiveRows.forEach(function(row){
+      var line=document.createElement("div"); line.className="trade";
+      [[row.name,"Analiza taśmy · maks. 1 szt.","trade-player"],[coins(row.market),"Najniższy BIN","trade-value"],[coins(row.buy),"Kup maks.","trade-value trade-buy"],[coins(row.sell),"Cel sprzedaży","trade-value trade-sell"],["do "+row.sellBy,"Kiedy","trade-value trade-time"],[(row.net>0?"+":"")+coins(row.net),"Netto / szt.","trade-value trade-net"]].forEach(function(item){
+        var cell=document.createElement("span"); cell.className=item[2]; cell.textContent=item[0];
+        if(item[1]){var small=document.createElement("small");small.textContent=item[1];cell.appendChild(small);}
+        line.appendChild(cell);
+      });
+      target.appendChild(line);
+    });
+    if (!expensiveRows.length){var note=document.createElement("div");note.className="trade-empty";note.textContent=topAgeHours>12?"Droższe karty: brak świeżych wyników analizy taśmy; po kolejnym cyklu pojawią się tylko trafione okazje.":"Droższe karty: taśma nie wskazuje teraz okazji do 200 000 monet.";target.appendChild(note);}
   }
 
   function numericChange(value){

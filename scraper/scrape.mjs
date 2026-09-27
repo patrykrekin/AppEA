@@ -7,7 +7,7 @@ import { readCard } from "./lib/card.mjs";
 import { evaluate, parseAgoMinutes } from "./lib/score.mjs";
 import { openPicks, settle, summarize } from "./lib/record.mjs";
 import { policz, dopisz, floorsZPasm } from "./lib/indeks.mjs";
-import { SEL as S2, TOP_BANDS, TOP_PER_BAND, TOP_COUNT, HOLD_DAYS } from "./config.js";
+import { SEL as S2, TOP_BANDS, TOP_PER_BAND, TOP_COUNT, TOP_MAX_PRICE, HOLD_DAYS } from "./config.js";
 
 /* node scrape.mjs fast   — Index, Momentum, pasma, snajpy (oba rynki z jednego wejścia)
    node scrape.mjs slow   — ruchy dobowe
@@ -247,32 +247,57 @@ async function readPool(page){
   }, S2.pool);
 }
 
+function sampleByPrice(pool){
+  const candidates=[];
+  for (const band of TOP_BANDS){
+    const sorted=pool.filter(c => c.rating===band && c.price>0 && c.price<=TOP_MAX_PRICE).sort((a,b)=>a.price-b.price);
+    if (sorted.length<=TOP_PER_BAND){candidates.push(...sorted);continue;}
+    const used=new Set();
+    for (let i=0;i<TOP_PER_BAND;i++){
+      const index=Math.round(i*(sorted.length-1)/(TOP_PER_BAND-1));
+      if (!used.has(index)){used.add(index);candidates.push(sorted[index]);}
+    }
+  }
+  return candidates;
+}
+
 async function buildTop(page){
   const pool = await readPool(page);
-
-  const candidates = [];
-  for (const band of TOP_BANDS){
-    candidates.push(...pool.filter(c => c.rating === band).slice(0, TOP_PER_BAND));
-  }
-  if (!candidates.length) throw new Error("pusta pula kandydatów");
+  const candidates = sampleByPrice(pool);
+  if (!candidates.length) throw new Error("brak kandydatów do 200 000 monet");
 
   const scored = [], skipped = [];
   for (const c of candidates){
     try {
       await sleep(900);                                   // nie waliMY w serwis bez przerwy
       const { bin, sales } = await readCard(page, c.url, PACING.navTimeoutMs);
+      if (!onGrid(bin) || bin > TOP_MAX_PRICE){ skipped.push(`${c.name} ${c.rating}: BIN poza zakresem 200 000`); continue; }
       const ev = evaluate({ bin, sales: sales.map(s => ({ minutesAgo: parseAgoMinutes(s.ago), price: s.price })) });
       if (!ev.ok){ skipped.push(`${c.name} ${c.rating}: ${ev.reason}`); continue; }
+      if (ev.sufit > TOP_MAX_PRICE){ skipped.push(`${c.name} ${c.rating}: limit zakupu przekracza 200 000`); continue; }
       scored.push({ name: `${c.name} ${c.rating}${c.pos ? " " + c.pos : ""}`, url: c.url, rating: c.rating, ...ev });
     } catch (e) { skipped.push(`${c.name} ${c.rating}: ${e.message.split("\n")[0]}`); }
   }
 
   scored.sort((a, b) => b.score - a.score);
-  return { picks: scored.slice(0, TOP_COUNT), checked: candidates.length, skipped };
+  const highPicks=scored.filter(p => p.bin>20000 && p.bin<=TOP_MAX_PRICE && p.rozrzut>=12).slice(0,3);
+  return { picks: scored.slice(0, TOP_COUNT), highPicks, checked: candidates.length, skipped };
+}
+
+async function selectPcMarket(page){
+  await go(page, SOURCES.poolGG);
+  const selected=await page.evaluate(() => {
+    const button=[...document.querySelectorAll("button")].find(x => (x.innerText||"").trim()==="PC");
+    if (!button) return false;
+    button.click();
+    return true;
+  });
+  if (!selected) throw new Error("nie znalazłem przełącznika PC na fut.gg");
+  await sleep(2500);
 }
 
 /* ---------- przebieg ---------- */
-const { browser, page } = await open();
+const { browser, page, newPage } = await open();
 const at = Math.floor(Date.now() / 1000);
 const stamp = new Date().toLocaleString("pl-PL", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" });
 let fields = {};
@@ -319,17 +344,24 @@ try {
       }
     };
   } else if (cycle === "top"){
-    const { picks, checked, skipped } = await buildTop(page);
-    console.log(`sprawdzone ${checked} kart, przeszło ${picks.length}`);
-    skipped.slice(0, 8).forEach(x => console.log("  odrzut:", x));
-    if (!picks.length) console.log("Żadna karta nie przeszła progów. Publikuję pustą listę — to uczciwsza odpowiedź niż naciągana piątka.");
+    const psResult=await buildTop(page);
+    const pcPage=await newPage();
+    await selectPcMarket(pcPage);
+    const pcResult=await buildTop(pcPage);
+    for (const [platform,result] of [["PS",psResult],["PC",pcResult]]){
+      console.log(`${platform}: sprawdzone ${result.checked} kart, ${result.picks.length} w rankingu, ${result.highPicks.length} droższe okazje`);
+      result.skipped.slice(0, 5).forEach(x => console.log(`  ${platform} odrzut:`, x));
+      if (!result.picks.length) console.log(`${platform}: żadna karta nie przeszła progów.`);
+    }
 
     const prev = read(OUT);
     const rec0 = prev.record || { open: [], closed: [] };
-    const rec1 = { ...rec0, open: openPicks(rec0, picks, at) };
+    const trackedPs=psResult.picks.concat(psResult.highPicks).map(p => ({...p,platform:"ps"}));
+    const rec1 = { ...rec0, open: openPicks(rec0, trackedPs, at) };
     const rec2 = await settle(rec1, at, HOLD_DAYS, async o => {
       try {
-        const { sales } = await readCard(page, o.url, PACING.navTimeoutMs);
+        const sourcePage=o.platform==="pc" ? pcPage : page;
+        const { sales } = await readCard(sourcePage, o.url, PACING.navTimeoutMs);
         const prices = sales.slice(0, 20).map(s => s.price).sort((a, b) => a - b);
         return prices.length ? prices[prices.length >> 1] : null;
       } catch { return null; }
@@ -339,11 +371,27 @@ try {
       at, atTop: at,
       /* checked jedzie razem z wierszami, żeby strona umiała odróżnić
          "jeszcze nie sprawdzaliśmy" od "sprawdziliśmy i nic nie przeszło". */
-      top: { label: stamp, checked, rows: picks.map(p => ({
-        name: p.name, sufit: p.sufit, fair: p.fair, listAt: p.listAt,
-        zysk: p.zysk, okazje: p.okazje, probek: p.probek, szansa: p.szansa, plynnosc: p.plynnosc,
-        sellBy: new Date((at + HOLD_DAYS * 86400) * 1000).toLocaleDateString("pl-PL", { weekday:"long", day:"2-digit", month:"2-digit" })
-      })) },
+      top: {
+        label: stamp,
+        ps: { checked: psResult.checked, rows: psResult.picks.map(p => ({
+          name: p.name, bin: p.bin, sufit: p.sufit, fair: p.fair, listAt: p.listAt,
+          zysk: p.zysk, okazje: p.okazje, probek: p.probek, plynnosc: p.plynnosc, score: p.score, rozrzut: p.rozrzut,
+          sellBy: new Date((at + HOLD_DAYS * 86400) * 1000).toLocaleDateString("pl-PL", { weekday:"long", day:"2-digit", month:"2-digit" })
+        })), high: psResult.highPicks.map(p => ({
+          name: p.name, bin: p.bin, sufit: p.sufit, fair: p.fair, listAt: p.listAt,
+          zysk: p.zysk, okazje: p.okazje, probek: p.probek, plynnosc: p.plynnosc, score: p.score, rozrzut: p.rozrzut,
+          sellBy: new Date((at + HOLD_DAYS * 86400) * 1000).toLocaleDateString("pl-PL", { weekday:"long", day:"2-digit", month:"2-digit" })
+        })) },
+        pc: { checked: pcResult.checked, rows: pcResult.picks.map(p => ({
+          name: p.name, bin: p.bin, sufit: p.sufit, fair: p.fair, listAt: p.listAt,
+          zysk: p.zysk, okazje: p.okazje, probek: p.probek, plynnosc: p.plynnosc, score: p.score, rozrzut: p.rozrzut,
+          sellBy: new Date((at + HOLD_DAYS * 86400) * 1000).toLocaleDateString("pl-PL", { weekday:"long", day:"2-digit", month:"2-digit" })
+        })), high: pcResult.highPicks.map(p => ({
+          name: p.name, bin: p.bin, sufit: p.sufit, fair: p.fair, listAt: p.listAt,
+          zysk: p.zysk, okazje: p.okazje, probek: p.probek, plynnosc: p.plynnosc, score: p.score, rozrzut: p.rozrzut,
+          sellBy: new Date((at + HOLD_DAYS * 86400) * 1000).toLocaleDateString("pl-PL", { weekday:"long", day:"2-digit", month:"2-digit" })
+        })) }
+      },
       record: { ...rec2, summary: summarize(rec2.closed) }
     };
   } else {

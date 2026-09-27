@@ -54,12 +54,12 @@ export const CYCLES = {
   top:  ["top", "record"]
 };
 
-/* Pula kandydatów do rankingu: dno pasm, bo to jedyny mechanizm,
-   który u nas przeszedł pomiar (+420 na Bruno Guimarães 86).
-   Karty z największych spadków celowo NIE wchodzą — brak zmierzonego mechanizmu. */
+/* Pula do rankingu taśmy. Próbkujemy cały zakres cen w paśmie, nie tylko
+   pięć najtańszych kart, żeby sprawdzić też droższe pozycje do 200k. */
 export const TOP_BANDS = [85, 86, 87, 88, 89];
-export const TOP_PER_BAND = 5;      // 25 kart = ok. 1,5 min przebiegu
+export const TOP_PER_BAND = 5;      // 25 kart na platformę; próbka z całego zakresu cen
 export const TOP_COUNT = 5;
+export const TOP_MAX_PRICE = 200_000;
 export const HOLD_DAYS = 3;         // po tylu dniach pick jest rozliczany
 
 export const OUT = process.env.FUT_DATA || "./data.json";

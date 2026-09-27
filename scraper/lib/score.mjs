@@ -1,4 +1,4 @@
-import { listBelow, onGrid, snapDown, net } from "./grid.mjs";
+import { listBelow, onGrid, snapDown, net, stepFor } from "./grid.mjs";
 
 /* Ranking okazji, nie ofert.
 
@@ -37,24 +37,27 @@ export function evaluate({ bin, sales, windowMin = 10, sample = 20, minOkazji = 
   if (!fair) return { ok: false, reason: "brak wyceny" };
 
   const listAt = listBelow(fair);                  // krok pod rynkiem, inaczej nie zejdzie
-  const sufit  = snapDown(listAt * 0.95);          // najwyższa cena zakupu, przy której jest zysk
-  if (sufit <= 0) return { ok: false, reason: "pasmo za tanie na marżę" };
+  let granica = snapDown(listAt * 0.95);            // maksymalny próg rentowności po podatku
+  if (net(granica, listAt) <= 0) granica -= stepFor(granica);
+  if (granica <= 0) return { ok: false, reason: "pasmo za tanie na marżę" };
 
   const plynnosc = sales.filter(s => s.minutesAgo !== null && s.minutesAgo <= windowMin).length;
-  const tanie    = sales.filter(s => s.price <= sufit);
+  const tanie    = sales.filter(s => s.price <= granica);
   const okazje   = tanie.length;
 
   if (plynnosc < minPlynnosc) return { ok: false, reason: `płynność ${plynnosc}/${windowMin}min` };
   if (okazje < minOkazji)     return { ok: false, reason: `okazji ${okazje} na ${sales.length} sprzedaży` };
 
-  const zysk = net(median(tanie.map(s => s.price)), listAt);   // typowy zarobek z trafionej okazji
+  const sufit = median(tanie.map(s => s.price)); // limit oparty na typowej cenie faktycznie tanich sprzedaży
+  const rozrzut = +((listAt / sufit - 1) * 100).toFixed(1);
+  const zysk = net(sufit, listAt);                 // netto przy limicie kupna pokazanym na stronie
   if (zysk <= 0) return { ok: false, reason: "netto ≤ 0 nawet na tanich" };
 
   const szansa = okazje / sales.length;
 
   return {
     ok: true,
-    fair, bin, sufit, listAt, zysk, okazje, plynnosc,
+    fair, bin, sufit, listAt, zysk, okazje, plynnosc, rozrzut,
     szansa: +(szansa * 100).toFixed(1),
     probek: sales.length,
     /* Wartość oczekiwana na dziesięć minut: ile transakcji schodzi × jak często

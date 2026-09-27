@@ -9,8 +9,9 @@ const DAY = 86400;
 export function openPicks(rec, picks, at){
   const open = [...(rec.open || [])];
   for (const p of picks){
-    if (open.some(o => o.name === p.name)) continue;          // już otwarty
-    open.push({ name: p.name, url: p.url, at, buy: p.sufit, target: p.listAt, expected: p.zysk });
+    const platform = p.platform || "ps";
+    if (open.some(o => o.name === p.name && (o.platform || "ps") === platform)) continue; // już otwarty na tym rynku
+    open.push({ name: p.name, url: p.url, platform, at, buy: p.sufit, target: p.listAt, expected: p.zysk });
   }
   return open;
 }

@@ -30,6 +30,12 @@ odświeżanych co pół godziny to bez znaczenia — licznik świeżości i tak 
 Uruchomienie: zakładka **Actions** → *Odświeżenie cen* → **Run workflow** (można wymusić
 `fast` albo `slow` ręcznie, bez czekania na harmonogram).
 
+Cykl `top` sprawdza ceny z całego zakresu do 200 000 monet osobno na konsoli i PC.
+Do strony przechodzą tylko karty, których taśma ma co najmniej 3 sprzedaże w 10 minut,
+powtarzające się tanie wejścia i dodatni zysk po podatku; droższe muszą też mieć co najmniej
+12% rozrzutu między typowym tanim wejściem a ceną wystawienia. Droższe karty są alternatywami
+do wyboru; strona pokazuje najwyżej trzy i oznacza je jako maksymalnie jedną sztukę.
+
 ## Instalacja na własnym serwerze (opcjonalnie, gdy Actions nie wystarczy)
 
 ```bash
