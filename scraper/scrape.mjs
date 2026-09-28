@@ -6,27 +6,20 @@ import { listBelow, onGrid, snapDown, net } from "./lib/grid.mjs";
 import { policz, dopisz, floorsZPasm } from "./lib/indeks.mjs";
 import { policzOkazje, dopiszOkazje, aktualizujPoziomy } from "./lib/okazje.mjs";
 import { readSbc, dniDo, dopiszKoszty } from "./lib/sbc.mjs";
-import { readCard, sekundyTemu } from "./lib/card.mjs";
-import { kandydaci, doOdczytu, dopiszObserwacje, plynnosc } from "./lib/obserwacja.mjs";
+import { zWierszy, dopiszRuchy, odbicia } from "./lib/ruchy.mjs";
 
 /* Budżet czasu na całą watchlistę. Przy zdrowej stronie karta schodzi w ~3 s,
    więc osiem sztuk to ~25 s. Budżet jest na wypadek, gdy fut.gg zwalnia i każda
    karta dobija do pełnego czekania — wtedy pętla urywa się sama, zamiast
    rozjechać pięciominutowy harmonogram tak jak cykl `top` 27.09.
    Sprawdzenie jest PRZED kartą, więc przekroczenie to najwyżej jeden odczyt. */
-const OBSERWACJA_BUDZET_MS = 130000;
-
-/* 28.09 wieczorem — watchlista WYŁĄCZONA. Powód, sprawdzony na żywo:
-   · /cheapest-by-rating/ renderuje ceny po stronie serwera, zero zapytań do API
-     — dlatego odczyt pasm działa z runnera od tygodnia
-   · strona pojedynczej karty bierze ceny inaczej: najpierw /api/fut/price-access/sign/,
-     potem /api/fut/player-prices/27/{id}/?verify=<token>. To samo zapytanie bez tokenu
-     wraca z 403 i stroną Cloudflare.
-   Z runnera GitHuba bramka nie przechodzi: w każdym odczycie było
-   "sprzedaże=0 aukcje=0 NIEDORENDEROWANE". Obchodzenia tej bramki nie robimy.
-   Zostawiam kod i diagnostykę, ale krok nie startuje — inaczej każdy przebieg pali
-   130 s na strony, które i tak nie oddadzą ceny. */
-const OBSERWACJA_WLACZONA = false;
+/* Cztery strony momentum w cyklu fast: dwie pierwsze to najwięksi spadkowicze,
+   dwie ostatnie najwięksi rosnący. Dokładnie ta populacja, o którą chodzi —
+   kandydaci na odbicie i potwierdzenia odbicia. Reszta rozkładu to karty, które
+   prawie nie drgnęły, więc nie ma czego zapisywać.
+   Budżet 45 s: cztery ładowania po ~8 s z zapasem. Sprawdzenie jest PRZED stroną,
+   więc przekroczenie to najwyżej jedno wejście. */
+const RUCHY_BUDZET_MS = 45000;
 import { SEL as S2 } from "./config.js";
 
 /* node scrape.mjs fast   — Index, Momentum, pasma, snajpy (oba rynki z jednego wejścia)
@@ -153,6 +146,22 @@ function zbierzMovers(page){
 }
 
 const procent = w => parseFloat(String(w[2] || "").replace("%", "").replace(",", "."));
+
+/* Numery stron do przeczytania w cyklu fast: dwie pierwsze i dwie ostatnie.
+   Liczbę stron czytamy z paginacji, a nie wpisujemy na sztywno — 28.09 było ich
+   dziesięć, ale to zależy od tego, ile kart akurat się rusza. */
+async function stronyMomentum(page){
+  await go(page, SOURCES.movers);
+  const ostatnia = await page.evaluate(() => {
+    const n = [...document.querySelectorAll('a[href*="momentum"]')]
+      .map(a => { const m = (a.getAttribute("href") || "").match(/page=(\d+)/); return m ? +m[1] : 1; });
+    return n.length ? Math.max(...n) : 1;
+  });
+  /* Wiersze pierwszej strony oddajemy od razu — jesteśmy już na niej, więc
+     wchodzenie na nią drugi raz w pętli byłoby darmowym marnowaniem sekund. */
+  const chce = [2, ostatnia - 1, ostatnia].filter(n => n >= 2 && n <= ostatnia);
+  return { pozostale: [...new Set(chce)], wiersze1: await zbierzMovers(page) };
+}
 
 async function readMovers(page){
   await go(page, SOURCES.movers);
@@ -303,62 +312,47 @@ try {
     okazjePc.poziomy = aktualizujPoziomy(poprzPoziomy.pc, bands.pc, at);
     console.log(`okazje: konsola ${okazjePs.razem}, PC ${okazjePc.razem} (>10% pod własnym poziomem)`);
 
-    /* Watchlista: kilka kart czytanych ze strony karty, żeby nie tracić ich
-       z oczu, gdy przestają być najtańsze w paśmie. Cały krok jest opcjonalny:
-       własny try, własny budżet czasu i twardy limit sztuk. 27.09 podobny krok
-       (50 kart) zakleszczył harmonogram na 2,5 h — to się nie powtórzy, bo
-       pętla wychodzi po przekroczeniu budżetu, a nie po przejściu całej listy. */
+    /* Szereg cen z momentum. Zastąpił watchlistę na stronach kart, bo tamte ceny
+       stoją za podpisanym zapytaniem (403 z runnera) — szczegóły w lib/ruchy.mjs.
+       Krok jest opcjonalny: własny try i własny budżet czasu. Nieudany odczyt
+       ruchów NIE może zabrać pasm, indeksu ani okazji. */
     let obserwacja = prev.obserwacja || null;
-    /* Diagnostyka leci do data.json, nie tylko do loga przebiegu. Log widzi
-       tylko właściciel repo w zakładce Actions; data.json widać z zewnątrz,
-       więc awarię da się rozpoznać bez przeklejania niczego. Kilka linii,
-       kasowalne jednym usunięciem pola, jak watchlista zacznie działać. */
+    /* Diagnostyka leci do data.json, nie tylko do loga w Actions — awarię widać
+       wtedy z zewnątrz, bez przeklejania logów. */
     const diag = [];
     try {
-      if (!OBSERWACJA_WLACZONA) throw new Error("watchlista wyłączona: ceny per karta za bramką (403 na player-prices)");
-      const kand = kandydaci(bands.ps, poprzPoziomy.ps);
-      const plan = doOdczytu(prev.obserwacja, kand, at);
-      diag.push(`pasma=${Object.keys(bands.ps).length} poziomy=${Object.keys(poprzPoziomy.ps || {}).length} kandydaci=${kand.length} plan=${plan.length}`);
       const start = Date.now();
-      const odczyty = [];
-      for (const poz of plan){
-        if (Date.now() - start > OBSERWACJA_BUDZET_MS){
-          diag.push(`budżet czasu wyczerpany po ${odczyty.length}/${plan.length}`);
+      const { pozostale, wiersze1 } = await stronyMomentum(page);
+      const wiersze = [...wiersze1];
+      diag.push(`strona 1: ${wiersze1.length} wierszy`);
+      for (const nr of pozostale){
+        if (Date.now() - start > RUCHY_BUDZET_MS){
+          diag.push(`budżet czasu wyczerpany po ${wiersze.length} wierszach`);
           break;
         }
         try {
-          const r = await readCard(page, poz.url, PACING.navTimeoutMs);
-          const zKand = kand.find(x => x.klucz === poz.klucz);
-          odczyty.push({
-            ...poz,
-            bin: r.bin,
-            poziom: zKand ? zKand.poziom : null,
-            rabat: zKand ? zKand.rabat : null,
-            plynnosc: plynnosc(r.sales, sekundyTemu),
-            podaz: r.podaz
-          });
-          diag.push(`${poz.klucz}: ${r.diag}`);
-          console.log(`  ${poz.klucz}: ${r.diag}`);
+          await go(page, `${SOURCES.movers}?page=${nr}`);
+          const w = await zbierzMovers(page);
+          wiersze.push(...w);
+          diag.push(`strona ${nr}: ${w.length} wierszy`);
         } catch (e) {
-          const m = String(e.message || e).split("\n")[0].slice(0, 120);
-          diag.push(`${poz.klucz}: BŁĄD ${m}`);
-          console.log(`  ${poz.klucz}: BŁĄD ${m}`);
+          diag.push(`strona ${nr}: BŁĄD ${String(e.message || e).split("\n")[0].slice(0, 100)}`);
         }
       }
-      if (odczyty.length){
-        obserwacja = dopiszObserwacje(prev.obserwacja, at, odczyty);
-        const zCena = odczyty.filter(o => Number.isFinite(o.bin)).length;
-        console.log(`watchlista: ${zCena}/${odczyty.length} z ceną, ${Object.keys(obserwacja.karty).length} na liście, ${Math.round((Date.now() - start) / 1000)} s`);
+      const wpisy = zWierszy(wiersze);
+      diag.push(`wierszy=${wiersze.length} sparsowanych=${wpisy.length} spadków=${wpisy.filter(x => x.zmiana24 < 0).length}`);
+      if (wpisy.length){
+        obserwacja = dopiszRuchy(prev.obserwacja, at, wpisy);
+        const wraca = odbicia(obserwacja, at).length;
+        console.log(`ruchy: ${wpisy.length} wpisów, ${Object.keys(obserwacja.karty).length} w szeregu, ${wraca} zawraca, ${Math.round((Date.now() - start) / 1000)} s`);
       } else {
-        console.log("watchlista: żaden odczyt się nie udał — zostawiam poprzednią");
+        console.log("ruchy: nic nie sparsowałem — zostawiam poprzedni szereg");
       }
     } catch (e) {
       const m = String(e.message || e).split("\n")[0].slice(0, 200);
       diag.push("KROK PRZERWANY: " + m);
-      console.log("watchlista: " + m + " — zostawiam poprzednią");
+      console.log("ruchy: " + m + " — zostawiam poprzedni szereg");
     }
-    /* Diagnostyka ma się zapisać nawet wtedy, gdy nie powstała ani jedna karta
-       — to jest dokładnie ten przypadek, który chcemy zobaczyć. */
     obserwacja = { at, karty: (obserwacja && obserwacja.karty) || {}, diag: diag.slice(0, 12) };
 
     fields = {
