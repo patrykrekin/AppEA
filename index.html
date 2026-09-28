@@ -196,12 +196,12 @@
   </section>
 
   <section class="plans section">
-    <div class="section-head"><h3>Plan kupna i sprzedaży</h3><span>Pozycje z analizy projektu · dopasowane do budżetu</span></div>
+    <div class="section-head"><h3>Plan kupna i sprzedaży</h3><span>Wpisane ręcznie 26–27.09 · ceny NIE są odświeżane</span></div>
     <div class="plan-grid" id="plan-list"><div class="plan-empty">Wczytuję plan…</div></div>
   </section>
 
   <section class="calendar">
-    <div class="section-head"><h3>Najbliższe terminy i eventy</h3><span>Daty zapisane w analizie · scraper odświeża ceny, nie kalendarz</span></div>
+    <div class="section-head"><h3>Najbliższe terminy i eventy</h3><span id="kal-caption">Liczone przy każdym odczycie · okno rusza się samo</span></div>
     <div class="calendar-list" id="calendar-list"><div class="plan-empty">Wczytuję terminy…</div></div>
   </section>
 
@@ -223,7 +223,7 @@
   <section class="moves" id="obs-box">
     <div class="section-head"><h3>Karty pod obserwacją</h3><span id="obs-caption"></span></div>
     <div id="obs-list"><div class="empty-moves">Szereg rusza przy najbliższym odczycie.</div></div>
-    <p class="budget-note" style="margin-top:10px"><strong>Wczoraj</strong> to cena sprzed doby odtworzona z dzisiejszej ceny i zmiany dobowej — rachunek, nie prognoza. Od niej liczymy cenę wyjścia (krok siatki niżej, żeby schodziło) i <strong>kupno do</strong> — najwyższą cenę wejścia, przy której po 5% podatku zostaje jeszcze 5% marży. Wszystkie trzy liczby są w siatce FUT, więc da się je wpisać w grze.<br><strong>Kiedy wchodzić:</strong> nie w chwili spadku, tylko gdy karta przestaje robić nowe dno — dlatego przy każdej stoi, ile czasu minęło od ostatniego dna. Ile ten czas ma wynosić, jeszcze nie wiemy; od teraz zapisujemy wynik każdej obserwacji i policzymy to na danych. <strong>„W limicie” nie znaczy „warto”.</strong> Limit to rachunek: tyle możesz zapłacić, żeby po podatku została marża. Czy warto wchodzić, mówi dopiero druga część werdyktu — „zawraca” to jedyne potwierdzenie, jakie dziś mamy, i to z ostatniej półgodziny. Czego to nie mówi: <strong>że karta wróci</strong>. Ta, która spadła 15%, potrafi spadać dalej — dlatego przy karcie, która nadal leci w dół, piszemy „jeszcze leci” zamiast zachęcać do wejścia. Ruch półgodzinny liczymy tylko powyżej kroku zaokrąglenia fut.gg: przy cenie „680K” krok to 1000 monet, a mniejszego ruchu nie da się odróżnić od samego zapisu. Karty poza twoim limitem 10% są wygaszone. Werdykt „za drogo” przy płytkiej przecenie nie jest usterką: przy spadku mniejszym niż jakieś 10–13% powrót do wczorajszego poziomu daje po podatku ledwie parę procent, więc limit wejścia wypada poniżej dzisiejszej ceny.</p>
+    <p class="budget-note" style="margin-top:10px"><strong>Ceny w tej sekcji są zaokrąglone przez fut.gg</strong> — „680K” to 680 000 z krokiem 1000, a nie dokładny BIN. <strong>Wczoraj</strong> to cena sprzed doby odtworzona z dzisiejszej ceny i zmiany dobowej — rachunek, nie prognoza. Od niej liczymy cenę wyjścia (krok siatki niżej, żeby schodziło) i <strong>kupno do</strong> — najwyższą cenę wejścia, przy której po 5% podatku zostaje jeszcze 5% marży. Wszystkie trzy liczby są w siatce FUT, więc da się je wpisać w grze.<br><strong>Kiedy wchodzić:</strong> nie w chwili spadku, tylko gdy karta przestaje robić nowe dno — dlatego przy każdej stoi, ile czasu minęło od ostatniego dna. Ile ten czas ma wynosić, jeszcze nie wiemy; od teraz zapisujemy wynik każdej obserwacji i policzymy to na danych. <strong>„W limicie” nie znaczy „warto”.</strong> Limit to rachunek: tyle możesz zapłacić, żeby po podatku została marża. Czy warto wchodzić, mówi dopiero druga część werdyktu — „zawraca” to jedyne potwierdzenie, jakie dziś mamy, i to z ostatniej półgodziny. Czego to nie mówi: <strong>że karta wróci</strong>. Ta, która spadła 15%, potrafi spadać dalej — dlatego przy karcie, która nadal leci w dół, piszemy „jeszcze leci” zamiast zachęcać do wejścia. Ruch półgodzinny liczymy tylko powyżej kroku zaokrąglenia fut.gg: przy cenie „680K” krok to 1000 monet, a mniejszego ruchu nie da się odróżnić od samego zapisu. Karty poza twoim limitem 10% są wygaszone. Werdykt „za drogo” przy płytkiej przecenie nie jest usterką: przy spadku mniejszym niż jakieś 10–13% powrót do wczorajszego poziomu daje po podatku ledwie parę procent, więc limit wejścia wypada poniżej dzisiejszej ceny.</p>
   </section>
 
   <section class="moves" id="sbc-box">
@@ -477,7 +477,7 @@
       var cap = buyLimit(first), cel = sellTarget(first), net = Math.floor(cel*0.95-cap);
       label.textContent = labels[platform] + " · " + coins(bank) + " monet · wymaga wyszukiwarki";
       title.textContent = first[0] + ": kupuj do " + coins(cap);
-      text.textContent = "Dno stało na " + coins(first[1]) + ". Kupujesz pod dnem, wystawiasz po " + coins(cel)
+      text.textContent = first[0] + " stoi po " + coins(first[1]) + ". Kupujesz pod tą ceną, wystawiasz po " + coins(cel)
         + " — około " + (net>0?"+":"") + coins(net) + " monet netto na sztuce po podatku. "
         + "To pozycja pod snajpa: trzeba siedzieć przy wyszukiwarce i odświeżać, bo tanie wystawienia znikają w sekundy. "
         + "Nie mamy dziś nic, co dałoby się wziąć bez tego."
@@ -652,9 +652,10 @@
     var rows = (data && data.snipe && data.snipe[platforma] && data.snipe[platforma].rows) || [];
     for (var i=0;i<rows.length;i++) if (rows[i][0] === nazwa && Number(rows[i][1]) > 0)
       return { cena: Number(rows[i][1]), zrodlo: "BIN karty" };
-    var h = (data && data.hist && data.hist[platforma]) || [];
-    var f = h.length ? h[h.length-1].floors : null;
-    if (f && rating && Number(f[rating]) > 0) return { cena: Number(f[rating]), zrodlo: "dno pasma " + rating };
+    /* USUNIĘTE 28.09: tu był fallback na dno pasma. Dno pasma to cena NAJTAŃSZEJ
+       karty w paśmie, a nie cena tej karty — Kim Min Jae 83 chodzi po 800, gdy dno
+       pasma 83 stoi na 650. Podstawienie 650 pokazywało stratę na pozycji zamkniętej
+       na plusie. Lepiej przyznać, że nie znamy ceny, niż podać cudzą. */
     return null;
   }
 
@@ -680,7 +681,8 @@
       n.append(document.createTextNode(p.nazwa));
       var kurs = kursKarty(p.nazwa, p.rating, p.platforma);
       var meta = document.createElement("small");
-      meta.textContent = kurs ? kurs.zrodlo : "brak notowania";
+      meta.textContent = kurs ? kurs.zrodlo : "brak notowania — nie widzimy ceny tej karty";
+      if (!kurs) meta.title = "Widzimy ~11 najtańszych kart w paśmie i karty z listy ruchów. Cena tej karty jest poza naszym zasięgiem, więc jej nie zgadujemy.";
       n.appendChild(meta);
 
       var wej = document.createElement("input");
@@ -1327,71 +1329,59 @@
       if (item.note){ var note=document.createElement("p"); note.textContent=plainText(item.note); note.style.color="var(--gold)"; card.appendChild(note); }
       target.appendChild(card);
     });
-    var entries=[];
-    all.forEach(function(item){
-      [{label:"Kupno",text:item.when,price:item.entry,canExpand:true},{label:"Sprzedaż",text:item.sell,price:item.sellPrice,canExpand:false}].forEach(function(action){
-        planDates(action.text).forEach(function(parsed){
-          if (parsed < new Date(new Date().setHours(0,0,0,0))) return;
-          var cards=action.canExpand && planIsActive(item) ? cardsForPlan(item).slice(0,3) : [];
-          entries.push({date:parsed,label:action.label,item:item,price:action.price,text:action.text,cards:cards});
-        });
-      });
-    });
-    entries.sort(function(a,b){return a.date-b.date;});
-    entries.forEach(function(entry){
-      var hasCards=entry.cards.length>0;
-      var row=document.createElement(hasCards ? "details" : "div"); row.className="calendar-row";
-      var date=document.createElement("span"); date.className="calendar-date"; date.textContent=entry.date.toLocaleDateString("pl-PL",{weekday:"short",day:"2-digit",month:"2-digit"});
-      var action=document.createElement("span"); action.className="calendar-action";
-      action.textContent=entry.label+": "; var strong=document.createElement("strong"); strong.textContent=entry.item.name; action.appendChild(strong); action.append(" · "+cleanCalendarText(entry.item.why || entry.item.note || ""));
-      var price=document.createElement("span"); price.className="calendar-price"; price.textContent=entry.price ? coins(entry.price)+" monet" : "";
-      if (hasCards){
-        var trigger=document.createElement("summary"); trigger.className="calendar-trigger";
-        var arrow=document.createElement("span"); arrow.className="calendar-arrow"; arrow.setAttribute("aria-hidden","true"); arrow.textContent="⌄";
-        trigger.append(date,action,price,arrow); row.appendChild(trigger);
-        var picks=document.createElement("div"); picks.className="calendar-picks";
-        entry.cards.forEach(function(card){
-          var pick=document.createElement("div"); pick.className="calendar-pick";
-          var name=document.createElement("strong"); name.textContent=card.name;
-          var buy=document.createElement("span"); buy.className="calendar-buy";
-          buy.textContent=card.current ? "Kup maks. "+coins(card.buy)+" monet · okno: "+freshenWhen(entry.item.when) : (card.buyVerified ? "Poluj maks. "+coins(card.buy)+" monet · okno: " : "Odczyt ceny: "+coins(card.market)+" monet · limit kupna nieustalony · okno: ")+freshenWhen(entry.item.when);
-          var sell=document.createElement("span"); sell.className="calendar-sell";
-          var sellDates=planDates(entry.item.sell);
-          if (Number(entry.item.sellPrice)>0 && sellDates.length){
-            var dateText=sellDates.map(function(d){return d.toLocaleDateString("pl-PL",{weekday:"short",day:"2-digit",month:"2-digit"});}).join("–");
-            sell.textContent="Sprzedaj około "+dateText+" za "+coins(entry.item.sellPrice)+" monet";
-          } else {
-            sell.textContent="Sprzedaż: "+(entry.item.sell || "termin nieustalony")+(entry.item.exit ? " · warunek: "+cleanCalendarText(entry.item.exit) : "");
-          }
-          pick.append(name,buy,sell);
-          if (!card.current){ var note=document.createElement("span"); note.className="calendar-note"; note.textContent=(Number(entry.item.entry)>bank*0.10 ? "Ta karta przekracza limit jednej karty przy obecnym budżecie. " : "")+"Cena pochodzi z zapisanej analizy, nie ze świeżego BIN-u."; pick.appendChild(note); }
-          picks.appendChild(pick);
-        });
-        row.appendChild(picks);
-      } else row.append(date,action,price);
-      calendar.appendChild(row);
-    });
-    if (!entries.length) setEmpty(calendar,"Plan nie zawiera już przyszłych dat. Warunki sprzedaży bez daty znajdziesz przy pozycjach.","plan-empty");
+    /* Kalendarz NIE pochodzi już z ręcznych pozycji. Liczy go scraper przy każdym
+       przebiegu z terminów SBC, stałego rytmu tygodnia EA i naszego rozkładu
+       godzinowego — okno startuje od dnia odczytu, więc przesuwa się samo.
+       Wcześniej stały tu daty wpisane 26–27.09 i po trzech dniach kłóciły się
+       z naszą własną tabelą SBC. */
+    pokazKalendarz(calendar);
   }
 
-  function cardsForPlan(item){
-    var ratingMatch=String(item.name || "").match(/\b(\d{2})\b/), rating=ratingMatch && ratingMatch[1];
-    var saved=data && data.tier && data.tier.cards && data.tier.cards[platform] && rating ? data.tier.cards[platform][rating] : null;
-    if (Array.isArray(saved) && saved.length) return saved.slice(0,5).map(function(c){return {name:c.name,market:Number(c.price),buy:Number(item.entry),current:true};});
-    var live=data && data.snipe && data.snipe[platform] && data.snipe[platform].rows;
-    if (Array.isArray(live) && rating && (rating==="86" || rating==="87")){
-      var candidates=live.filter(function(row){return new RegExp("\\b"+rating+"\\b").test(row[0]);});
-      if (candidates.length) return candidates.slice(0,5).map(function(row){return {name:row[0],market:Number(row[1]),buy:Number(item.entry),current:true};});
+  function pokazKalendarz(calendar){
+    var cap = document.getElementById("kal-caption");
+    if (cap){
+      var sAt = data && data.sbc && data.sbc.at;
+      cap.textContent = "Liczone przy każdym odczycie"
+        + (sAt ? " · terminy SBC z " + czasHM(sAt) : "")
+        + " · okno rusza się samo";
     }
-    var names=[];
-    String(item.price || "").split(",").forEach(function(part){
-      var tokens=part.trim().split(/\s+/), idx=tokens.findIndex(function(token){return /^\d{2}$/.test(token);});
-      if (idx<1 || !tokens[idx+1] || !/^[A-Z]{2,3}$/.test(tokens[idx+1])) return;
-      var market=Number(tokens.slice(idx+2).join(""));
-      if (Number.isFinite(market) && market>0) names.push({name:tokens.slice(0,idx+2).join(" "),market:market,buy:market,buyVerified:market<=Number(item.entry),current:false});
+    var dni = (data && Array.isArray(data.kalendarz)) ? data.kalendarz : null;
+    if (!dni || !dni.length){
+      setEmpty(calendar, loadError ? "Nie udało się pobrać danych." : "Kalendarz policzy się przy najbliższym odczycie.", "plan-empty");
+      return;
+    }
+    var IKONA = { sprzedaj: "Sprzedaj", podaz: "Podaż", pomiar: "Pomiar" };
+    dni.forEach(function(d){
+      d.wpisy.forEach(function(w){
+        var row = document.createElement("div"); row.className = "calendar-row";
+        var date = document.createElement("span"); date.className = "calendar-date";
+        date.textContent = etykietaDnia(d.ts);
+        var action = document.createElement("span"); action.className = "calendar-action";
+        var strong = document.createElement("strong"); strong.textContent = w.tytul;
+        action.append(document.createTextNode((IKONA[w.typ] || "Uwaga") + ": "), strong);
+        var opis = document.createElement("small");
+        opis.style.cssText = "display:block;color:var(--soft);margin-top:3px";
+        opis.textContent = w.tresc + (w.zrodlo ? " — źródło: " + w.zrodlo : "");
+        action.appendChild(opis);
+        var price = document.createElement("span"); price.className = "calendar-price";
+        price.textContent = w.kwota ? coins(w.kwota) + " monet" : "";
+        row.append(date, action, price);
+        calendar.appendChild(row);
+      });
     });
-    return names.slice(0,5);
   }
+
+  /* "dziś" i "jutro" zamiast daty, bo tak się o tym myśli. */
+  function etykietaDnia(ts){
+    var d = new Date(ts * 1000);
+    var dzis = new Date(); var kluczD = function(x){ return x.toLocaleDateString("sv-SE", { timeZone: "Europe/Warsaw" }); };
+    var jutro = new Date(dzis.getTime() + 86400000);
+    if (kluczD(d) === kluczD(dzis)) return "dziś";
+    if (kluczD(d) === kluczD(jutro)) return "jutro";
+    return d.toLocaleDateString("pl-PL", { weekday: "short", day: "2-digit", month: "2-digit" });
+  }
+
+
 
   function eventForPlan(item){
     var name=String(item.name || "");
@@ -1404,20 +1394,6 @@
     if (name.indexOf("Destined for Glory")>=0) return "Terminarz meczów Destined for Glory";
     if (name.indexOf("Ikony")>=0) return "Rynek ikon";
     return name;
-  }
-  function cleanCalendarText(value){return brief(value).replace(/[+−-]?\d+(?:[,.]\d+)?\s*%/g,"").replace(/\s{2,}/g," ").replace(/\s+([,.;])/g,"$1").trim();}
-
-  /* Nagłówek patrzył wyłącznie na żywe wiersze snajperskie, a te są tylko z pasm
-     86–87. Przy małym banku mówił "nie ma nic dla ciebie", podczas gdy dwa
-     centymetry niżej stały Fodder 83 i 84 mieszczące się w limicie. Ta funkcja
-     daje nagłówkowi ten sam zbiór, który widzi użytkownik na liście planu. */
-  function planOptions(bank){
-    if (!data || !data.pos || !bank) return [];
-    var all = (data.pos.short || []).concat(data.pos.long || []);
-    return all.filter(function(item){
-      var entry = Number(item.entry);
-      return Number.isFinite(entry) && entry > 0 && entry <= bank * 0.10 && planIsActive(item);
-    }).sort(function(a, b){ return Number(a.entry) - Number(b.entry); });
   }
 
   function planFor(row){
