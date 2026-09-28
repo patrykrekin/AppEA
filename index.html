@@ -208,8 +208,8 @@
 
   <section class="moves" id="obs-box">
     <div class="section-head"><h3>Karty pod obserwacją</h3><span id="obs-caption"></span></div>
-    <div id="obs-list"><div class="empty-moves">Wstrzymane — patrz pod tabelą.</div></div>
-    <p class="budget-note" style="margin-top:10px">Wstrzymane. Ceny pojedynczych kart fut.gg podaje przez zapytanie podpisane tokenem i z naszego serwera wraca na nie 403 — obchodzenia tej bramki nie robimy. Lista pasm, na której stoi reszta strony, jest renderowana po stronie serwera i działa normalnie.</p>
+    <div id="obs-list"><div class="empty-moves">Szereg rusza przy najbliższym odczycie.</div></div>
+    <p class="budget-note" style="margin-top:10px">Własny szereg cen, zapisywany co pięć minut z listy ruchów fut.gg. Bierzemy karty, które spadły w dobę, i trzymamy je przez 12 godzin — także wtedy, gdy przestaną spadać, bo wyjście ze spadków to właśnie jest odbicie. <strong>Pół godziny</strong> liczymy tylko powyżej kroku zaokrąglenia fut.gg: przy cenie podanej jako „680K” krok to 1000 monet, a mniejszego ruchu nie da się odróżnić od samego zapisu — wtedy piszemy „bez ruchu” zamiast zmyślać procent.</p>
   </section>
 
   <section class="moves" id="sbc-box">
@@ -345,52 +345,40 @@
     change.className = "change " + (move > 0.15 ? "up" : move < -0.15 ? "down" : "flat");
   }
 
-  /* Pozycja z taśmy sprzedaży: cena wejścia liczona od tego, PO ILE KARTA
-     FAKTYCZNIE SCHODZI, a nie od pojedynczego taniego wystawienia.
-     Różnica jest zasadnicza. Tanie wystawienie to cudzy błąd — żyje sekundy
-     i wygrywa je bot. Mediana 50 ostatnich transakcji to cena, po której rynek
-     się rozlicza; ona nie znika, bo ktoś kliknął szybciej.
-     Dlatego nagłówek podaje LIMIT ("nie płać więcej niż"), nie okazję do wyrwania.
+  /* Nagłówek z naszego szeregu cen: karta, która spadła w dobę, a w ostatniej
+     półgodzinie zawraca w górę. To jest OBSERWACJA, nie prognoza — mówimy, co się
+     dzieje, i nie obiecujemy, że będzie się działo dalej. Skuteczność policzymy,
+     jak nazbiera się typów; do tego czasu nagłówek ma tak brzmieć.
 
-     Watchlista jest konsolowa — na PC tej sekcji nie pokazujemy, zamiast
-     podpisywać konsolowe liczby jako pecetowe. */
-  var SPREAD_MIN_PLYNNOSC = 8;     // mniej niż sprzedaż co ~7 min i nie ma po co wchodzić
-  var SPREAD_MIN_MARZA = 0.04;     // poniżej 4% netto to nie jest pozycja, tylko szum
-  var SPREAD_MAX_WIEK = 25 * 60;   // odczyt starszy niż 25 minut przestaje być ceną "teraz"
+     Czemu to nie jest snajpienie: nie ścigamy się o cudze tanie wystawienie, tylko
+     pokazujemy kartę, której cena już zawróciła. Wejście jest w cenie rynkowej. */
+  var ODB_MIN_SPADEK = -4;     // płytszy ruch dobowy to szum, nie przecena
+  var ODB_MIN_POMIAROW = 4;    // 20 minut szeregu, zanim cokolwiek powiemy
+  var ODB_MAX_WIEK = 25 * 60;  // starszy odczyt przestaje być ceną "teraz"
 
-  function spreadPick(bank){
-    if (platform !== "ps") return null;
+  function odbiciePick(bank){
     var o = data && data.obserwacja;
     var karty = (o && o.karty && typeof o.karty === "object") ? o.karty : null;
     if (!karty || !o.at) return null;
 
     var best = null;
     Object.keys(karty).forEach(function(k){
-      var w = karty[k], p = w && w.plynnosc;
-      if (!p || !(p.mediana > 0) || !(p.naGodzine >= SPREAD_MIN_PLYNNOSC)) return;
-      if (!(w.ostatnio > 0) || (o.at - w.ostatnio) > SPREAD_MAX_WIEK) return;
-
-      var cel = wystawPod(p.mediana);
-      if (!(cel > 0)) return;
-      /* Najwyższa cena, przy której po 5% podatku zostaje jeszcze marża. */
-      var limit = wDol(Math.floor(cel * 0.95 / (1 + SPREAD_MIN_MARZA)));
-      if (!(limit > 0) || limit > bank * 0.10) return;
-      var netto = Math.floor(cel * 0.95 - limit);
-      if (netto <= 0) return;
-
+      var w = karty[k];
+      if (!(w.cena > 0) || !(w.najnizsza > 0)) return;
+      if (typeof w.zmiana24 !== "number" || w.zmiana24 > ODB_MIN_SPADEK) return;
+      if (!w.hist || w.hist.length < ODB_MIN_POMIAROW) return;
+      if (!(w.ostatnio > 0) || (o.at - w.ostatnio) > ODB_MAX_WIEK) return;
+      if (w.cena > bank * 0.10) return;
+      var t = obsTrend(w, o.at);
+      if (t.trend === null || t.trend <= 0) return;
       var kand = {
-        nazwa: w.nazwa, rating: w.rating, limit: limit, cel: cel, netto: netto,
-        cena: w.cena > 0 ? w.cena : null,
-        mediana: p.mediana, naGodzine: p.naGodzine, wGodzine: p.wGodzine || 0,
-        obciete: !!p.obciete, podaz: (w.podaz && w.podaz.sztuk) || 0,
-        zwrot: netto / limit
+        klucz: w.klucz, cena: w.cena, dno: w.najnizsza, zmiana24: w.zmiana24,
+        trend: t.trend, sekund: Math.max(60, o.at - w.hist[0][0]),
+        odDna: +(((w.cena / w.najnizsza) - 1) * 100).toFixed(1),
+        /* Minimalna cena wyjścia, żeby po 5% podatku nie stracić na tym wejściu. */
+        naZero: Math.ceil(w.cena / 0.95)
       };
-      kand.wzasiegu = kand.cena !== null && kand.cena <= limit;
-      /* Karta, którą da się wziąć TERAZ, bije kartę z lepszą marżą, ale poza
-         zasięgiem — nagłówek ma być czynnością, nie ciekawostką. */
-      if (!best
-          || (kand.wzasiegu && !best.wzasiegu)
-          || (kand.wzasiegu === best.wzasiegu && kand.zwrot > best.zwrot)) best = kand;
+      if (!best || kand.trend > best.trend) best = kand;
     });
     return best;
   }
@@ -418,23 +406,17 @@
     /* Najpierw pozycja, której nie trzeba snajpić. Dopiero jak jej nie ma —
        stary pick pod flip, ale podpisany uczciwie: on wymaga siedzenia przy
        wyszukiwarce i przegrywania z botami. */
-    var sp = spreadPick(bank);
+    var sp = odbiciePick(bank);
     if (sp){
-      label.textContent = labels[platform] + " · " + coins(bank) + " monet · z taśmy sprzedaży";
-      title.textContent = sp.wzasiegu
-        ? sp.nazwa + " " + sp.rating + ": bierz do " + coins(sp.limit)
-        : sp.nazwa + " " + sp.rating + ": nie płać więcej niż " + coins(sp.limit);
-      text.textContent = "Przez ostatnią godzinę ta karta schodziła po " + coins(sp.mediana)
-        + " — to " + sp.wGodzine + " " + odm(sp.wGodzine, "zamknięta transakcja", "zamknięte transakcje", "zamkniętych transakcji")
-        + ", nie cena z pojedynczego wystawienia. Wystawiasz po " + coins(sp.cel)
-        + ", zostaje około " + (sp.netto > 0 ? "+" : "") + coins(sp.netto) + " monet netto na sztuce po podatku. "
-        + (sp.wzasiegu
-            ? "Najtańsza sztuka stoi teraz po " + coins(sp.cena) + ", czyli w limicie. "
-            : "Najtańsza sztuka stoi teraz po " + coins(sp.cena) + " — powyżej limitu, więc dziś czekasz. ")
-        + "Tempo " + sp.naGodzine + (sp.obciete ? "+" : "") + " szt./h"
-        + (sp.podaz ? ", w tej chwili " + sp.podaz + " " + odm(sp.podaz, "wystawienie", "wystawienia", "wystawień") : "")
-        + " — to nie jest wyrywanie cudzej pomyłki, tylko pilnowanie ceny wejścia."
-        + copiesNote(bank, sp.limit);
+      label.textContent = labels[platform] + " · " + coins(bank) + " monet · z naszego szeregu cen";
+      title.textContent = sp.klucz + ": spadła o " + Math.abs(sp.zmiana24).toFixed(1).replace(".", ",") + "% w dobę, zawraca";
+      text.textContent = "Dno w naszym szeregu to " + coins(sp.dno) + ", teraz stoi po " + coins(sp.cena)
+        + " — w ostatniej półgodzinie " + procTekst(sp.trend) + ", licząc tylko ruch większy niż krok zaokrąglenia. "
+        + "Mierzymy ją od " + obsGodziny(sp.sekund) + ". Żeby po 5% podatku nie stracić, musisz wyjść powyżej "
+        + coins(sp.naZero) + ". "
+        + "To jest obserwacja, nie prognoza: cena już zawróciła, ale nie obiecujemy, że będzie zawracać dalej — "
+        + "skuteczność policzymy, jak nazbiera się typów."
+        + copiesNote(bank, sp.cena);
       return;
     }
 
@@ -768,23 +750,23 @@
     var klucze = karty ? Object.keys(karty) : [];
     if (!klucze.length){
       cap.textContent = "";
-      setEmpty(box, loadError ? "Nie udało się pobrać danych." : "Wstrzymane — patrz pod tabelą.", "empty-moves");
+      setEmpty(box, loadError ? "Nie udało się pobrać danych." : "Szereg rusza przy najbliższym odczycie.", "empty-moves");
       return;
     }
+    var wiersze = klucze.map(function(k){ return obsWiersz(karty[k], o.at); });
+    var wraca = wiersze.filter(function(x){ return x.trend !== null && x.trend > 0; }).length;
     cap.textContent = (o.at ? "Odczyt " + czasHM(o.at) + " · " : "")
-      + klucze.length + " " + odm(klucze.length, "karta", "karty", "kart");
+      + klucze.length + " " + odm(klucze.length, "karta", "karty", "kart")
+      + (wraca ? " · " + wraca + " zawraca" : "");
 
-    var wiersze = klucze.map(function(k){
-      var w = karty[k];
-      var zmiana = (w.wejscie > 0 && w.cena > 0) ? ((w.cena / w.wejscie) - 1) * 100 : null;
-      return { klucz: k, w: w, zmiana: zmiana };
-    }).sort(function(a, b){ return (b.zmiana === null ? -999 : b.zmiana) - (a.zmiana === null ? -999 : a.zmiana); });
+    /* Najpierw to, co zawraca — reszta to karty, które nadal lecą w dół. */
+    wiersze.sort(function(a, b){ return (b.trend === null ? -999 : b.trend) - (a.trend === null ? -999 : a.trend); });
 
     box.replaceChildren();
     var head = document.createElement("div"); head.className = "obs-row head";
     var hNaz = document.createElement("span"); hNaz.className = "obs-nazwa"; hNaz.textContent = "Karta";
     var hLicz = document.createElement("span"); hLicz.className = "obs-liczby";
-    ["Cena teraz", "Od wejścia", "Schodzi"].forEach(function(t){
+    ["Cena teraz", "Doba", "Pół godziny"].forEach(function(t){
       var x = document.createElement("span"); x.className = "obs-val"; x.textContent = t; hLicz.appendChild(x);
     });
     head.append(hNaz, hLicz);
@@ -795,50 +777,68 @@
       var row = document.createElement("div"); row.className = "obs-row";
 
       var n = document.createElement("span"); n.className = "obs-nazwa";
-      n.append(document.createTextNode(w.nazwa + (w.rating ? " " + w.rating : "")));
+      n.append(document.createTextNode(w.klucz || "—"));
       var meta = document.createElement("small");
       var odIle = (o.at && w.odKiedy) ? obsGodziny(o.at - w.odKiedy) : null;
-      meta.textContent = (odIle ? "obserwujemy " + odIle : "")
+      meta.textContent = (odIle ? "śledzimy " + odIle : "")
         + ((w.hist && w.hist.length) ? " · " + w.hist.length + " " + odm(w.hist.length, "pomiar", "pomiary", "pomiarów") : "");
       n.appendChild(meta);
 
       var c = document.createElement("span"); c.className = "obs-val";
       c.append(document.createTextNode(w.cena > 0 ? coins(w.cena) : "—"));
-      /* Mediana faktycznych sprzedaży z ostatniej godziny. Potrafi stać wyraźnie
-         nad najniższym BIN-em i wtedy to jest cała informacja o marży. */
-      if (w.plynnosc && w.plynnosc.mediana > 0){
-        var med = document.createElement("small");
-        med.textContent = "sprzedaż " + coins(w.plynnosc.mediana);
-        c.appendChild(med);
+      if (r.odDna !== null && r.odDna > 0){
+        var dn = document.createElement("small");
+        dn.textContent = "dno " + coins(w.najnizsza);
+        c.appendChild(dn);
       }
 
-      var z = document.createElement("span"); z.className = "obs-val";
-      if (r.zmiana === null){ z.textContent = "—"; }
-      else {
-        z.classList.add(r.zmiana >= 0 ? "gora" : "dol");
-        z.append(document.createTextNode((r.zmiana > 0 ? "+" : r.zmiana < 0 ? "−" : "")
-          + Math.abs(r.zmiana).toFixed(1).replace(".", ",") + "%"));
-        var od = document.createElement("small");
-        od.textContent = "od " + coins(w.wejscie);
-        z.appendChild(od);
-      }
+      var d = document.createElement("span"); d.className = "obs-val";
+      if (typeof w.zmiana24 === "number"){
+        d.classList.add(w.zmiana24 >= 0 ? "gora" : "dol");
+        d.textContent = procTekst(w.zmiana24);
+      } else { d.textContent = "—"; }
 
-      var s = document.createElement("span"); s.className = "obs-val";
-      if (w.plynnosc && w.plynnosc.naGodzine > 0){
-        s.append(document.createTextNode(w.plynnosc.naGodzine + (w.plynnosc.obciete ? "+" : "") + "/h"));
-        if (w.plynnosc.obciete) s.title = "Taśma 50 sprzedaży skończyła się po "
-          + Math.round(w.plynnosc.oknoSek / 60) + " min — prawdziwa liczba jest wyższa.";
-      } else { s.append(document.createTextNode("—")); }
-      if (w.podaz && w.podaz.sztuk > 0){
-        var pd = document.createElement("small");
-        pd.textContent = w.podaz.sztuk + " " + odm(w.podaz.sztuk, "wystawienie", "wystawienia", "wystawień");
-        s.appendChild(pd);
+      var t = document.createElement("span"); t.className = "obs-val";
+      if (r.trend === null){
+        t.append(document.createTextNode("—"));
+        t.title = r.powod || "";
+      } else {
+        if (r.trend !== 0) t.classList.add(r.trend > 0 ? "gora" : "dol");
+        t.append(document.createTextNode(r.trend === 0 ? "bez ruchu" : procTekst(r.trend)));
+        if (r.trend === 0) t.title = "Ruch mniejszy niż krok zaokrąglenia fut.gg ("
+          + coins(w.krok) + ") — nie da się odróżnić od zapisu ceny.";
       }
-
       var liczby = document.createElement("span"); liczby.className = "obs-liczby";
-      liczby.append(c, z, s);
+      liczby.append(c, d, t);
       row.append(n, liczby); box.appendChild(row);
     });
+  }
+
+  function procTekst(x){
+    return (x > 0 ? "+" : x < 0 ? "−" : "") + Math.abs(x).toFixed(1).replace(".", ",") + "%";
+  }
+
+  /* Ruch ceny w ostatniej półgodzinie — liczony TYLKO powyżej kroku zaokrąglenia,
+     bo fut.gg podaje tu ceny skrócone ("680K"). Poniżej kroku nie wiemy, czy cena
+     drgnęła, czy to sam zapis, więc zwracamy zero zamiast zmyślać ruch. */
+  var OBS_OKNO_TRENDU = 1800;
+  function obsTrend(w, at){
+    var h = (w && Array.isArray(w.hist)) ? w.hist : [];
+    if (h.length < 2) return { trend: null, powod: "za mało pomiarów" };
+    var baza = null;
+    for (var i = 0; i < h.length; i++){ if ((at - h[i][0]) <= OBS_OKNO_TRENDU){ baza = h[i]; break; } }
+    if (!baza) baza = h[0];
+    var od = baza[1], doC = h[h.length - 1][1];
+    if (!(od > 0)) return { trend: null, powod: "brak ceny odniesienia" };
+    if (Math.abs(doC - od) < (w.krok || 1)) return { trend: 0, powod: "" };
+    return { trend: +(((doC / od) - 1) * 100).toFixed(1), powod: "" };
+  }
+  function obsWiersz(w, at){
+    var t = obsTrend(w, at);
+    return {
+      w: w, trend: t.trend, powod: t.powod,
+      odDna: (w.najnizsza > 0 && w.cena > 0) ? +(((w.cena / w.najnizsza) - 1) * 100).toFixed(1) : null
+    };
   }
 
   function showSbc(){
