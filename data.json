@@ -1,5 +1,5 @@
 {
-  "at": 1790614549,
+  "at": 1790614890,
   "index": {
     "ps": {
       "value": "124,01",
@@ -24,76 +24,76 @@
   },
   "movers": [
     [
-      "Aubameyang 86 ST",
-      "125K",
-      "-10.79%",
-      "-13,487"
-    ],
-    [
-      "Stoica 80 ST",
-      "10.8K",
-      "-10.41%",
-      "-1,171"
-    ],
-    [
-      "Undav 87 CAM",
-      "72.5K",
-      "-9.37%",
-      "-6,746"
-    ],
-    [
-      "Kanu 86 ST",
-      "40K",
-      "-7.78%",
-      "-3,073"
+      "Isak 88 ST",
+      "660K",
+      "-12.35%",
+      "-82,498"
     ],
     [
       "Abdulhamid 85 RB",
-      "33.5K",
-      "-6.89%",
-      "-2,274"
+      "29.3K",
+      "-11.45%",
+      "-3,406"
     ],
     [
-      "Bompastor 86 LB",
-      "129K",
-      "-6.47%",
-      "-8,346"
+      "David 82 ST",
+      "15K",
+      "-9.67%",
+      "-1,402"
     ],
     [
-      "Pizarro 86 ST",
-      "40K",
-      "-5.74%",
-      "-2,339"
+      "Rogers 87 CM",
+      "440K",
+      "-7.83%",
+      "-33,669"
+    ],
+    [
+      "Engelhardt 80 CDM",
+      "12.8K",
+      "-7.4%",
+      "-944"
+    ],
+    [
+      "Zamorano 88 ST",
+      "89.5K",
+      "-7.32%",
+      "-6,515"
+    ],
+    [
+      "Orban 80 ST",
+      "11K",
+      "-6.66%",
+      "-733"
+    ],
+    [
+      "Hamm 93 ST",
+      "15M",
+      "+116.7%",
+      "17,505,000"
+    ],
+    [
+      "Lizarazu 88 LB",
+      "460K",
+      "+46.96%",
+      "201,928"
     ],
     [
       "Henry 91 ST",
-      "5.1M",
-      "+43.94%",
-      "2,240,940"
+      "4.7M",
+      "+29.47%",
+      "1,385,090"
     ],
     [
-      "Touré 88 CM",
-      "2.8M",
-      "+43.51%",
-      "1,218,280"
+      "Al Jaber 86 ST",
+      "82K",
+      "+20.58%",
+      "16,258"
     ],
     [
       "Matuidi 86 CDM",
-      "2M",
-      "+39.49%",
-      "789,405"
-    ],
-    [
-      "Ferdinand 89 CB",
-      "2.3M",
-      "+29.29%",
-      "665,762"
-    ],
-    [
-      "Fernando Hierro 88 CDM",
-      "287K",
-      "+26.43%",
-      "75,854"
+      "1.8M",
+      "+14.33%",
+      "259,373"
     ]
   ],
   "open": {
@@ -3310,7 +3310,7 @@
   },
   "atFast": 1790614549,
   "atTop": 1790524887,
-  "atSlow": 1790571698,
+  "atSlow": 1790614890,
   "okazje": {
     "prog": 0.1,
     "wersja": 2,
@@ -9183,194 +9183,223 @@
     }
   },
   "sbc": {
-    "at": 1790571698,
+    "at": 1790614890,
     "lista": [
       {
-        "nazwa": "Renato Veiga",
-        "kategoria": "players",
-        "href": "/sbc/players/27-26-renato-veiga/",
-        "koszt": 25000,
+        "nazwa": "83+ Upgrade",
+        "kategoria": "upgrades",
+        "href": "/sbc/upgrades/27-12-83-upgrade/",
+        "koszt": 2150,
+        "nagroda": null,
         "wyzwan": 1,
         "powtarzalna": null,
-        "wygasaZa": "REPEATABLE",
-        "wygasaAt": null,
-        "trwala": false
+        "wygasaZa": "in 24 hours",
+        "wygasaAt": 1790701304,
+        "trwala": false,
+        "kosztPoprz": 2500,
+        "kosztZmiana": -14
       },
       {
         "nazwa": "Destined for Glory Challenge 1",
         "kategoria": "challenges",
         "href": "/sbc/challenges/27-21-destined-for-glory-challenge-1/",
-        "koszt": null,
+        "koszt": 3250,
+        "nagroda": null,
         "wyzwan": 1,
         "powtarzalna": null,
-        "wygasaZa": "REPEATABLE",
-        "wygasaAt": null,
-        "trwala": false
-      },
-      {
-        "nazwa": "Antonio Nusa",
-        "kategoria": "players",
-        "href": "/sbc/players/27-25-antonio-nusa/",
-        "koszt": 75000,
-        "wyzwan": 1,
-        "powtarzalna": null,
-        "wygasaZa": "REPEATABLE",
-        "wygasaAt": null,
-        "trwala": false
-      },
-      {
-        "nazwa": "TOTW Upgrade",
-        "kategoria": "upgrades",
-        "href": "/sbc/upgrades/27-29-totw-upgrade/",
-        "koszt": null,
-        "wyzwan": 1,
-        "powtarzalna": null,
-        "wygasaZa": "REPEATABLE",
-        "wygasaAt": null,
+        "wygasaZa": "in 2 days",
+        "wygasaAt": 1790787704,
         "trwala": false
       },
       {
         "nazwa": "Marquee Matchups",
         "kategoria": "challenges",
         "href": "/sbc/challenges/27-19-marquee-matchups/",
-        "koszt": null,
+        "koszt": 18700,
+        "nagroda": null,
         "wyzwan": 4,
         "powtarzalna": null,
-        "wygasaZa": "REPEATABLE",
-        "wygasaAt": null,
+        "wygasaZa": "in 3 days",
+        "wygasaAt": 1790874104,
+        "trwala": false
+      },
+      {
+        "nazwa": "Antonio Nusa",
+        "kategoria": "players",
+        "href": "/sbc/players/27-25-antonio-nusa/",
+        "koszt": 68500,
+        "nagroda": 85,
+        "wyzwan": 1,
+        "powtarzalna": null,
+        "wygasaZa": "in 4 days",
+        "wygasaAt": 1790960504,
+        "trwala": false,
+        "kosztPoprz": 75000,
+        "kosztZmiana": -8.7
+      },
+      {
+        "nazwa": "TOTW Upgrade",
+        "kategoria": "upgrades",
+        "href": "/sbc/upgrades/27-29-totw-upgrade/",
+        "koszt": 11300,
+        "nagroda": null,
+        "wyzwan": 1,
+        "powtarzalna": null,
+        "wygasaZa": "in 4 days",
+        "wygasaAt": 1790960504,
+        "trwala": false
+      },
+      {
+        "nazwa": "Renato Veiga",
+        "kategoria": "players",
+        "href": "/sbc/players/27-26-renato-veiga/",
+        "koszt": 21250,
+        "nagroda": 84,
+        "wyzwan": 1,
+        "powtarzalna": null,
+        "wygasaZa": "in 6 days",
+        "wygasaAt": 1791133304,
+        "trwala": false,
+        "kosztPoprz": 25000,
+        "kosztZmiana": -15
+      },
+      {
+        "nazwa": "2x 79+ Upgrade",
+        "kategoria": "upgrades",
+        "href": "/sbc/upgrades/27-23-2x-79-upgrade/",
+        "koszt": 6500,
+        "nagroda": null,
+        "wyzwan": 1,
+        "powtarzalna": "bez limitu",
+        "wygasaZa": "in 7 days",
+        "wygasaAt": 1791219704,
         "trwala": false
       },
       {
         "nazwa": "Intro to Player SBCs",
         "kategoria": "foundations",
         "href": "/sbc/foundations/27-20-intro-to-player-sbcs/",
-        "koszt": 4000,
+        "koszt": 3250,
+        "nagroda": 82,
         "wyzwan": 1,
         "powtarzalna": null,
-        "wygasaZa": "REPEATABLE",
+        "wygasaZa": "in 9 years",
         "wygasaAt": null,
-        "trwala": false
-      },
-      {
-        "nazwa": "83+ Upgrade",
-        "kategoria": "upgrades",
-        "href": "/sbc/upgrades/27-12-83-upgrade/",
-        "koszt": 2500,
-        "wyzwan": 1,
-        "powtarzalna": null,
-        "wygasaZa": "REPEATABLE",
-        "wygasaAt": null,
-        "trwala": false
-      },
-      {
-        "nazwa": "2x 79+ Upgrade",
-        "kategoria": "upgrades",
-        "href": "/sbc/upgrades/27-11-2x-79-upgrade/",
-        "koszt": null,
-        "wyzwan": 1,
-        "powtarzalna": "3",
-        "wygasaZa": "REPEATABLE",
-        "wygasaAt": null,
-        "trwala": false
+        "trwala": true,
+        "kosztPoprz": 4000,
+        "kosztZmiana": -18.8
       },
       {
         "nazwa": "Gold Upgrade",
         "kategoria": "upgrades",
         "href": "/sbc/upgrades/27-6-gold-upgrade/",
-        "koszt": null,
+        "koszt": 7200,
+        "nagroda": null,
         "wyzwan": 1,
         "powtarzalna": "bez limitu",
-        "wygasaZa": "REPEATABLE",
+        "wygasaZa": "in 9 years",
         "wygasaAt": null,
-        "trwala": false
+        "trwala": true
       },
       {
         "nazwa": "Silver Upgrade",
         "kategoria": "upgrades",
         "href": "/sbc/upgrades/27-5-silver-upgrade/",
-        "koszt": null,
+        "koszt": 2200,
+        "nagroda": null,
         "wyzwan": 1,
         "powtarzalna": "bez limitu",
-        "wygasaZa": "REPEATABLE",
+        "wygasaZa": "in 9 years",
         "wygasaAt": null,
-        "trwala": false
+        "trwala": true
       },
       {
         "nazwa": "Bronze Upgrade",
         "kategoria": "upgrades",
         "href": "/sbc/upgrades/27-4-bronze-upgrade/",
-        "koszt": null,
+        "koszt": 2200,
+        "nagroda": null,
         "wyzwan": 1,
         "powtarzalna": "bez limitu",
-        "wygasaZa": "REPEATABLE",
+        "wygasaZa": "in 9 years",
         "wygasaAt": null,
-        "trwala": false
+        "trwala": true
       },
       {
         "nazwa": "League & Nation Advanced",
         "kategoria": "challenges",
         "href": "/sbc/challenges/27-10-league-nation-advanced/",
-        "koszt": null,
+        "koszt": 23050,
+        "nagroda": null,
         "wyzwan": 3,
         "powtarzalna": null,
-        "wygasaZa": "REPEATABLE",
+        "wygasaZa": "in 9 years",
         "wygasaAt": null,
-        "trwala": false
+        "trwala": true
       },
       {
         "nazwa": "Gold Re-Roll",
         "kategoria": "foundations",
         "href": "/sbc/foundations/27-9-gold-re-roll/",
-        "koszt": 1250,
+        "koszt": 2150,
+        "nagroda": null,
         "wyzwan": 1,
         "powtarzalna": "bez limitu",
-        "wygasaZa": "REPEATABLE",
+        "wygasaZa": "in 9 years",
         "wygasaAt": null,
-        "trwala": false
+        "trwala": true,
+        "kosztPoprz": 1250,
+        "kosztZmiana": 72
       },
       {
         "nazwa": "Bronze and Silver Re-roll",
         "kategoria": "foundations",
         "href": "/sbc/foundations/27-8-bronze-and-silver-re-roll/",
-        "koszt": null,
+        "koszt": 2150,
+        "nagroda": null,
         "wyzwan": 1,
         "powtarzalna": "bez limitu",
-        "wygasaZa": "REPEATABLE",
+        "wygasaZa": "in 9 years",
         "wygasaAt": null,
-        "trwala": false
+        "trwala": true
       },
       {
         "nazwa": "Intro to Streamlined SBCs",
         "kategoria": "foundations",
         "href": "/sbc/foundations/27-7-getting-started/",
-        "koszt": 1000,
+        "koszt": 8250,
+        "nagroda": null,
         "wyzwan": 4,
         "powtarzalna": null,
-        "wygasaZa": "REPEATABLE",
+        "wygasaZa": "in 9 years",
         "wygasaAt": null,
-        "trwala": false
+        "trwala": true,
+        "kosztPoprz": 1000,
+        "kosztZmiana": 725
       },
       {
         "nazwa": "Intro to Upgrade SBCs",
         "kategoria": "foundations",
         "href": "/sbc/foundations/27-3-intro-to-upgrade-sbcs/",
-        "koszt": null,
+        "koszt": 14350,
+        "nagroda": null,
         "wyzwan": 3,
         "powtarzalna": null,
-        "wygasaZa": "REPEATABLE",
+        "wygasaZa": "in 9 years",
         "wygasaAt": null,
-        "trwala": false
+        "trwala": true
       },
       {
         "nazwa": "Intro to SBCs",
         "kategoria": "foundations",
         "href": "/sbc/foundations/27-1-intro-to-sbcs/",
-        "koszt": null,
+        "koszt": 5350,
+        "nagroda": null,
         "wyzwan": 4,
         "powtarzalna": null,
-        "wygasaZa": "REPEATABLE",
+        "wygasaZa": "in 9 years",
         "wygasaAt": null,
-        "trwala": false
+        "trwala": true
       }
     ]
   },
