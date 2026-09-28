@@ -30,6 +30,8 @@
 export const SBC_URL = "https://www.fut.gg/sbc/";
 
 const CZEKAJ_MS = 12000;
+const USTALENIE_MS = 700;    // odstęp między pomiarami liczby wypełnionych cen
+const USTALENIE_PROB = 8;    // maks. 5,6 s dopychania po pojawieniu się pierwszej ceny
 const ODZNAKI = new Set([
   "NEW", "EXPIRED", "EXPIRES", "CHALLENGES", "REPEATABLE",
   "REFRESHES", "REFRESHES EVERY", "SBC", "ALL"
@@ -119,6 +121,22 @@ export async function readSbc(page, url = SBC_URL, navTimeoutMs){
   /* Czekamy na PIERWSZĄ cenę w monetach, nie na same linki. Linki są w surowym
      HTML od razu, ceny dochodzą później — liczenie linków kończyło czekanie
      za wcześnie i braliśmy kafelki bez kosztów. */
+  /* 28.09 wieczorem: porównanie z żywą stroną pokazało Destined for Glory
+     Challenge 1 za 2 300 u nas i 5 400 na fut.gg — 3 minuty różnicy w odczycie.
+     Przyczyna: czekaliśmy na PIERWSZĄ cenę i od razu czytaliśmy wszystkie kafelki,
+     a one hydratują się pojedynczo. Kafelek doczytany później dawał wartość
+     z połowy drogi. Teraz czekamy, aż liczba wypełnionych cen PRZESTANIE rosnąć —
+     dwa takie same pomiary pod rząd znaczą, że strona skończyła. */
+  const ileCen = () => page.evaluate(() => {
+    let n = 0;
+    for (const a of document.querySelectorAll('a[href^="/sbc/"]')){
+      for (const img of a.querySelectorAll('img[src*="coin"]')){
+        if (/\d/.test(img.parentElement?.innerText || "")){ n++; break; }
+      }
+    }
+    return n;
+  });
+
   let dorenderowane = true;
   try {
     await page.waitForFunction(() => {
@@ -127,6 +145,13 @@ export async function readSbc(page, url = SBC_URL, navTimeoutMs){
       if (!img) return false;
       return /\d/.test((img.parentElement.innerText || ""));
     }, { timeout: CZEKAJ_MS });
+
+    let poprz = -1, teraz = await ileCen(), prob = 0;
+    while (teraz !== poprz && prob < USTALENIE_PROB){
+      await page.waitForTimeout(USTALENIE_MS);
+      poprz = teraz; teraz = await ileCen(); prob++;
+    }
+    if (teraz !== poprz) dorenderowane = false;   // nadal rosło, gdy skończył się budżet
   } catch { dorenderowane = false; }
 
   const surowe = await page.evaluate(() => {
