@@ -48,10 +48,35 @@ export function sekundyTemu(tekst){
 export async function readCard(page, url, navTimeoutMs){
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: navTimeoutMs });
 
-  /* Platforma: czytamy konsolę. Jeżeli strona wstała na PC — przełączamy. */
+  /* Warunek gotowości trzyma się liczby BIN-u, nie obecności tabeli: tabela
+     bywa gotowa wcześniej, a to cena nam znikała. */
+  const gotowe = () => page.waitForFunction(() => {
+    const txt = e => (e && e.innerText ? e.innerText : "").trim();
+    const tabela = [...document.querySelectorAll("table")]
+      .some(t => [...t.querySelectorAll("th")].some(h => txt(h) === "Time Sold")
+              && t.querySelectorAll("tbody tr").length > 0);
+    if (!tabela) return false;
+    const l = [...document.querySelectorAll("*")].find(e => e.children.length === 0 && txt(e) === "Lowest BIN");
+    if (!l) return false;
+    let b = l;
+    for (let i = 0; i < 4 && b.parentElement; i++){
+      b = b.parentElement;
+      if (txt(b).split("\n").map(s => s.trim()).some(s => /^[\d][\d,]{2,}$/.test(s))) return true;
+    }
+    return false;
+  }, { timeout: CZEKAJ_MS });
+
+  let dorenderowane = true;
+  try { await gotowe(); } catch { dorenderowane = false; }
+
+  /* Platforma DOPIERO TERAZ. Wcześniej sprawdzaliśmy ją zaraz po
+     domcontentloaded, kiedy przycisków jeszcze nie ma w DOM — czyli nigdy nie
+     przełączaliśmy i przy pechu czytaliśmy ceny PC (cykl fast klika PC na
+     liście pasm) podpisane jako konsolowe. */
   let platforma = "ps";
+  let przelaczone = false;
   try {
-    const trzeba = await page.evaluate(() => {
+    przelaczone = await page.evaluate(() => {
       const b = [...document.querySelectorAll("button")]
         .filter(x => /^(Console|PC)$/.test((x.innerText || "").trim()));
       const konsola = b.find(x => x.innerText.trim() === "Console");
@@ -60,28 +85,10 @@ export async function readCard(page, url, navTimeoutMs){
       if (aktywna === "false"){ konsola.click(); return true; }
       return false;
     });
-    if (trzeba) await page.waitForTimeout(1200);
+    /* Po przełączeniu ceny lecą od nowa — czekamy na nie tak samo jak na starcie,
+       zamiast zgadywać stałym opóźnieniem. */
+    if (przelaczone){ try { await gotowe(); } catch { dorenderowane = false; } }
   } catch { platforma = null; }
-
-  let dorenderowane = true;
-  try {
-    await page.waitForFunction(() => {
-      const txt = e => (e && e.innerText ? e.innerText : "").trim();
-      const tabela = [...document.querySelectorAll("table")]
-        .some(t => [...t.querySelectorAll("th")].some(h => txt(h) === "Time Sold")
-                && t.querySelectorAll("tbody tr").length > 0);
-      if (!tabela) return false;
-      /* Kluczowe: czekamy na samą liczbę BIN-u. To ona nam zniknęła. */
-      const l = [...document.querySelectorAll("*")].find(e => e.children.length === 0 && txt(e) === "Lowest BIN");
-      if (!l) return false;
-      let b = l;
-      for (let i = 0; i < 4 && b.parentElement; i++){
-        b = b.parentElement;
-        if (txt(b).split("\n").map(s => s.trim()).some(s => /^[\d][\d,]{2,}$/.test(s))) return true;
-      }
-      return false;
-    }, { timeout: CZEKAJ_MS });
-  } catch { dorenderowane = false; }
 
   const czytaj = () => page.evaluate(() => {
     const txt = e => (e && e.innerText ? e.innerText : "").trim();
@@ -148,6 +155,6 @@ export async function readCard(page, url, navTimeoutMs){
   return {
     ...out, platforma, dorenderowane, dogrywka, binZrodlo,
     /* Diagnostyka do loga przebiegu — bez niej zgadywaliśmy, czemu nie ma ceny. */
-    diag: `bin=${out.bin ?? "brak"}(${binZrodlo || "brak"}) sprzedaże=${(out.sales || []).length} aukcje=${(out.podaz && out.podaz.sztuk) || 0}${dorenderowane ? "" : " NIEDORENDEROWANE"}${dogrywka ? " dogrywka" : ""}`
+    diag: `bin=${out.bin ?? "brak"}(${binZrodlo || "brak"}) sprzedaże=${(out.sales || []).length} aukcje=${(out.podaz && out.podaz.sztuk) || 0}${dorenderowane ? "" : " NIEDORENDEROWANE"}${dogrywka ? " dogrywka" : ""}${przelaczone ? " przełączono-na-konsolę" : ""}`
   };
 }
