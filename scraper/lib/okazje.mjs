@@ -125,8 +125,16 @@ export function dopiszOkazje(stan, at, ps, pc, limit = LOG_LIMIT){
   const kartyPs = dopiszKarty(stareKarty.ps, ps?.karty, poprz.ps, at);
   const kartyPc = dopiszKarty(stareKarty.pc, pc?.karty, poprz.pc, at);
 
+  /* Sam licznik nie wystarczy: "3 okazje" bez nazw jest nie do wykorzystania.
+     Zapisujemy karty z BIEŻĄCEGO odczytu, żeby strona mogła je wypisać z ceną,
+     poziomem i przeceną. Kilka pozycji na odczyt, więc plik tego nie odczuje. */
+  const teraz = {
+    ps: (ps?.karty || []).slice(0, 8),
+    pc: (pc?.karty || []).slice(0, 8)
+  };
+
   return {
-    prog: PROG, wersja: WERSJA, odKiedy: s.odKiedy || at, godziny, log,
+    prog: PROG, wersja: WERSJA, odKiedy: s.odKiedy || at, godziny, log, teraz, terazAt: at,
     poziomy: { ps: ps?.poziomy || (s.poziomy || {}).ps || {}, pc: pc?.poziomy || (s.poziomy || {}).pc || {} },
     karty: { ps: kartyPs, pc: kartyPc },
     ostatnie: {
