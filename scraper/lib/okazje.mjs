@@ -18,6 +18,7 @@
    zgadywać przesunięcia i żeby zmiana czasu nie rozjechała kubełków. */
 
 import { KOSZYK } from "./indeks.mjs";
+import { listBelow, snapDown, net } from "./grid.mjs";
 
 export const PROG = 0.10;          // ile pod WŁASNYM poziomem karty liczy się za okazję
 export const ALFA = 0.05;          // waga nowego odczytu w poziomie karty (~1 h półtrwania)
@@ -31,6 +32,85 @@ export const WERSJA = 2;
 export const LOG_LIMIT = 288;      // doba przy przebiegu co 5 minut
 export const KART_LIMIT = 80;      // ile kart trzymamy w rejestrze przeżywalności
 export const KART_WIEK = 3 * 86400;
+
+/* ── Poziom DOBOWY i pozycje inwestycyjne ────────────────────────────────────
+
+   Po co drugi poziom, skoro mamy już własny poziom karty: bo one odpowiadają na
+   dwa różne pytania. Poziom z alfą 0,05 ma pół godziny–godzinę pamięci i łapie
+   MIGNIĘCIA — czyjeś tanie wystawienie, które żyje minuty i które i tak zabierze
+   bot. Poziom dobowy ma kilkanaście godzin pamięci i łapie PRZECENĘ: kartę, która
+   naprawdę zeszła niżej i stoi tam od godzin.
+
+   Pierwsze jest okazją snajperską, drugie pozycją inwestycyjną. Do tej pory
+   strona miała tylko to pierwsze i dlatego w nagłówku wiecznie siedział flip.
+
+   Alfa 0,005 przy odczycie co 5 minut to około 11,5 h półtrwania. Nowy poziom
+   zasiewamy szybkim poziomem tej samej karty, a nie ceną z jednego odczytu —
+   inaczej pierwszego dnia każda karta miałaby poziom równy swojej cenie i nic
+   by się nie zgłaszało. */
+export const ALFA_D = 0.005;
+export const PROG_INW = 0.08;      // ile pod poziomem dobowym to już przecena, nie szum
+export const MIN_ODCZYTOW_D = 24;  // dwie godziny obserwacji, zanim uwierzymy w poziom dobowy
+export const INW_MARZA = 0.05;     // marża netto, której wymagamy od pozycji
+export const INW_LIMIT = 12;
+
+export function aktualizujPoziomyD(stareD, szybkie, bands, at, alfa = ALFA_D, maxWiek = KART_WIEK){
+  const out = {};
+  const p = stareD && typeof stareD === "object" ? stareD : {};
+  const s = szybkie && typeof szybkie === "object" ? szybkie : {};
+  for (const r of KOSZYK){
+    for (const c of (bands[r] || [])){
+      if (!c || !Number.isFinite(c.price) || c.price <= 0) continue;
+      const k = `${c.name} ${r}`;
+      const w = p[k];
+      if (w && w.p > 0){
+        out[k] = { p: Math.round(w.p * (1 - alfa) + c.price * alfa), n: (w.n || 0) + 1, t: at };
+      } else {
+        const zasiew = (s[k] && s[k].p > 0) ? s[k].p : c.price;
+        out[k] = { p: zasiew, n: (s[k] && s[k].n) || 1, t: at };
+      }
+    }
+  }
+  for (const k of Object.keys(p)){
+    if (!out[k] && (at - (p[k].t || 0)) <= maxWiek) out[k] = p[k];
+  }
+  return out;
+}
+
+/* Pozycje inwestycyjne: karta stojąca wyraźnie pod swoim poziomem dobowym.
+   Cel wyjścia to ten poziom (krok siatki niżej, żeby schodziło), a cena wejścia
+   jest liczona wstecz od celu tak, żeby po 5% podatku została marża. */
+export function policzInwestycje(bands, poziomyD, prog = PROG_INW, minOdczytow = MIN_ODCZYTOW_D, limit = INW_LIMIT){
+  const p = poziomyD || {};
+  const out = [];
+  for (const r of KOSZYK){
+    for (const c of (bands[r] || [])){
+      if (!c || !Number.isFinite(c.price) || c.price <= 0) continue;
+      const klucz = `${c.name} ${r}`;
+      const w = p[klucz];
+      if (!w || !(w.p > 0) || (w.n || 0) < minOdczytow) continue;
+      if (c.price > w.p * (1 - prog)) continue;
+
+      const cel = listBelow(w.p);
+      if (!(cel > 0)) continue;
+      const kupnoDo = snapDown(Math.floor(cel * 0.95 / (1 + INW_MARZA)));
+      const netto = net(kupnoDo, cel);
+      if (!(kupnoDo > 0) || netto <= 0) continue;
+
+      out.push({
+        klucz, nazwa: c.name, rating: r, pos: c.pos || null,
+        cena: c.price, poziom: w.p, odczytow: w.n,
+        rabat: +((1 - c.price / w.p) * 100).toFixed(1),
+        cel, kupnoDo, netto,
+        wzasiegu: c.price <= kupnoDo,
+        zwrot: +((netto / kupnoDo) * 100).toFixed(1)
+      });
+    }
+  }
+  /* Najpierw to, co da się wziąć TERAZ, potem po zwrocie — nagłówek ma być
+     czynnością, nie ciekawostką. */
+  return out.sort((a, b) => (b.wzasiegu - a.wzasiegu) || (b.zwrot - a.zwrot)).slice(0, limit);
+}
 
 export function godzinaPL(at){
   const s = new Date(at * 1000).toLocaleString("en-GB", {
@@ -136,6 +216,9 @@ export function dopiszOkazje(stan, at, ps, pc, limit = LOG_LIMIT){
   return {
     prog: PROG, wersja: WERSJA, odKiedy: s.odKiedy || at, godziny, log, teraz, terazAt: at,
     poziomy: { ps: ps?.poziomy || (s.poziomy || {}).ps || {}, pc: pc?.poziomy || (s.poziomy || {}).pc || {} },
+    /* Poziom dobowy jedzie tą samą drogą co szybki — bez tego wracałby do zera
+       przy każdym przebiegu i pozycje inwestycyjne nigdy by się nie ustabilizowały. */
+    poziomyD: { ps: ps?.poziomyD || (s.poziomyD || {}).ps || {}, pc: pc?.poziomyD || (s.poziomyD || {}).pc || {} },
     karty: { ps: kartyPs, pc: kartyPc },
     ostatnie: {
       ps: (ps?.karty || []).map(k => k.klucz),
