@@ -3,13 +3,10 @@ import { SOURCES, SEL, CYCLES, OUT, PACING, SNIPE_BANDS, SNIPE_DISCOUNT } from "
 import { patch, read } from "./lib/store.mjs";
 import { validate } from "./validate.mjs";
 import { listBelow, onGrid, snapDown, net } from "./lib/grid.mjs";
-import { readCard } from "./lib/card.mjs";
-import { evaluate, parseAgoMinutes } from "./lib/score.mjs";
-import { openPicks, settle, summarize } from "./lib/record.mjs";
 import { policz, dopisz, floorsZPasm } from "./lib/indeks.mjs";
 import { policzOkazje, dopiszOkazje } from "./lib/okazje.mjs";
 import { readSbc, dniDo } from "./lib/sbc.mjs";
-import { SEL as S2, TOP_BANDS, TOP_PER_BAND, TOP_COUNT, TOP_MAX_PRICE, HOLD_DAYS } from "./config.js";
+import { SEL as S2 } from "./config.js";
 
 /* node scrape.mjs fast   — Index, Momentum, pasma, snajpy (oba rynki z jednego wejścia)
    node scrape.mjs slow   — ruchy dobowe
@@ -253,96 +250,8 @@ async function readBandsGG(page){
   return { ps, pc };
 }
 
-/* ---------- ranking "Kup teraz" ---------- */
-
-/* Pula kandydatów z fut.gg — wiersz jest linkiem do karty, więc nazwa i URL idą razem. */
-async function readPool(page){
-  await go(page, SOURCES.poolGG);
-  return page.evaluate(sel => {
-    const txt = e => (e && e.innerText ? e.innerText : "").trim();
-      /* Futbin i fut.gg skracają ceny: "650", "2K", "3.8K", "27.25K", "1.84M".
-         Samo wycięcie nie-cyfr dawało 38 zamiast 3 800 — sprawdzone na żywej stronie. */
-      const cena = s => {
-        const t = String(s || "").trim().replace(/[\s\u00A0]/g, "").toUpperCase();
-        const m = t.match(/^([\d.,]+)([KM])?$/);
-        if (!m) return NaN;
-        let n = parseFloat(m[1].replace(/,/g, ""));
-        if (m[2] === "K") n *= 1000;
-        if (m[2] === "M") n *= 1000000;
-        return Math.round(n);
-      };
-    const re = new RegExp(sel.hrefTest);
-    return [...document.querySelectorAll(sel.row)]
-      .filter(a => re.test(a.getAttribute("href") || ""))
-      .map(a => {
-        const l = txt(a).split("\n").map(x => x.trim()).filter(Boolean);
-        return { name: l[0], price: cena(l[1]),
-                 pos: l[2], rating: parseInt(l[3], 10),
-                 url: new URL(a.getAttribute("href"), location.origin).href };
-      })
-      .filter(x => x.name && Number.isFinite(x.rating));
-  }, S2.pool);
-}
-
-function sampleByPrice(pool){
-  const candidates=[];
-  for (const band of TOP_BANDS){
-    const sorted=pool.filter(c => c.rating===band && c.price>0 && c.price<=TOP_MAX_PRICE).sort((a,b)=>a.price-b.price);
-    if (sorted.length<=TOP_PER_BAND){candidates.push(...sorted);continue;}
-    const used=new Set();
-    for (let i=0;i<TOP_PER_BAND;i++){
-      const index=Math.round(i*(sorted.length-1)/(TOP_PER_BAND-1));
-      if (!used.has(index)){used.add(index);candidates.push(sorted[index]);}
-    }
-  }
-  return candidates;
-}
-
-async function buildTop(page){
-  const pool = await readPool(page);
-  const candidates = sampleByPrice(pool);
-  if (!candidates.length) throw new Error("brak kandydatów do 200 000 monet");
-
-  const scored = [], skipped = [];
-  /* Licznik diagnostyczny. Jeśli cykl znów wróci z zerem, log od razu powie, czy to
-     model odrzucił karty, czy po prostu strony się nie dorenderowały. */
-  let nieDorenderowane = 0;
-  for (const c of candidates){
-    try {
-      await sleep(900);                                   // nie waliMY w serwis bez przerwy
-      const { bin, sales, dorenderowane } = await readCard(page, c.url, PACING.navTimeoutMs);
-      if (!dorenderowane || !sales.length){
-        nieDorenderowane++;
-        skipped.push(`${c.name} ${c.rating}: strona nie dorenderowała tabeli sprzedaży`);
-        continue;
-      }
-      if (!onGrid(bin) || bin > TOP_MAX_PRICE){ skipped.push(`${c.name} ${c.rating}: BIN poza zakresem 200 000`); continue; }
-      const ev = evaluate({ bin, sales: sales.map(s => ({ minutesAgo: parseAgoMinutes(s.ago), price: s.price })) });
-      if (!ev.ok){ skipped.push(`${c.name} ${c.rating}: ${ev.reason}`); continue; }
-      if (ev.sufit > TOP_MAX_PRICE){ skipped.push(`${c.name} ${c.rating}: limit zakupu przekracza 200 000`); continue; }
-      scored.push({ name: `${c.name} ${c.rating}${c.pos ? " " + c.pos : ""}`, url: c.url, rating: c.rating, ...ev });
-    } catch (e) { skipped.push(`${c.name} ${c.rating}: ${e.message.split("\n")[0]}`); }
-  }
-
-  scored.sort((a, b) => b.score - a.score);
-  const highPicks=scored.filter(p => p.bin>20000 && p.bin<=TOP_MAX_PRICE && p.rozrzut>=12).slice(0,3);
-  return { picks: scored.slice(0, TOP_COUNT), highPicks, checked: candidates.length, nieDorenderowane, skipped };
-}
-
-async function selectPcMarket(page){
-  await go(page, SOURCES.poolGG);
-  const selected=await page.evaluate(() => {
-    const button=[...document.querySelectorAll("button")].find(x => (x.innerText||"").trim()==="PC");
-    if (!button) return false;
-    button.click();
-    return true;
-  });
-  if (!selected) throw new Error("nie znalazłem przełącznika PC na fut.gg");
-  await sleep(2500);
-}
-
 /* ---------- przebieg ---------- */
-const { browser, page, newPage } = await open();
+const { browser, page } = await open();
 const at = Math.floor(Date.now() / 1000);
 const stamp = new Date().toLocaleString("pl-PL", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" });
 let fields = {};
@@ -397,58 +306,6 @@ try {
         s86: (bands.ps[86] || []).slice(0, 3).map(c => `${c.name} ${c.price}`).join(", "),
         s87: (bands.ps[87] || []).slice(0, 3).map(c => `${c.name} ${c.price}`).join(", ")
       }
-    };
-  } else if (cycle === "top"){
-    const psResult=await buildTop(page);
-    const pcPage=await newPage();
-    await selectPcMarket(pcPage);
-    const pcResult=await buildTop(pcPage);
-    for (const [platform,result] of [["PS",psResult],["PC",pcResult]]){
-      console.log(`${platform}: sprawdzone ${result.checked} kart, ${result.picks.length} w rankingu, ${result.highPicks.length} droższe okazje`);
-      if (result.nieDorenderowane) console.log(`${platform}: UWAGA — ${result.nieDorenderowane} z ${result.checked} kart nie dorenderowało tabeli sprzedaży. To nie jest werdykt modelu, tylko nieudany odczyt.`);
-      result.skipped.slice(0, 5).forEach(x => console.log(`  ${platform} odrzut:`, x));
-      if (!result.picks.length) console.log(`${platform}: żadna karta nie przeszła progów.`);
-    }
-
-    const prev = read(OUT);
-    const rec0 = prev.record || { open: [], closed: [] };
-    const trackedPs=psResult.picks.concat(psResult.highPicks).map(p => ({...p,platform:"ps"}));
-    const rec1 = { ...rec0, open: openPicks(rec0, trackedPs, at) };
-    const rec2 = await settle(rec1, at, HOLD_DAYS, async o => {
-      try {
-        const sourcePage=o.platform==="pc" ? pcPage : page;
-        const { sales } = await readCard(sourcePage, o.url, PACING.navTimeoutMs);
-        const prices = sales.slice(0, 20).map(s => s.price).sort((a, b) => a - b);
-        return prices.length ? prices[prices.length >> 1] : null;
-      } catch { return null; }
-    });
-
-    fields = {
-      at, atTop: at,
-      /* checked jedzie razem z wierszami, żeby strona umiała odróżnić
-         "jeszcze nie sprawdzaliśmy" od "sprawdziliśmy i nic nie przeszło". */
-      top: {
-        label: stamp,
-        ps: { checked: psResult.checked, rows: psResult.picks.map(p => ({
-          name: p.name, bin: p.bin, sufit: p.sufit, fair: p.fair, listAt: p.listAt,
-          zysk: p.zysk, okazje: p.okazje, probek: p.probek, plynnosc: p.plynnosc, score: p.score, rozrzut: p.rozrzut,
-          sellBy: new Date((at + HOLD_DAYS * 86400) * 1000).toLocaleDateString("pl-PL", { weekday:"long", day:"2-digit", month:"2-digit" })
-        })), high: psResult.highPicks.map(p => ({
-          name: p.name, bin: p.bin, sufit: p.sufit, fair: p.fair, listAt: p.listAt,
-          zysk: p.zysk, okazje: p.okazje, probek: p.probek, plynnosc: p.plynnosc, score: p.score, rozrzut: p.rozrzut,
-          sellBy: new Date((at + HOLD_DAYS * 86400) * 1000).toLocaleDateString("pl-PL", { weekday:"long", day:"2-digit", month:"2-digit" })
-        })) },
-        pc: { checked: pcResult.checked, rows: pcResult.picks.map(p => ({
-          name: p.name, bin: p.bin, sufit: p.sufit, fair: p.fair, listAt: p.listAt,
-          zysk: p.zysk, okazje: p.okazje, probek: p.probek, plynnosc: p.plynnosc, score: p.score, rozrzut: p.rozrzut,
-          sellBy: new Date((at + HOLD_DAYS * 86400) * 1000).toLocaleDateString("pl-PL", { weekday:"long", day:"2-digit", month:"2-digit" })
-        })), high: pcResult.highPicks.map(p => ({
-          name: p.name, bin: p.bin, sufit: p.sufit, fair: p.fair, listAt: p.listAt,
-          zysk: p.zysk, okazje: p.okazje, probek: p.probek, plynnosc: p.plynnosc, score: p.score, rozrzut: p.rozrzut,
-          sellBy: new Date((at + HOLD_DAYS * 86400) * 1000).toLocaleDateString("pl-PL", { weekday:"long", day:"2-digit", month:"2-digit" })
-        })) }
-      },
-      record: { ...rec2, summary: summarize(rec2.closed) }
     };
   } else {
     const movers = await readMovers(page);
