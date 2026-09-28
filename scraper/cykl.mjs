@@ -31,7 +31,10 @@ export function wybierz(dane = d, kiedy = teraz, godzina = h){
   const st = t => !t || (kiedy - t) >= PRZETERMINOWANY;
   const oT = (godzina >= 6 && godzina < 12) || (godzina >= 16 && godzina < 22);
   const oS = (godzina >= 5 && godzina < 12) || (godzina >= 17 && godzina < 24);
-  if (st(dane.atTop)  && oT) return "top";
+  /* top NIE jest już wybierany automatycznie. Trwa kilkanaście minut, a puka się
+     co pięć — przy jednym torze blokował wszystko, przy osobnym i tak zjadałby
+     minuty w kółko, bo po anulowaniu atTop nigdy się nie odświeżał i selektor
+     wybierał go bez końca. Odpalamy go osobnym wywołaniem z cycle=top. */
   if (st(dane.atSlow) && oS) return "slow";
   return "fast";
 }
