@@ -82,6 +82,13 @@
   .sbc-termin{font:12px "IBM Plex Mono",monospace;text-align:right;white-space:nowrap;color:var(--muted)}
   .sbc-termin.pilne{color:var(--gold)}
   .sbc-koszt{font:12px "IBM Plex Mono",monospace;text-align:right;white-space:nowrap;color:var(--muted)}
+  .ok-karta{display:grid;grid-template-columns:1fr 84px 84px 84px;align-items:baseline;gap:10px;padding:7px 0;border-bottom:1px solid var(--line)}
+  .ok-karta:last-of-type{border-bottom:0}
+  .ok-karta.head span{font:10px "IBM Plex Mono",monospace;text-transform:uppercase;letter-spacing:.06em;color:var(--soft)}
+  .ok-nazwa{color:var(--ink);font-size:14px}
+  .ok-val{font:12px "IBM Plex Mono",monospace;text-align:right;white-space:nowrap;color:var(--muted)}
+  .ok-val.zysk{color:var(--green)}
+  .okazje-karty-box{margin:0 0 14px}
   .okazja-row{display:grid;grid-template-columns:60px 1fr 104px;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line)}
   .okazja-row:last-child{border-bottom:0}
   .okazja-godz{font:13px "IBM Plex Mono",monospace;color:var(--ink)}
@@ -188,6 +195,7 @@
   <section class="moves" id="okazje-box">
     <div class="section-head"><h3>Kiedy pojawiają się okazje</h3><span id="okazje-caption"></span></div>
     <p class="okazje-teraz" id="okazje-teraz">—</p>
+    <div id="okazje-karty"></div>
     <div id="okazje-list"></div>
     <p class="budget-note" style="margin-top:10px">Karta tańsza o co najmniej 10% od <strong>własnego zwykłego poziomu</strong> z ostatniej godziny — nie od reszty pasma. Karta, która zawsze stoi tanio, nie jest okazją, tylko kartą, której nikt nie chce.</p>
   </section>
@@ -686,6 +694,39 @@
      i tak pobiera pasma, więc nie kosztują ani jednego dodatkowego wejścia na fut.gg.
      Godzina jest już policzona w czasie polskim po stronie scrapera. */
   var OKAZJE_MIN_PRZEBIEGOW = 6;
+  /* Licznik bez nazw jest bezużyteczny — tu wypisujemy, o które karty chodzi
+     w tej chwili, z ceną, jej zwykłym poziomem i tym, co zostaje po podatku,
+     gdybyś kupił teraz i wystawił krok pod poziomem. */
+  function pokazOkazjeTeraz(log){
+    var box = document.getElementById("okazje-karty");
+    var stan = data && data.okazje;
+    var lista = (stan && stan.teraz && stan.teraz[platform]) || [];
+    box.replaceChildren();
+    if (!lista.length) return;
+    box.className = "okazje-karty-box";
+    var head = document.createElement("div"); head.className = "ok-karta head";
+    ["Karta","Cena teraz","Zwykle","Na rękę"].forEach(function(t){
+      var x = document.createElement("span"); x.textContent = t; head.appendChild(x);
+    });
+    box.appendChild(head);
+    lista.forEach(function(k){
+      var row = document.createElement("div"); row.className = "ok-karta";
+      var n = document.createElement("span"); n.className = "ok-nazwa";
+      n.append(document.createTextNode(k.klucz || k.nazwa || "—"));
+      var c = document.createElement("span"); c.className = "ok-val"; c.textContent = coins(k.cena);
+      var p = document.createElement("span"); p.className = "ok-val";
+      p.textContent = k.poziom ? coins(wDol(k.poziom)) + "  −" + String(k.rabat).replace(".", ",") + "%" : "—";
+      var z = document.createElement("span"); z.className = "ok-val";
+      if (k.poziom > 0 && k.cena > 0){
+        var netto = Math.floor(wystawPod(k.poziom) * 0.95 - k.cena);
+        if (netto > 0) z.classList.add("zysk");
+        z.textContent = (netto > 0 ? "+" : "") + coins(netto);
+        z.title = "Wystaw po " + coins(wystawPod(k.poziom));
+      } else { z.textContent = "—"; }
+      row.append(n, c, p, z); box.appendChild(row);
+    });
+  }
+
   function plOkazje(n){
     if (n === 1) return "okazja";
     var d2 = n % 100, d1 = n % 10;
@@ -712,6 +753,8 @@
     } else {
       teraz.textContent = loadError ? "Nie udało się pobrać danych." : "Pierwszy odczyt w drodze.";
     }
+
+    pokazOkazjeTeraz(log);
 
     if (!godziny){ cap.textContent = ""; box.replaceChildren(); return; }
 
