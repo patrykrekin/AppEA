@@ -26,11 +26,25 @@ export function validate(d){
   for (const p of ["ps","pc"]){
     const rows = d.snipe?.[p]?.rows;
     if (!Array.isArray(rows) || !rows.length){ err.push(`snipe.${p}.rows puste`); continue; }
-    rows.forEach(([name, market, buy, list], i) => {
-      for (const [label, v] of [["rynek",market],["snajpuj do",buy],["wystaw",list]])
+    rows.forEach(([name, market, buy, list, poziom, pomiarow], i) => {
+      for (const [label, v] of [["oferta",market],["snajpuj do",buy],["wystaw",list]])
         if (!onGrid(v)) err.push(`snipe.${p}[${i}] ${name}: ${label} ${v} nie leży na siatce`);
       if (net(buy, list) <= 0) err.push(`snipe.${p}[${i}] ${name}: netto ${net(buy,list)} — pozycja do niczego`);
-      if (list >= market) warn.push(`snipe.${p}[${i}] ${name}: wystawienie ${list} nie jest pod rynkiem ${market}`);
+
+      /* Twarda reguła asymetrii: limit kupna NIGDY powyżej ostatniej widzianej
+         oferty. Poziom się spóźnia i w spadającym rynku kazałby przepłacać —
+         a przepłacenie to strata monet, w odróżnieniu od za wysokiego celu,
+         przy którym karta po prostu stoi. */
+      if (buy > market) err.push(`snipe.${p}[${i}] ${name}: limit kupna ${buy} powyżej oferty ${market}`);
+
+      /* Cel porównujemy z tym, z czego naprawdę powstał. Od 28.09 cel bierze się
+         z poziomu karty, więc "wystawienie nie jest pod rynkiem" przy odstającej
+         taniej ofercie było ostrzeżeniem o poprawnym zachowaniu. */
+      const odniesienie = Number.isFinite(poziom) && poziom > 0 ? poziom : market;
+      if (list >= odniesienie)
+        warn.push(`snipe.${p}[${i}] ${name}: wystawienie ${list} nie jest pod ${Number.isFinite(poziom) && poziom > 0 ? `poziomem ${poziom}` : `ofertą ${market}`}`);
+      if (Number.isFinite(poziom) && poziom > 0 && !(pomiarow > 0))
+        err.push(`snipe.${p}[${i}] ${name}: poziom ${poziom} bez liczby pomiarów — nie wiadomo, ile za nim stoi`);
     });
   }
 
