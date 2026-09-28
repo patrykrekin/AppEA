@@ -1,5 +1,5 @@
 {
-  "at": 1790564145,
+  "at": 1790564493,
   "index": {
     "ps": {
       "value": "124,01",
@@ -96,32 +96,8 @@
   },
   "snipe": {
     "ps": {
-      "label": "konsola · 28.09, 02:55",
+      "label": "konsola · 28.09, 03:01",
       "rows": [
-        [
-          "Carnesecchi 86 GK",
-          3500,
-          2900,
-          3400
-        ],
-        [
-          "Bruno Guimarães 86 CM",
-          3700,
-          3100,
-          3600
-        ],
-        [
-          "Katoto 86 ST",
-          3700,
-          3100,
-          3600
-        ],
-        [
-          "McCabe 86 LB",
-          3700,
-          3100,
-          3600
-        ],
         [
           "McTominay 86 CM",
           3800,
@@ -129,43 +105,67 @@
           3700
         ],
         [
-          "Bastoni 86 CB",
+          "Diogo Costa 86 GK",
           3800,
           3200,
           3700
         ],
         [
-          "Saka 87 RW",
+          "Bruno Guimarães 86 CM",
+          3800,
+          3200,
+          3700
+        ],
+        [
+          "McCabe 86 LB",
+          3800,
+          3200,
+          3700
+        ],
+        [
+          "Fernández 86 CM",
+          3800,
+          3200,
+          3700
+        ],
+        [
+          "Katoto 86 ST",
+          3900,
+          3300,
+          3800
+        ],
+        [
+          "Barella 87 CM",
+          5500,
+          4600,
+          5400
+        ],
+        [
+          "Rúben Dias 87 CB",
           5700,
           4800,
           5600
         ],
         [
-          "Irene Paredes 87 CB",
+          "Miedema 87 CAM",
+          5800,
+          4900,
+          5700
+        ],
+        [
+          "Harder 87 CAM",
           5800,
           4900,
           5700
         ],
         [
           "Lavelle 87 CAM",
-          5800,
-          4900,
-          5700
-        ],
-        [
-          "Miedema 87 CAM",
           5900,
           5000,
           5800
         ],
         [
-          "Berger 87 GK",
-          5900,
-          5000,
-          5800
-        ],
-        [
-          "Rúben Dias 87 CB",
+          "Irene Paredes 87 CB",
           5900,
           5000,
           5800
@@ -173,22 +173,28 @@
       ]
     },
     "pc": {
-      "label": "PC · 28.09, 02:55",
+      "label": "PC · 28.09, 03:01",
       "rows": [
         [
-          "Ødegaard 86 CM",
+          "Reiten 86 LB",
           4100,
           3400,
           4000
         ],
         [
-          "Diogo Costa 86 GK",
-          4200,
-          3500,
-          4100
+          "Bruno Guimarães 86 CM",
+          4100,
+          3400,
+          4000
         ],
         [
-          "Dimarco 86 LB",
+          "Fernández 86 CM",
+          4100,
+          3400,
+          4000
+        ],
+        [
+          "Cucurella 86 LB",
           4200,
           3500,
           4100
@@ -200,52 +206,46 @@
           4100
         ],
         [
-          "McCabe 86 LB",
+          "Carnesecchi 86 GK",
           4200,
           3500,
           4100
         ],
         [
-          "Reiten 86 LB",
-          4300,
-          3600,
-          4200
+          "Miedema 87 CAM",
+          6100,
+          5100,
+          6000
         ],
         [
-          "Irene Paredes 87 CB",
-          6200,
-          5200,
-          6100
-        ],
-        [
-          "Lavelle 87 CAM",
+          "Tah 87 CB",
           6200,
           5200,
           6100
         ],
         [
           "Martínez 87 ST",
-          6200,
-          5200,
-          6100
-        ],
-        [
-          "Barella 87 CM",
-          6200,
-          5200,
-          6100
-        ],
-        [
-          "Tah 87 CB",
           6300,
           5300,
           6200
         ],
         [
-          "Miedema 87 CAM",
-          6500,
-          5500,
-          6400
+          "Lavelle 87 CAM",
+          6300,
+          5300,
+          6200
+        ],
+        [
+          "Rúben Dias 87 CB",
+          6300,
+          5300,
+          6200
+        ],
+        [
+          "Hampton 87 GK",
+          6400,
+          5400,
+          6300
         ]
       ]
     }
@@ -253,9 +253,9 @@
   "tier": {
     "p83": "650",
     "p84": "650",
-    "p85": "1800",
-    "s86": "Carnesecchi 3500, Bruno Guimarães 3700, Katoto 3700",
-    "s87": "Saka 5700, Irene Paredes 5800, Lavelle 5800",
+    "p85": "1400",
+    "s86": "McTominay 3800, Diogo Costa 3800, Bruno Guimarães 3800",
+    "s87": "Barella 5500, Rúben Dias 5700, Miedema 5800",
     "mid": "Oblak 88 GK 13 250, Russo 88 ST 16 250, Gabriel 89 CB 16 750, Bruno Fernandes 89 CAM 23 500",
     "hero": "Cahill 85 CM 31 500, Šašic 89 ST 48 000, Kluivert 87 ST 79 000",
     "dfg": "od ok. 42 000 (Abdulhamid 85 CM)",
@@ -264,15 +264,7 @@
       "ps": {
         "83": [
           {
-            "name": "Ginter 83 CB",
-            "price": 650
-          },
-          {
-            "name": "Schick 83 ST",
-            "price": 650
-          },
-          {
-            "name": "Gavi 83 CM",
+            "name": "Gnabry 83 CAM",
             "price": 650
           },
           {
@@ -280,13 +272,21 @@
             "price": 650
           },
           {
-            "name": "Álex Baena 83 LM",
+            "name": "Schick 83 ST",
+            "price": 650
+          },
+          {
+            "name": "Bowen 83 RM",
+            "price": 650
+          },
+          {
+            "name": "Hall 83 LB",
             "price": 650
           }
         ],
         "84": [
           {
-            "name": "Konsa 84 CB",
+            "name": "Yamashita 84 GK",
             "price": 650
           },
           {
@@ -294,114 +294,114 @@
             "price": 650
           },
           {
-            "name": "Laporte 84 CB",
+            "name": "Minge 84 CDM",
+            "price": 650
+          },
+          {
+            "name": "Marta 84 CAM",
             "price": 650
           },
           {
             "name": "Sommer 84 GK",
             "price": 650
-          },
-          {
-            "name": "Kamara 84 CDM",
-            "price": 650
           }
         ],
         "85": [
+          {
+            "name": "Walsh 85 CDM",
+            "price": 1400
+          },
+          {
+            "name": "Bronze 85 RB",
+            "price": 1700
+          },
+          {
+            "name": "Le Tissier 85 CB",
+            "price": 1800
+          },
           {
             "name": "Fox 85 RB",
             "price": 1800
           },
           {
-            "name": "Giugliano 85 CM",
-            "price": 1800
-          },
-          {
-            "name": "Bronze 85 RB",
-            "price": 1800
-          },
-          {
-            "name": "Walsh 85 CDM",
-            "price": 1800
-          },
-          {
-            "name": "Svilar 85 GK",
+            "name": "Carpenter 85 RB",
             "price": 1800
           }
         ],
         "86": [
           {
-            "name": "Carnesecchi 86 GK",
-            "price": 3500
+            "name": "McTominay 86 CM",
+            "price": 3800
+          },
+          {
+            "name": "Diogo Costa 86 GK",
+            "price": 3800
           },
           {
             "name": "Bruno Guimarães 86 CM",
-            "price": 3700
-          },
-          {
-            "name": "Katoto 86 ST",
-            "price": 3700
+            "price": 3800
           },
           {
             "name": "McCabe 86 LB",
-            "price": 3700
+            "price": 3800
           },
           {
-            "name": "McTominay 86 CM",
+            "name": "Fernández 86 CM",
             "price": 3800
           }
         ],
         "87": [
           {
-            "name": "Saka 87 RW",
+            "name": "Barella 87 CM",
+            "price": 5500
+          },
+          {
+            "name": "Rúben Dias 87 CB",
             "price": 5700
           },
           {
-            "name": "Irene Paredes 87 CB",
+            "name": "Miedema 87 CAM",
+            "price": 5800
+          },
+          {
+            "name": "Harder 87 CAM",
             "price": 5800
           },
           {
             "name": "Lavelle 87 CAM",
-            "price": 5800
-          },
-          {
-            "name": "Miedema 87 CAM",
-            "price": 5900
-          },
-          {
-            "name": "Berger 87 GK",
             "price": 5900
           }
         ],
         "88": [
           {
-            "name": "Kimmich 88 CDM",
-            "price": 8800
-          },
-          {
             "name": "Hasegawa 88 CDM",
-            "price": 8900
+            "price": 8700
           },
           {
             "name": "Banda 88 ST",
-            "price": 9000
+            "price": 8900
+          },
+          {
+            "name": "Kimmich 88 CDM",
+            "price": 8900
           },
           {
             "name": "Bühl 88 LM",
             "price": 9000
           },
           {
-            "name": "Rice 88 CDM",
+            "name": "Mapi León 88 CB",
             "price": 9000
           }
         ],
         "89": [
           {
             "name": "Gabriel 89 CB",
-            "price": 18500
+            "price": 18250
           },
           {
             "name": "Chawinga 89 LM",
-            "price": 19500
+            "price": 19750
           },
           {
             "name": "Bruno Fernandes 89 CAM",
@@ -413,48 +413,48 @@
           },
           {
             "name": "Donnarumma 89 GK",
-            "price": 39750
+            "price": 40250
           }
         ]
       },
       "pc": {
         "83": [
           {
-            "name": "Matsukubo 83 CAM",
+            "name": "Watkins 83 ST",
+            "price": 600
+          },
+          {
+            "name": "Däbritz 83 CM",
             "price": 650
           },
           {
-            "name": "Coffey 83 CM",
+            "name": "Pavlović 83 CDM",
             "price": 650
           },
           {
-            "name": "Schick 83 ST",
-            "price": 700
+            "name": "Toney 83 ST",
+            "price": 650
           },
           {
-            "name": "Nüsken 83 CDM",
-            "price": 700
-          },
-          {
-            "name": "Lobotka 83 CM",
-            "price": 700
+            "name": "Blackstenius 83 ST",
+            "price": 650
           }
         ],
         "84": [
           {
-            "name": "Laporte 84 CB",
+            "name": "Yamashita 84 GK",
             "price": 650
           },
           {
-            "name": "Mac Allister 84 CM",
+            "name": "Anton 84 CB",
             "price": 650
           },
           {
-            "name": "Baumann 84 GK",
+            "name": "Cristiano Ronaldo 84 ST",
             "price": 650
           },
           {
-            "name": "Alexander-Arnold 84 RB",
+            "name": "Zubimendi 84 CDM",
             "price": 650
           },
           {
@@ -464,7 +464,7 @@
         ],
         "85": [
           {
-            "name": "Nnadozie 85 GK",
+            "name": "Rúben Neves 85 CDM",
             "price": 1800
           },
           {
@@ -472,92 +472,92 @@
             "price": 1900
           },
           {
-            "name": "Williamson 85 CB",
-            "price": 1900
-          },
-          {
             "name": "Casparij 85 RB",
             "price": 1900
           },
           {
-            "name": "Park 85 RM",
+            "name": "Xhaka 85 CDM",
+            "price": 1900
+          },
+          {
+            "name": "Tielemans 85 CM",
             "price": 1900
           }
         ],
         "86": [
           {
+            "name": "Weir 86 CAM",
+            "price": 3900
+          },
+          {
             "name": "McTominay 86 CM",
-            "price": 3800
+            "price": 4000
+          },
+          {
+            "name": "Reiten 86 LB",
+            "price": 4100
           },
           {
             "name": "Bruno Guimarães 86 CM",
-            "price": 3900
-          },
-          {
-            "name": "Fabián Ruiz 86 CM",
-            "price": 3900
-          },
-          {
-            "name": "Bastoni 86 CB",
-            "price": 4000
+            "price": 4100
           },
           {
             "name": "Fernández 86 CM",
-            "price": 4000
+            "price": 4100
           }
         ],
         "87": [
           {
-            "name": "Rúben Dias 87 CB",
+            "name": "Hemp 87 LM",
             "price": 6000
           },
           {
-            "name": "Irene Paredes 87 CB",
-            "price": 6200
+            "name": "Miedema 87 CAM",
+            "price": 6100
           },
           {
-            "name": "Lavelle 87 CAM",
+            "name": "Tah 87 CB",
             "price": 6200
           },
           {
             "name": "Martínez 87 ST",
-            "price": 6200
+            "price": 6300
           },
           {
-            "name": "Barella 87 CM",
-            "price": 6200
+            "name": "Lavelle 87 CAM",
+            "price": 6300
           }
         ],
         "88": [
           {
-            "name": "Hasegawa 88 CDM",
+            "name": "Bühl 88 LM",
             "price": 9000
           },
           {
-            "name": "Kimmich 88 CDM",
-            "price": 9300
+            "name": "Rice 88 CDM",
+            "price": 9400
           },
           {
-            "name": "Díaz 88 LM",
+            "name": "Mapi León 88 CB",
             "price": 9500
           },
           {
-            "name": "Bühl 88 LM",
+            "name": "Díaz 88 LM",
             "price": 9600
           },
           {
-            "name": "Banda 88 ST",
-            "price": 9700
+            "name": "Hasegawa 88 CDM",
+            "price": 9600
           }
         ],
         "89": [
           {
             "name": "Gabriel 89 CB",
-            "price": 18500
+            "price": 18750
           },
           {
             "name": "Bruno Fernandes 89 CAM",
-            "price": 20000
+            "price": 19000
           },
           {
             "name": "Chawinga 89 LM",
@@ -565,11 +565,11 @@
           },
           {
             "name": "Donnarumma 89 GK",
-            "price": 40250
+            "price": 41000
           },
           {
             "name": "Messi 89 CAM",
-            "price": 43000
+            "price": 44000
           }
         ]
       }
@@ -758,19 +758,6 @@
           "87": 6000,
           "88": 8800,
           "89": 24000
-        },
-        "w": 2
-      },
-      {
-        "at": 1790535356,
-        "floors": {
-          "83": 650,
-          "84": 650,
-          "85": 1800,
-          "86": 3800,
-          "87": 5900,
-          "88": 9100,
-          "89": 26500
         },
         "w": 2
       },
@@ -1995,6 +1982,19 @@
           "89": 23500
         },
         "w": 2
+      },
+      {
+        "at": 1790564493,
+        "floors": {
+          "83": 650,
+          "84": 650,
+          "85": 1800,
+          "86": 3800,
+          "87": 5800,
+          "88": 8900,
+          "89": 23500
+        },
+        "w": 2
       }
     ],
     "pc": [
@@ -2008,19 +2008,6 @@
           "87": 6200,
           "88": 9700,
           "89": 21750
-        },
-        "w": 2
-      },
-      {
-        "at": 1790535356,
-        "floors": {
-          "83": 700,
-          "84": 700,
-          "85": 1900,
-          "86": 4000,
-          "87": 6200,
-          "88": 9500,
-          "89": 24000
         },
         "w": 2
       },
@@ -3245,6 +3232,19 @@
           "89": 22000
         },
         "w": 2
+      },
+      {
+        "at": 1790564493,
+        "floors": {
+          "83": 650,
+          "84": 650,
+          "85": 1900,
+          "86": 4100,
+          "87": 6200,
+          "88": 9500,
+          "89": 22000
+        },
+        "w": 2
       }
     ]
   },
@@ -3252,11 +3252,11 @@
     "ps": {
       "wartosc": 100,
       "zmiana": 0,
-      "okno": "9 h",
+      "okno": "10 h",
       "szerokosc": {
-        "gora": 1,
+        "gora": 2,
         "dol": 3,
-        "plask": 3,
+        "plask": 2,
         "razem": 7
       },
       "pomiarow": 96,
@@ -3266,11 +3266,11 @@
     "pc": {
       "wartosc": 100,
       "zmiana": 0,
-      "okno": "9 h",
+      "okno": "10 h",
       "szerokosc": {
         "gora": 3,
-        "dol": 2,
-        "plask": 2,
+        "dol": 1,
+        "plask": 3,
         "razem": 7
       },
       "pomiarow": 96,
@@ -3278,7 +3278,7 @@
       "wersja": 2
     }
   },
-  "atFast": 1790564145,
+  "atFast": 1790564493,
   "atTop": 1790524887,
   "atSlow": 1790528488,
   "okazje": {
@@ -3304,6 +3304,10 @@
       "4": {
         "przebiegow": 12,
         "okazji": 50
+      },
+      "5": {
+        "przebiegow": 1,
+        "okazji": 5
       },
       "20": {
         "przebiegow": 3,
@@ -3807,27 +3811,41 @@
         1790564145,
         2,
         1
+      ],
+      [
+        1790564493,
+        3,
+        2
       ]
     ],
     "karty": {
       "ps": {
         "Gabriel 89": {
-          "widziano": 60,
-          "utrzymal": 59,
-          "rabat": 21.3,
+          "widziano": 61,
+          "utrzymal": 60,
+          "rabat": 22.3,
           "najlepszyRabat": 47.6,
           "rating": 89,
-          "cena": 18500,
-          "ostatnio": 1790564145
+          "cena": 18250,
+          "ostatnio": 1790564493
         },
         "Chawinga 89": {
-          "widziano": 60,
-          "utrzymal": 59,
-          "rabat": 17,
+          "widziano": 61,
+          "utrzymal": 60,
+          "rabat": 16,
           "najlepszyRabat": 23.8,
           "rating": 89,
-          "cena": 19500,
-          "ostatnio": 1790564145
+          "cena": 19750,
+          "ostatnio": 1790564493
+        },
+        "Walsh 85": {
+          "widziano": 2,
+          "utrzymal": 0,
+          "rabat": 22.2,
+          "najlepszyRabat": 27.8,
+          "rating": 85,
+          "cena": 1400,
+          "ostatnio": 1790564493
         },
         "Carpenter 85": {
           "widziano": 2,
@@ -4063,15 +4081,6 @@
           "cena": 3500,
           "ostatnio": 1790548277
         },
-        "Walsh 85": {
-          "widziano": 1,
-          "utrzymal": 0,
-          "rabat": 27.8,
-          "najlepszyRabat": 27.8,
-          "rating": 85,
-          "cena": 1300,
-          "ostatnio": 1790547358
-        },
         "Nnadozie 85": {
           "widziano": 1,
           "utrzymal": 0,
@@ -4084,22 +4093,22 @@
       },
       "pc": {
         "Gabriel 89": {
-          "widziano": 60,
-          "utrzymal": 59,
-          "rabat": 15.9,
+          "widziano": 61,
+          "utrzymal": 60,
+          "rabat": 14.8,
           "najlepszyRabat": 29.3,
           "rating": 89,
-          "cena": 18500,
-          "ostatnio": 1790564145
+          "cena": 18750,
+          "ostatnio": 1790564493
         },
         "Bruno Fernandes 89": {
-          "widziano": 40,
+          "widziano": 41,
           "utrzymal": 30,
-          "rabat": 14.8,
+          "rabat": 13.6,
           "najlepszyRabat": 19.2,
           "rating": 89,
-          "cena": 18750,
-          "ostatnio": 1790563854
+          "cena": 19000,
+          "ostatnio": 1790564493
         },
         "Çalhanoğlu 85": {
           "widziano": 1,
@@ -4240,11 +4249,13 @@
     },
     "ostatnie": {
       "ps": [
+        "Walsh 85",
         "Gabriel 89",
         "Chawinga 89"
       ],
       "pc": [
-        "Gabriel 89"
+        "Gabriel 89",
+        "Bruno Fernandes 89"
       ]
     }
   }
