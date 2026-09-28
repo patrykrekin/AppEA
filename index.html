@@ -452,7 +452,8 @@
         + "Teraz stoi po " + coins(inw.cena) + ", czyli " + inw.rabat.toFixed(1).replace(".", ",") + "% niżej. "
         + "Wystawiasz po " + coins(inw.cel) + " — krok siatki pod jej poziomem, więc schodzi. "
         + "Zostaje około +" + coins(inw.netto) + " monet netto na sztuce po podatku, to " + inw.zwrot.toFixed(1).replace(".", ",") + "% zwrotu. "
-        + "Nie musisz siedzieć przy wyszukiwarce: ta cena stoi od godzin, nie od sekund."
+        + (inw.odSekund ? "Ta cena stoi już " + obsGodziny(inw.odSekund) + " — sprawdzamy ją co pięć minut i przez cały ten czas nie wróciła w górę. " : "")
+        + "To odróżnia pozycję od snajpa: tanie wystawienie znika w minuty, przecena stoi."
         + copiesNote(bank, inw.kupnoDo) + stalenessNote();
       return;
     }
