@@ -5,8 +5,14 @@ import { validate } from "./validate.mjs";
 import { listBelow, onGrid, snapDown, net } from "./lib/grid.mjs";
 import { policz, dopisz, floorsZPasm } from "./lib/indeks.mjs";
 import { policzOkazje, dopiszOkazje, aktualizujPoziomy, aktualizujPoziomyD, policzInwestycje, aktualizujTrwalosc } from "./lib/okazje.mjs";
-import { readSbc, dniDo, dopiszKoszty } from "./lib/sbc.mjs";
+import { readSbc, dopiszKoszty } from "./lib/sbc.mjs";
 import { zWierszy, dopiszRuchy, odbicia } from "./lib/ruchy.mjs";
+import { zbuduj as zbudujKalendarz } from "./lib/kalendarz.mjs";
+
+/* SBC co godzinę, nie dwa razy na dobę. 28.09: SBC z terminem 24 h potrafi
+   wygasnąć i zostać zastąpiona nową, a cykl `slow` pokazywał nieistniejącą
+   przez pół doby. Jedno wejście na fut.gg co dwunasty przebieg — tanio. */
+const SBC_WIEK_MS = 55 * 60 * 1000;
 
 /* Budżet czasu na całą watchlistę. Przy zdrowej stronie karta schodzi w ~3 s,
    więc osiem sztuk to ~25 s. Budżet jest na wypadek, gdy fut.gg zwalnia i każda
@@ -376,8 +382,35 @@ try {
     }
     obserwacja = { at, karty: (obserwacja && obserwacja.karty) || {}, diag: diag.slice(0, 12) };
 
+    /* SBC w cyklu fast, ale tylko raz na godzinę. Własny try — nieudany odczyt
+       terminów nie może zabrać cen, indeksu ani okazji. */
+    let sbcOut = prev.sbc || null;
+    try {
+      const wiek = prev.sbc && prev.sbc.at ? (at - prev.sbc.at) * 1000 : Infinity;
+      if (wiek >= SBC_WIEK_MS){
+        const r = await readSbc(page, undefined, PACING.navTimeoutMs);
+        if (!r.dorenderowane) console.log("SBC: strona nie dorenderowała — zostawiam poprzednie terminy");
+        else if (!r.lista.length) console.log("SBC: pusta lista — zostawiam poprzednie terminy");
+        else {
+          const lista = dopiszKoszty(r.lista, prev.sbc);
+          sbcOut = { at, lista };
+          console.log(`SBC: ${lista.length} pozycji, z kosztem ${lista.filter(x => x.koszt).length}`);
+        }
+      }
+    } catch (e) {
+      console.log("SBC: " + String(e.message || e).split("\n")[0] + " — zostawiam poprzednie terminy");
+    }
+
+    /* Kalendarz liczymy z tego, co właśnie odczytaliśmy. Okno startuje od dnia
+       przebiegu, więc przesuwa się samo — nie ma listy do utrzymywania. */
+    const ostatnieFloors = histPs.length ? histPs[histPs.length - 1].floors : null;
+    const kalendarz = zbudujKalendarz(sbcOut, prev.okazje, ostatnieFloors, at);
+    console.log(`kalendarz: ${kalendarz.length} dni z wpisami`);
+
     fields = {
       at, atFast: at,
+      ...(sbcOut ? { sbc: sbcOut } : {}),
+      kalendarz,
       hist: { ps: histPs, pc: histPc },
       nasz: { ps: policz(histPs), pc: policz(histPc) },
       okazje: dopiszOkazje(prev.okazje, at, okazjePs, okazjePc),
@@ -409,30 +442,10 @@ try {
   } else {
     const movers = await readMovers(page);
     if (movers.length < 5) throw new Error(`tylko ${movers.length} wierszy ruchów — nie nadpisuję`);
-    /* Lista SBC jedzie w wolnym cyklu — terminy zmieniają się raz na dobę, nie co
-       pięć minut. Nieudany odczyt SBC NIE może zabrać ruchów cen, dlatego osobny
-       try: wolimy stare terminy i świeże ceny niż nic. */
-    let sbc = null;
-    try {
-      const r = await readSbc(page, undefined, PACING.navTimeoutMs);
-      if (!r.dorenderowane) console.log("SBC: strona nie dorenderowała listy — zostawiam poprzednie terminy");
-      else if (!r.lista.length) console.log("SBC: pusta lista po parsowaniu — zostawiam poprzednie terminy");
-      else {
-        /* Koszt rozwiązania porównujemy z poprzednim wolnym cyklem — jego ruch to
-           nasza miara popytu na fodder, jedyna dostępna, bo wymogu składu fut.gg
-           nie podaje. Bez poprzedniego pliku po prostu nie ma z czym porównać. */
-        const lista = dopiszKoszty(r.lista, read(OUT).sbc);
-        sbc = { at, lista };
-        const naj = lista.find(x => x.wygasaAt);
-        const ruszone = lista.filter(x => Number.isFinite(x.kosztZmiana) && Math.abs(x.kosztZmiana) >= 5).length;
-        console.log(`SBC: ${lista.length} pozycji, z kosztem ${lista.filter(x => x.koszt).length}, ruszone ${ruszone}`
-          + (naj ? `, najbliższy termin: ${naj.nazwa} za ${dniDo(naj, at)} dni` : ""));
-      }
-    } catch (e) {
-      console.log("SBC: " + String(e.message || e).split("\n")[0] + " — zostawiam poprzednie terminy");
-    }
+    /* SBC przeniesione do cyklu fast (raz na godzinę) — terminy 24-godzinne
+       starzały się tu przez pół doby. Wolny cykl robi już tylko ruchy dobowe. */
 
-    fields = sbc ? { at, atSlow: at, movers, sbc } : { at, atSlow: at, movers };
+    fields = { at, atSlow: at, movers };
   }
 
   const { err, warn } = validate({ ...read(OUT), ...fields });
