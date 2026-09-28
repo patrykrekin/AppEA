@@ -19,7 +19,15 @@
 
 import { KOSZYK } from "./indeks.mjs";
 
-export const PROG = 0.10;          // ile pod medianą dna liczy się za okazję
+export const PROG = 0.10;          // ile pod WŁASNYM poziomem karty liczy się za okazję
+export const ALFA = 0.05;          // waga nowego odczytu w poziomie karty (~1 h półtrwania)
+export const MIN_ODCZYTOW = 6;     // pół godziny obserwacji, zanim uwierzymy w poziom karty
+
+/* Wersja definicji okazji. 1 — tanio względem dna pasma (dawało wieczne "okazje"
+   w rodzaju Gabriela). 2 — tanio względem własnego poziomu karty. Liczby z jednej
+   definicji nie znaczą tego samego co z drugiej, więc przy zmianie rejestr startuje
+   od zera zamiast sklejać dwa różne pomiary w jedną statystykę. */
+export const WERSJA = 2;
 export const LOG_LIMIT = 288;      // doba przy przebiegu co 5 minut
 export const KART_LIMIT = 80;      // ile kart trzymamy w rejestrze przeżywalności
 export const KART_WIEK = 3 * 86400;
@@ -32,20 +40,59 @@ export function godzinaPL(at){
   return Number.isFinite(h) ? h % 24 : null;
 }
 
-/** bands: dane z fut.gg, floors: wynik floorsZPasm z TEGO SAMEGO odczytu. */
-export function policzOkazje(bands, floors, prog = PROG){
+/* Poziom karty: wykładnicza średnia jej WŁASNYCH cen.
+   Do 28.09.2026 porównywaliśmy kartę z medianą dna jej pasma i to był błąd.
+   Pasmo nie jest grupą porównawczą — Gabriel 89 stał 47% pod dnem pasma przez
+   99 odczytów z rzędu i wyglądał jak wieczna okazja. Nie był okazją. Był kartą,
+   której nikt nie chce, i jego cena po prostu TAKA jest.
+
+   Karta jest okazją wtedy, gdy jest tania WZGLĘDEM SIEBIE. Gabriel stojący
+   niezmiennie na 19 250 dostaje poziom 19 250 i przestaje być zgłaszany.
+   Karta, która normalnie chodzi po 4 000 i spada na 3 000 — zgłaszana.
+
+   Alfa 0,05 przy odczycie co 5 minut daje około godziny półtrwania: nowa cena
+   staje się normą po godzinie. To celowe. Po godzinie taniości to już nie jest
+   anomalia, tylko nowy poziom rynku. */
+export function aktualizujPoziomy(stare, bands, at, alfa = ALFA, maxWiek = KART_WIEK){
+  const out = {};
+  const p = stare && typeof stare === "object" ? stare : {};
+  for (const r of KOSZYK){
+    for (const c of (bands[r] || [])){
+      if (!c || !Number.isFinite(c.price) || c.price <= 0) continue;
+      const k = `${c.name} ${r}`;
+      const w = p[k];
+      out[k] = w && w.p > 0
+        ? { p: Math.round(w.p * (1 - alfa) + c.price * alfa), n: (w.n || 0) + 1, t: at }
+        : { p: c.price, n: 1, t: at };
+    }
+  }
+  /* Karty, które wypadły z dna pasma, trzymamy jeszcze chwilę — wrócą pod tą samą
+     nazwą i szkoda tracić ich poziom. Po trzech dniach i tak nic już nie mówi. */
+  for (const k of Object.keys(p)){
+    if (!out[k] && (at - (p[k].t || 0)) <= maxWiek) out[k] = p[k];
+  }
+  return out;
+}
+
+/** bands: dane z fut.gg, poziomy: stan SPRZED tego odczytu — inaczej dzisiejsza
+ *  tania cena sama obniżyłaby próg, który ma pobić. */
+export function policzOkazje(bands, poziomy, prog = PROG, minOdczytow = MIN_ODCZYTOW){
   const pasma = {};
   const karty = [];
+  const poz = poziomy && typeof poziomy === "object" ? poziomy : {};
   let razem = 0;
   for (const r of KOSZYK){
-    const dno = floors[r];
-    if (!(dno > 0)) continue;
-    const granica = dno * (1 - prog);
-    const tanie = (bands[r] || []).filter(c => c && Number.isFinite(c.price) && c.price > 0 && c.price <= granica);
-    for (const c of tanie){
+    const tanie = [];
+    for (const c of (bands[r] || [])){
+      if (!c || !Number.isFinite(c.price) || c.price <= 0) continue;
+      const k = `${c.name} ${r}`;
+      const w = poz[k];
+      if (!w || !(w.p > 0) || (w.n || 0) < minOdczytow) continue;   // za mało obserwacji
+      if (c.price > w.p * (1 - prog)) continue;
+      tanie.push(c);
       karty.push({
-        klucz: `${c.name} ${r}`, nazwa: c.name, rating: r, cena: c.price, dno,
-        rabat: +((1 - c.price / dno) * 100).toFixed(1)
+        klucz: k, nazwa: c.name, rating: r, cena: c.price, poziom: w.p,
+        rabat: +((1 - c.price / w.p) * 100).toFixed(1)
       });
     }
     pasma[r] = tanie.length;
@@ -71,13 +118,16 @@ export function dopiszOkazje(stan, at, ps, pc, limit = LOG_LIMIT){
 
   /* Rejestry trzymamy osobno per platforma — ta sama karta ma inną cenę na PC
      i na konsoli, więc mieszanie ich zafałszowałoby i rabat, i przeżywalność. */
-  const poprz = s.ostatnie || {};
-  const stareKarty = s.karty || {};
+  /* Rejestr z poprzedniej definicji odpada w całości — patrz WERSJA. */
+  const zgodna = (s.wersja || 1) === WERSJA;
+  const poprz = zgodna ? (s.ostatnie || {}) : {};
+  const stareKarty = zgodna ? (s.karty || {}) : {};
   const kartyPs = dopiszKarty(stareKarty.ps, ps?.karty, poprz.ps, at);
   const kartyPc = dopiszKarty(stareKarty.pc, pc?.karty, poprz.pc, at);
 
   return {
-    prog: PROG, odKiedy: s.odKiedy || at, godziny, log,
+    prog: PROG, wersja: WERSJA, odKiedy: s.odKiedy || at, godziny, log,
+    poziomy: { ps: ps?.poziomy || (s.poziomy || {}).ps || {}, pc: pc?.poziomy || (s.poziomy || {}).pc || {} },
     karty: { ps: kartyPs, pc: kartyPc },
     ostatnie: {
       ps: (ps?.karty || []).map(k => k.klucz),
