@@ -47,7 +47,8 @@
   .trade-head{font:500 10px "IBM Plex Mono",monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--soft);border-bottom:1px solid var(--line)}
   .trade{border-bottom:1px solid var(--line)}.trade:last-child{border-bottom:0}
   .trade-player{font-weight:600}.trade-player small{display:block;margin-top:3px;color:var(--soft);font:11px "DM Sans",sans-serif}.trade-value{font:500 14px "IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}
-  .trade-value small{display:none}.trade-buy{color:var(--blue)}.trade-sell{color:var(--green)}.trade-time{font:12px/1.35 "DM Sans",sans-serif;color:var(--muted)}.trade-net{font:12px "IBM Plex Mono",monospace;color:var(--green)}
+  .trade-value small{display:none}
+  .trade-zrodlo{display:block;margin-top:2px;font:10px/1.3 "IBM Plex Mono",monospace;letter-spacing:.03em;color:var(--soft)}.trade-buy{color:var(--blue)}.trade-sell{color:var(--green)}.trade-time{font:12px/1.35 "DM Sans",sans-serif;color:var(--muted)}.trade-net{font:12px "IBM Plex Mono",monospace;color:var(--green)}
   .trade-empty{padding:17px;color:var(--muted);font-size:14px}
   .lead-in{margin:6px 0 0;max-width:52ch;font:14px/1.5 "DM Sans",sans-serif;color:var(--muted)}
   .kopiuj{margin-left:8px;padding:2px 7px;border:1px solid var(--line);border-radius:6px;background:transparent;
@@ -208,7 +209,7 @@
   <section class="section">
     <div class="section-head"><h3>Karty do kupienia</h3><span id="trade-caption">Konsola · aktualny odczyt</span></div>
     <div class="trade-list">
-      <div class="trade-head"><span>Zawodnik</span><span>Najniższy BIN</span><span>Kup maks.</span><span>Cel sprzedaży</span><span>Kiedy</span><span>Netto / szt.</span></div>
+      <div class="trade-head"><span>Zawodnik</span><span>Najtańsza oferta</span><span>Kup maks.</span><span>Cel sprzedaży</span><span>Kiedy</span><span>Netto / szt.</span></div>
       <div id="trade-list"><div class="trade-empty">Wczytuję listę kart…</div></div>
     </div>
     <p class="budget-note">Limit 10% banku na jedną kartę trzyma cię przy życiu, gdy pozycja nie wypali. Cena sprzedaży i zysk to szacunek z ostatniego odczytu rynku, nie gwarancja.</p>
@@ -483,10 +484,14 @@
       var cap = buyLimit(first), cel = sellTarget(first), net = Math.floor(cel*0.95-cap);
       label.textContent = labels[platform] + " · " + coins(bank) + " monet · wymaga wyszukiwarki";
       title.textContent = first[0] + ": kupuj do " + coins(cap);
+      var skadCel = Number(first[5]) > 0
+        ? " Cel nie jest liczony z tej jednej oferty, tylko z poziomu tej karty z " + first[5] + " pomiarów — pojedyncze tanie wystawienie nie ma zaniżać ceny wyjścia."
+        : " Tej karty mamy za mało pomiarów, więc cel liczymy z tej jednej oferty. Traktuj go ostrożnie.";
       text.textContent = first[0] + " stoi po " + coins(first[1]) + ". Kupujesz pod tą ceną, wystawiasz po " + coins(cel)
         + " — około " + (net>0?"+":"") + coins(net) + " monet netto na sztuce po podatku. "
         + "To pozycja pod snajpa: trzeba siedzieć przy wyszukiwarce i odświeżać, bo tanie wystawienia znikają w sekundy. "
         + "Nie mamy dziś nic, co dałoby się wziąć bez tego."
+        + skadCel
         + copiesNote(bank, cap) + stalenessNote();
     /* Tu stała gałąź wołająca planOptions() — funkcję usuniętą razem z ręczną
        drabiną pozycji. Wywołania zostały i rzucały ReferenceError, który zabijał
@@ -496,9 +501,8 @@
        Nie przywracam funkcji, bo to była ręczna drabina, którą zastąpił liczony
        kalendarz; gałąź niżej mówi to samo z żywych liczb. */
     } else if (allRows.length){
-      var candidates = allRows.filter(function(row){return planFor(row);});
-      if (!candidates.length){ title.textContent="Brak kart z aktywnym planem wyjścia"; text.textContent="Projekt zapisuje teraz indywidualne ceny dla pasm 86–87. Pozostałe pozycje nie mają tu nazw kart i aktualnych cen."; return; }
-      var cheapest = candidates.reduce(function(best,row){ return buyLimit(row) < buyLimit(best) ? row : best; });
+      /* Bez bramki planFor — patrz komentarz w showTrades. */
+      var cheapest = allRows.reduce(function(best,row){ return buyLimit(row) < buyLimit(best) ? row : best; });
       var progSnipe = buyLimit(cheapest);
       var wszystkie = data && data.pos ? (data.pos.short || []).concat(data.pos.long || []) : [];
       var progPlan = wszystkie.reduce(function(min, item){
@@ -523,15 +527,20 @@
     if (loadError){ setEmpty(target, "Nie udało się pobrać data.json."); showAdvice([],[],[]); return; }
     if (!data){ setEmpty(target, "Wczytuję listę kart…"); showAdvice([],[],[]); return; }
     var allRows = data.snipe && data.snipe[platform] && Array.isArray(data.snipe[platform].rows) ? data.snipe[platform].rows : [];
-    var rows = allRows.filter(function(row){ var plan=planFor(row); return bank > 0 && plan && buyLimit(row) <= bank * 0.10; });
+    /* Do 28.09 wiersz pokazywał się tylko wtedy, gdy planFor(row) znalazł w
+       data.pos.short RĘCZNIE WPISANĄ pozycję "Pasmo 86"/"Pasmo 87" z datą jeszcze
+       nieprzeszłą. Te wpisy stoją zamrożone od 27.09 i mają w sobie "01.10", więc
+       2 października planIsActive przestałby je uznawać i CAŁA tabela zniknęłaby
+       z dnia na dzień — nie z powodu rynku, tylko dlatego, że minęła data wklepana
+       ręcznie trzy dni wcześniej. Cel sprzedaży i tak liczy dziś scraper z poziomu
+       karty, więc plan nie wnosił tu nic poza wygasaniem. */
+    var rows = allRows.filter(function(row){ return bank > 0 && buyLimit(row) <= bank * 0.10; });
     rows.sort(function(a,b){ return buyLimit(a) - buyLimit(b); });
     showAdvice(rows, allRows);
     if (!bank){ setEmpty(target, "Wpisz budżet, żeby zobaczyć pasujące karty."); return; }
     if (!rows.length){
       if (!allRows.length) { setEmpty(target, "Brak kart z aktualnego odczytu dla tego rynku."); return; }
-      var candidates = allRows.filter(function(row){return planFor(row);});
-      if (!candidates.length){ setEmpty(target,"Brak kart z aktywnym celem sprzedaży w planie."); return; }
-      var cheapest = candidates.reduce(function(best,row){ return buyLimit(row) < buyLimit(best) ? row : best; });
+      var cheapest = allRows.reduce(function(best,row){ return buyLimit(row) < buyLimit(best) ? row : best; });
       /* Drugie martwe wywołanie planOptions() — patrz komentarz w showAdvice.
          Zamiast odsyłać do ręcznej drabiny, która już nie istnieje, podajemy
          najniższe wejście z TEGO odczytu. */
@@ -543,7 +552,25 @@
       var line = document.createElement("div");
       line.className = "trade";
       var cap=buyLimit(row), targetPrice=sellTarget(row), net=Math.floor(targetPrice*0.95-cap);
-      [[nazwaZPrzyciskiem(row[0], cap),"", "trade-player"],[coins(row[1]),"Najniższy BIN","trade-value"],[coins(cap),"Kup maks.","trade-value trade-buy"],[coins(targetPrice),"Cel sprzedaży","trade-value trade-sell"],["od razu po kupnie","Kiedy","trade-value trade-time"],[(net>0?"+":"")+coins(net),"Netto / szt.","trade-value trade-net"]].forEach(function(item){
+      /* Skąd są te liczby — widoczne na stałe, nie tylko na telefonie.
+         "Najniższy BIN 3 800" czytało się jak cena karty, a to była najtańsza
+         oferta z jednego odczytu, która zwykle nie dożywa następnego. */
+      var pomiarow = Number(row[5]) || 0;
+      var wiek = priceAgeMin();
+      /* Limit kupna bierze się z NIŻSZEJ z dwóch liczb, więc piszemy, która wygrała —
+         "pod niższą z dwóch" nic nie mówi komuś, kto patrzy na wiersz przez sekundę. */
+      var zKtorej = (pomiarow && Number(row[4]) < Number(row[1])) ? "15% pod poziomem" : "15% pod ofertą";
+      var zrodla = [
+        null,
+        wiek === null ? (priceTimestamp() ? "widziana " + priceTimestamp() : null)
+                      : "widziana " + wiek + " min temu",
+        zKtorej,
+        pomiarow ? "krok pod poziomem · " + pomiarow + " " + odm(pomiarow, "pomiar", "pomiary", "pomiarów")
+                 : "krok pod ofertą · 1 odczyt",
+        null, null
+      ];
+      var komorki = [];
+      [[nazwaZPrzyciskiem(row[0], cap),"", "trade-player"],[coins(row[1]),"Najtańsza oferta","trade-value"],[coins(cap),"Kup maks.","trade-value trade-buy"],[coins(targetPrice),"Cel sprzedaży","trade-value trade-sell"],["od razu po kupnie","Kiedy","trade-value trade-time"],[(net>0?"+":"")+coins(net),"Netto / szt.","trade-value trade-net"]].forEach(function(item){
         var cell = document.createElement("span");
         cell.className = item[2];
         /* Pierwsza kolumna dostaje gotowy węzeł z przyciskiem, reszta zwykły tekst. */
@@ -553,7 +580,15 @@
           small.textContent = item[1];
           cell.appendChild(small);
         }
+        komorki.push(cell);
         line.appendChild(cell);
+      });
+      zrodla.forEach(function(tekst, i){
+        if (!tekst || !komorki[i]) return;
+        var z = document.createElement("span");
+        z.className = "trade-zrodlo";
+        z.textContent = tekst;
+        komorki[i].appendChild(z);
       });
       target.appendChild(line);
     });
@@ -1475,16 +1510,14 @@
     return name;
   }
 
-  function planFor(row){
-    var match=String(row && row[0] || "").match(/\b(86|87)\b/);
-    if (!match || !data || !data.pos || !Array.isArray(data.pos.short)) return null;
-    return data.pos.short.find(function(item){return item.name === "Pasmo " + match[1] && Number(item.sellPrice)>0 && planIsActive(item);}) || null;
-  }
-  /* Próg wejścia i cel sprzedaży pochodzą z tego samego odczytu co BIN: kup 15%
-     pod dnem, wystaw krok siatki pod dnem. Wcześniej próg był docinany liczbą
-     z ręcznie pisanego planu, a cel brany wprost z planu — przez co nagłówek
-     obiecywał cenę snajperską z datą wyjścia za cztery dni. To nie jest jeden
-     trade, tylko dwa sklejone. */
+  /* planFor() usunięte 28.09 razem z bramką, która trzymała tabelę snajperską
+     przy życiu tylko dopóki ręcznie wpisana data w data.pos nie minęła. Zostawianie
+     nieużywanej funkcji to zapraszanie jej z powrotem.
+
+     Próg wejścia i cel sprzedaży liczy scraper (lib/snajperka.mjs): cel z poziomu
+     karty, próg z niższej z dwóch liczb — poziomu i ostatniej oferty. Wcześniej
+     cel brał się wprost z ręcznego planu i nagłówek obiecywał cenę snajperską
+     z datą wyjścia za cztery dni. To nie jest jeden trade, tylko dwa sklejone. */
   function buyLimit(row){ return Number(row && row[2]); }
   function sellTarget(row){ return Number(row && row[3]); }
 
