@@ -82,6 +82,9 @@
   .sbc-termin{font:12px "IBM Plex Mono",monospace;text-align:right;white-space:nowrap;color:var(--muted)}
   .sbc-termin.pilne{color:var(--gold)}
   .sbc-koszt{font:12px "IBM Plex Mono",monospace;text-align:right;white-space:nowrap;color:var(--muted)}
+  .sbc-koszt small{display:block;font:11px "IBM Plex Mono",monospace;letter-spacing:.02em}
+  .sbc-koszt small.gora{color:var(--green)}
+  .sbc-koszt small.dol{color:var(--soft)}
   .ok-karta{display:grid;grid-template-columns:1fr 84px 84px 84px;align-items:baseline;gap:10px;padding:7px 0;border-bottom:1px solid var(--line)}
   .ok-karta:last-of-type{border-bottom:0}
   .ok-karta.head span{font:10px "IBM Plex Mono",monospace;text-transform:uppercase;letter-spacing:.06em;color:var(--soft)}
@@ -189,7 +192,7 @@
   <section class="moves" id="sbc-box">
     <div class="section-head"><h3>Najbliższe SBC</h3><span id="sbc-caption"></span></div>
     <div id="sbc-list"><div class="empty-moves">Wczytuję terminy…</div></div>
-    <p class="budget-note" style="margin-top:10px">Terminy czytane z fut.gg, nie wpisane ręcznie. SBC z bliskim terminem ciągnie z rynku karty w swoim progu — dlatego fodder drożeje przed wygaśnięciem, a nie po nim.</p>
+    <p class="budget-note" style="margin-top:10px">Kwota to koszt rozwiązania po dzisiejszych cenach, czytany z fut.gg. To sygnał <strong>wyjścia</strong>, nie wejścia: popyt na fodder rośnie do terminu i znika w chwili wygaśnięcia, więc kto trzyma karty w tym progu, sprzedaje przed datą, nie po niej. Procent obok kwoty to ruch kosztu od poprzedniego odczytu — rośnie, gdy fodder drożeje.</p>
   </section>
 
   <section class="moves" id="okazje-box">
@@ -661,14 +664,28 @@
       var n = document.createElement("span"); n.className = "sbc-nazwa";
       n.append(document.createTextNode(w.nazwa || "—"));
       var meta = document.createElement("small");
-      meta.textContent = (w.kategoria || "") + (w.powtarzalna ? " · powtarzalna " + w.powtarzalna : "");
+      /* Wymogu składu fut.gg nie publikuje. Ocena karty-nagrody to jedyna wskazówka,
+         w którym progu ta SBC szuka fodderu — pokazujemy ją wprost, tam gdzie jest. */
+      meta.textContent = (w.kategoria || "")
+        + (w.nagroda ? " · nagroda " + w.nagroda : "")
+        + (w.powtarzalna ? " · powtarzalna " + w.powtarzalna : "");
       n.appendChild(meta);
       var d = dniDoSbc(w);
       var t = document.createElement("span");
       t.className = "sbc-termin" + (d !== null && d <= 1 ? " pilne" : "");
       t.textContent = terminSlowami(w);
       var k = document.createElement("span"); k.className = "sbc-koszt";
-      k.textContent = w.koszt ? coins(w.koszt) : "—";
+      k.append(document.createTextNode(w.koszt ? coins(w.koszt) : "—"));
+      /* Ruch kosztu rozwiązania od poprzedniego odczytu. Rośnie = fodder, który ta
+         SBC zjada, właśnie drożeje. To nasz sygnał, nie cudza spekulacja. */
+      if (typeof w.kosztZmiana === "number" && Math.abs(w.kosztZmiana) >= 1){
+        var ruch = document.createElement("small");
+        ruch.className = w.kosztZmiana > 0 ? "gora" : "dol";
+        ruch.textContent = (w.kosztZmiana > 0 ? "+" : "−")
+          + String(Math.abs(w.kosztZmiana)).replace(".", ",") + "%";
+        ruch.title = "Poprzedni odczyt: " + coins(w.kosztPoprz);
+        k.appendChild(ruch);
+      }
       row.append(n, t, k); box.appendChild(row);
     });
   }
