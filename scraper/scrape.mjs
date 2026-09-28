@@ -8,6 +8,7 @@ import { policzOkazje, dopiszOkazje, aktualizujPoziomy, aktualizujPoziomyD, poli
 import { readSbc, dopiszKoszty } from "./lib/sbc.mjs";
 import { zWierszy, dopiszRuchy, odbicia } from "./lib/ruchy.mjs";
 import { zbuduj as zbudujKalendarz } from "./lib/kalendarz.mjs";
+import { dopiszRejestr, zrodloCen, skutecznoscInw } from "./lib/rejestr.mjs";
 
 /* SBC co godzinę, nie dwa razy na dobę. 28.09: SBC z terminem 24 h potrafi
    wygasnąć i zostać zastąpiona nową, a cykl `slow` pokazywał nieistniejącą
@@ -236,6 +237,47 @@ function cardsForCalendar(bands){
   return cards;
 }
 
+/* ---------- platforma na fut.gg ----------
+   Wybór platformy siedzi w ciasteczku `futgg_platform` (konsola = "ps5", PC = "pc")
+   i obowiązuje CAŁĄ sesję przeglądarki, nie tylko stronę, na której się kliknęło.
+
+   Sprawdzone na żywo 28.09.2026 i to był realny błąd w danych: readBandsGG
+   przełączał na PC, żeby odczytać drugie pasmo, i tam ciasteczko zostawało.
+   Wszystko, co czytaliśmy PÓŹNIEJ w tym samym przebiegu — momentum i koszty SBC —
+   było więc z PC, a strona podpisywała to jako konsolę. Różnice nie są kosmetyczne:
+   Destined for Glory Challenge 1 kosztowała 2 550 na PC i 3 900 na konsoli (+53%),
+   TOTW Upgrade 12 000 vs 11 050, Renato Veiga 23 000 vs 21 050.
+
+   Dlatego platformę ustawiamy JAWNIE przed każdym krokiem, który od niej zależy,
+   i sprawdzamy ciasteczko po kliknięciu, zamiast zakładać, że się udało. */
+const CIASTKO = { Console: "ps5", PC: "pc" };
+
+const czytajCiastko = page => page.evaluate(() =>
+  (document.cookie.split(";").map(x => x.trim()).find(x => x.startsWith("futgg_platform=")) || "").split("=")[1] || "");
+
+async function platforma(page, ktora){
+  /* Brak ciasteczka = konsola. Świeża przeglądarka wchodzi na fut.gg z aktywnym
+     przyciskiem Console i bez ciasteczka — ustawia je dopiero pierwszy klik.
+     Dlatego "pusto" traktujemy jak konsolę i nie klikamy po nic: każdy klik to
+     przeładowanie strony i 2,5 s z pięciominutowego budżetu przebiegu. */
+  const teraz = await czytajCiastko(page);
+  if (teraz === CIASTKO[ktora] || (ktora === "Console" && !teraz)) return teraz || CIASTKO.Console;
+
+  const klik = await page.evaluate(nazwa => {
+    const b = [...document.querySelectorAll("button")].find(x => (x.innerText || "").trim() === nazwa);
+    if (!b) return false;
+    b.click();
+    return true;
+  }, ktora);
+  if (!klik) throw new Error(`nie znalazłem przycisku ${ktora} na fut.gg`);
+  await sleep(2500);
+  /* Klik przeładowuje stronę, więc ciasteczko czytamy PO przeładowaniu. */
+  const po = await czytajCiastko(page);
+  if (po !== CIASTKO[ktora])
+    throw new Error(`przełączenie na ${ktora} nie weszło — ciasteczko ${po || "puste"}`);
+  return po;
+}
+
 /* ---------- fut.gg: dno pasm, obie platformy ----------
    Futbin odpada dla serwerów — Cloudflare zwraca "Just a moment...".
    fut.gg przepuszcza. Format cen tutaj to "1,700" i "19,000", nie "1.7K".
@@ -270,17 +312,18 @@ async function readBandsGG(page){
     return out;
   }, S2.pool);
 
-  const ps = await zbierz();                                   // Console jest domyślne
+  /* Konsola jest domyślna w świeżej przeglądarce, ale nie zakładamy tego —
+     ustawiamy jawnie, żeby jedno nieudane przełączenie nie podpisało cen z PC
+     jako konsolowych. */
+  await platforma(page, "Console");
+  const ps = await zbierz();
 
-  const przelaczone = await page.evaluate(() => {
-    const b = [...document.querySelectorAll("button")].find(x => (x.innerText || "").trim() === "PC");
-    if (!b) return false;
-    b.click();
-    return true;
-  });
-  if (!przelaczone) throw new Error("nie znalazłem przycisku PC na fut.gg");
-  await sleep(2500);
+  await platforma(page, "PC");
   const pc = await zbierz();
+
+  /* I wracamy na konsolę, bo ciasteczko obowiązuje resztę przebiegu — momentum
+     i SBC czytamy po tym kroku. */
+  await platforma(page, "Console");
 
   if (!Object.keys(ps).length || !Object.keys(pc).length) throw new Error("puste pasma z fut.gg");
   return { ps, pc };
@@ -380,7 +423,31 @@ try {
       diag.push("KROK PRZERWANY: " + m);
       console.log("ruchy: " + m + " — zostawiam poprzedni szereg");
     }
-    obserwacja = { at, karty: (obserwacja && obserwacja.karty) || {}, diag: diag.slice(0, 12) };
+    /* Momentum czytamy z ciasteczkiem ustawionym na konsolę (patrz platforma()),
+       więc szereg jest KONSOLOWY i tak go podpisujemy. Bez tego podpisu strona
+       stawiała ceny z jednego rynku obok liczb z drugiego. */
+    obserwacja = { at, platforma: "console", karty: (obserwacja && obserwacja.karty) || {}, diag: diag.slice(0, 12) };
+
+    /* Rejestr wyników pozycji — jedyna rzecz, która zamienia sekcję inwestycyjną
+       z rozumowania w pomiar. Wiersz otwiera się przy wykryciu pozycji, zamyka
+       po dobie albo po dojściu do celu, i zostaje z werdyktem. Szczegóły i pułapki
+       w lib/rejestr.mjs.
+
+       Momentum podajemy TYLKO do rejestru konsoli — to jego platforma. Dla PC
+       zostają same pasma, więc kubełek "urwane" będzie tam większy; lepiej mieć
+       mniej danych niż trafienia policzone z cudzego rynku. */
+    const poprzRej = prev.rejestr || {};
+    const rejestr = {
+      ps: dopiszRejestr(poprzRej.ps, at, inwestycje.ps, zrodloCen(bands.ps, obserwacja, at), okazjePs.poziomyD),
+      pc: dopiszRejestr(poprzRej.pc, at, inwestycje.pc, zrodloCen(bands.pc, null, at), okazjePc.poziomyD)
+    };
+    const skutecznosc = { ps: skutecznoscInw(rejestr.ps), pc: skutecznoscInw(rejestr.pc) };
+    for (const [nazwa, sk] of [["konsola", skutecznosc.ps], ["PC", skutecznosc.pc]]){
+      console.log(`rejestr ${nazwa}: ${sk.otwartych} otwartych, ${sk.probek} zamkniętych`
+        + (sk.gotowe
+            ? ` — trafień ${sk.trafienie}% ze ${sk.znane} znanych (cel ${sk.cel}, poziom zszedł ${sk.poziom}, głębiej ${sk.glebiej}, płasko ${sk.plasko}, urwane ${sk.urwane})`
+            : ` — za mało na skuteczność (próg ${sk.minProb})`));
+    }
 
     /* SBC w cyklu fast, ale tylko raz na godzinę. Własny try — nieudany odczyt
        terminów nie może zabrać cen, indeksu ani okazji. */
@@ -393,7 +460,10 @@ try {
         else if (!r.lista.length) console.log("SBC: pusta lista — zostawiam poprzednie terminy");
         else {
           const lista = dopiszKoszty(r.lista, prev.sbc);
-          sbcOut = { at, lista };
+          /* Koszty SBC ZALEŻĄ od platformy — 28.09 Destined for Glory Challenge 1
+             kosztowała 2 550 na PC i 3 900 na konsoli. Czytamy po powrocie na
+             konsolę, więc to koszty konsolowe, i tak je podpisujemy. */
+          sbcOut = { at, platforma: "console", lista };
           console.log(`SBC: ${lista.length} pozycji, z kosztem ${lista.filter(x => x.koszt).length}`);
         }
       }
@@ -415,6 +485,8 @@ try {
       nasz: { ps: policz(histPs), pc: policz(histPc) },
       okazje: dopiszOkazje(prev.okazje, at, okazjePs, okazjePc),
       inwestycje,
+      rejestr,
+      skutecznosc,
       ...(obserwacja ? { obserwacja } : {}),
       /* Index 100 i Momentum są tylko na Futbinie, a ten blokuje serwerownie.
          Przenosimy poprzednie wartości bez zmian i zapisujemy, kiedy były świeże,
