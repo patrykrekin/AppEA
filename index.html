@@ -240,6 +240,12 @@
     <p class="budget-note" style="margin-top:10px">Karta tańsza o co najmniej 10% od <strong>własnego zwykłego poziomu</strong> z ostatniej godziny — nie od reszty pasma. Karta, która zawsze stoi tanio, nie jest okazją, tylko kartą, której nikt nie chce.</p>
   </section>
 
+  <section class="moves" id="skutecznosc-box">
+    <div class="section-head"><h3>Czy nasze pozycje wychodzą</h3><span id="skutecznosc-caption"></span></div>
+    <div id="skutecznosc-list"></div>
+    <p class="budget-note" style="margin-top:10px">Każda wykryta pozycja dostaje wiersz w rejestrze i zamyka się po dobie albo w chwili dojścia do celu — dopiero z zamkniętych liczymy skuteczność. <strong>Do 15 zamkniętych pozycji ta sekcja nic nie twierdzi</strong>, tylko liczy; procent z trzech obserwacji nie jest procentem. Werdykty znaczą co innego, niż wygląda: <strong>„cel”</strong> to cena, która wróciła do poziomu sprzed przeceny. <strong>„Poziom zszedł”</strong> to nasz błąd, nie rynku — karta stała tanio, bo tyle była warta, a nasz poziom dobowy był po prostu spóźniony; z zewnątrz wygląda identycznie jak pozycja. <strong>„Urwane”</strong> to pozycje, których nie dopilnowaliśmy: widzimy tylko kilkanaście najtańszych kart w paśmie, a karta, która wróciła do poziomu, często właśnie dlatego z tego okna wypada. Dlatego urwane trzymamy osobno i <strong>nie wliczamy ich do mianownika</strong> — w pudłach zaniżałyby wynik tym mocniej, im lepiej by nam wychodziło. Rejestr nie jest kasowany przy wdrożeniu: każdy wiersz nosi podpis definicji, więc zmiana progu dzieli historię, a nie ją wyrzuca.</p>
+  </section>
+
   <section class="moves" id="polowanie-box">
     <div class="section-head"><h3>Na które karty nikt nie poluje</h3><span id="polowanie-caption"></span></div>
     <div id="polowanie-list"></div>
@@ -482,15 +488,13 @@
         + "To pozycja pod snajpa: trzeba siedzieć przy wyszukiwarce i odświeżać, bo tanie wystawienia znikają w sekundy. "
         + "Nie mamy dziś nic, co dałoby się wziąć bez tego."
         + copiesNote(bank, cap) + stalenessNote();
-    } else if (planOptions(bank).length){
-      var pick = planOptions(bank)[0];
-      var cel = Number(pick.sellPrice);
-      var zysk = Number.isFinite(cel) && cel > 0 ? Math.floor(cel * 0.95 - Number(pick.entry)) : null;
-      title.textContent = pick.name + ": kupuj do " + coins(pick.entry);
-      text.textContent = (Number.isFinite(cel) && cel > 0
-          ? "Cel sprzedaży " + coins(cel) + " · " + (pick.sell || "warunkowo") + " · około " + (zysk > 0 ? "+" : "") + coins(zysk) + " monet netto za sztukę po podatku. "
-          : "Termin wyjścia: " + (pick.sell || "warunkowo") + ". ")
-        + "To pozycja na całe pasmo, nie na konkretną kartę — bierzesz najtańsze sztuki powyżej progu. Nazwy kart pokazujemy dopiero od pasma 86." + copiesNote(bank, pick.entry);
+    /* Tu stała gałąź wołająca planOptions() — funkcję usuniętą razem z ręczną
+       drabiną pozycji. Wywołania zostały i rzucały ReferenceError, który zabijał
+       CAŁY render: wszystko po showTrades (ruchy, obserwacja, SBC, okazje,
+       kalendarz) przestawało się odświeżać. Uruchamiało się dokładnie wtedy, gdy
+       żadna nazwana karta nie mieszczyła się w budżecie — czyli przy małym banku.
+       Nie przywracam funkcji, bo to była ręczna drabina, którą zastąpił liczony
+       kalendarz; gałąź niżej mówi to samo z żywych liczb. */
     } else if (allRows.length){
       var candidates = allRows.filter(function(row){return planFor(row);});
       if (!candidates.length){ title.textContent="Brak kart z aktywnym planem wyjścia"; text.textContent="Projekt zapisuje teraz indywidualne ceny dla pasm 86–87. Pozostałe pozycje nie mają tu nazw kart i aktualnych cen."; return; }
@@ -528,10 +532,11 @@
       var candidates = allRows.filter(function(row){return planFor(row);});
       if (!candidates.length){ setEmpty(target,"Brak kart z aktywnym celem sprzedaży w planie."); return; }
       var cheapest = candidates.reduce(function(best,row){ return buyLimit(row) < buyLimit(best) ? row : best; });
-      var zPlanu = planOptions(bank);
-      setEmpty(target, zPlanu.length
-        ? "Brak nazwanych kart w tym limicie — nazwy zbieramy dopiero od pasma 86. Pozycje na twój budżet są niżej, w \u201EPlan kupna i sprzedaży\u201D (najtańsza: " + zPlanu[0].name + ", kup do " + coins(zPlanu[0].entry) + ")."
-        : "Brak okazji mieszczących się w obecnym budżecie. Najniższe wejście z ostatniego odczytu: " + coins(buyLimit(cheapest)) + ".");
+      /* Drugie martwe wywołanie planOptions() — patrz komentarz w showAdvice.
+         Zamiast odsyłać do ręcznej drabiny, która już nie istnieje, podajemy
+         najniższe wejście z TEGO odczytu. */
+      setEmpty(target, "Brak nazwanych kart w tym limicie — nazwy zbieramy dopiero od pasma 86. "
+        + "Najniższe wejście z ostatniego odczytu: " + coins(buyLimit(cheapest)) + ".");
       return;
     }
     rows.forEach(function(row){
@@ -613,7 +618,7 @@
     });
   }
 
-  function render(){ showMarket(); showTrades(); showMoves(); showMoje(); showObs(); showSbc(); showOkazje(); showPolowanie(); showPlans(); updateBudgetControls(); }
+  function render(){ showMarket(); showTrades(); showMoves(); showMoje(); showObs(); showSbc(); showOkazje(); showSkutecznosc(); showPolowanie(); showPlans(); updateBudgetControls(); }
 
   /* ── Moje pozycje ─────────────────────────────────────────────────────────
      Do tej pory strona mówiła, po ile kupić i po ile wystawić, a potem gracz
@@ -742,6 +747,80 @@
      następnym odczycie. To nasza miara konkurencji — czego nie ma w żadnym
      cenniku, bo wymaga własnego szeregu pomiarów co pięć minut. */
   var POLOWANIE_MIN_WIDZEN = 3;
+  /* Skuteczność pozycji. Ta sekcja istnieje po to, żeby móc powiedzieć "nie wychodzi",
+     więc nie ma tu żadnego wygładzania: kubełki pokazujemy wszystkie, także te,
+     które nam nie pasują, a przy zbyt małej próbce nie podajemy procentu wcale. */
+  var WERDYKTY = [
+    ["cel",     "Cena wróciła do poziomu",        "ok"],
+    ["poziom",  "To poziom zszedł do ceny",       "zle"],
+    ["glebiej", "Poleciała jeszcze niżej",        "zle"],
+    ["plasko",  "Nic się nie ruszyło",            ""],
+    ["urwane",  "Straciliśmy kartę z oczu",       ""]
+  ];
+
+  function showSkutecznosc(){
+    var box = document.getElementById("skutecznosc-list");
+    var cap = document.getElementById("skutecznosc-caption");
+    var sk = data && data.skutecznosc && data.skutecznosc[platform];
+    if (!sk){
+      cap.textContent = "";
+      setEmpty(box, loadError ? "Nie udało się pobrać danych." : "Rejestr startuje przy pierwszej wykrytej pozycji.", "empty-moves");
+      return;
+    }
+    cap.textContent = labels[platform] + " · definicja " + (sk.def || "—");
+    box.replaceChildren();
+
+    var naglowek = document.createElement("p");
+    naglowek.className = "okazje-teraz";
+    if (sk.gotowe && sk.trafienie !== null){
+      naglowek.textContent = "Trafionych " + sk.trafienie + "% z " + sk.znane
+        + odm(sk.znane, " rozstrzygniętej pozycji", " rozstrzygniętych pozycji", " rozstrzygniętych pozycji")
+        + (sk.medianaDoCelu !== null ? " · mediana dojścia do celu " + obsGodziny(sk.medianaDoCelu * 60) : "");
+    } else {
+      naglowek.textContent = "Zamkniętych pozycji: " + sk.probek + " z " + (sk.minProb || 15)
+        + " potrzebnych. Na tym etapie tylko zbieramy wyniki — procentu jeszcze nie podajemy.";
+    }
+    box.appendChild(naglowek);
+
+    var otw = document.createElement("p");
+    otw.className = "budget-note";
+    otw.style.margin = "0 0 10px";
+    otw.textContent = "Otwartych teraz: " + sk.otwartych
+      + odm(sk.otwartych, " pozycja", " pozycje", " pozycji") + ".";
+    box.appendChild(otw);
+
+    if (sk.probek){
+      var head = document.createElement("div"); head.className = "pol-row head";
+      ["Jak się skończyło", "Ile", "Udział"].forEach(function(t){
+        var x = document.createElement("span"); x.textContent = t; head.appendChild(x);
+      });
+      box.appendChild(head);
+      WERDYKTY.forEach(function(w){
+        var ile = sk[w[0]] || 0;
+        var row = document.createElement("div"); row.className = "pol-row";
+        var n = document.createElement("span"); n.className = "pol-nazwa"; n.textContent = w[1];
+        var a = document.createElement("span"); a.className = "pol-val" + (w[2] ? " " + w[2] : "");
+        a.textContent = String(ile);
+        var b = document.createElement("span"); b.className = "pol-val";
+        /* Udział liczymy z WSZYSTKICH próbek, nie ze "znanych" — inaczej kubełek
+           urwanych miałby udział większy od stu procent całości, do której należy. */
+        b.textContent = sk.probek ? Math.round(ile / sk.probek * 100) + "%" : "—";
+        row.append(n, a, b); box.appendChild(row);
+      });
+    }
+
+    if (sk.starsze && sk.starsze.probek){
+      var st = document.createElement("p");
+      st.className = "budget-note";
+      st.style.marginTop = "10px";
+      st.textContent = "Pod starszą definicją zamknęliśmy jeszcze " + sk.starsze.probek
+        + odm(sk.starsze.probek, " pozycję", " pozycje", " pozycji")
+        + (sk.starsze.trafienie !== null ? " (trafionych " + sk.starsze.trafienie + "%)" : "")
+        + ". Trzymamy je osobno, bo mierzyły inny próg — jedna liczba z dwóch definicji byłaby zlepkiem dwóch pomiarów.";
+      box.appendChild(st);
+    }
+  }
+
   function showPolowanie(){
     var box = document.getElementById("polowanie-list");
     var cap = document.getElementById("polowanie-caption");
