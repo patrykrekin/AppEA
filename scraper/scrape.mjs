@@ -4,7 +4,7 @@ import { patch, read } from "./lib/store.mjs";
 import { validate } from "./validate.mjs";
 import { listBelow, onGrid, snapDown, net } from "./lib/grid.mjs";
 import { policz, dopisz, floorsZPasm } from "./lib/indeks.mjs";
-import { policzOkazje, dopiszOkazje } from "./lib/okazje.mjs";
+import { policzOkazje, dopiszOkazje, aktualizujPoziomy } from "./lib/okazje.mjs";
 import { readSbc, dniDo } from "./lib/sbc.mjs";
 import { SEL as S2 } from "./config.js";
 
@@ -272,11 +272,14 @@ try {
     const histPs = dopisz(histPrev.ps, at, floorsPs);
     const histPc = dopisz(histPrev.pc, at, floorsPc);
 
-    /* Ile kart stoi co najmniej 10% pod medianą dna swojego pasma. To są te
-       wystawienia, z których są pieniądze — liczymy je z danych, które i tak mamy,
-       więc nie kosztuje to ani jednego dodatkowego wejścia na fut.gg. */
-    const okazjePs = policzOkazje(bands.ps, floorsPs);
-    const okazjePc = policzOkazje(bands.pc, floorsPc);
+    /* Okazja to karta tania WZGLĘDEM SIEBIE, nie względem pasma. Najpierw liczymy
+       na poziomach sprzed tego odczytu — inaczej dzisiejsza tania cena sama
+       obniżyłaby próg, który ma pobić — a dopiero potem poziomy aktualizujemy. */
+    const poprzPoziomy = (prev.okazje && prev.okazje.poziomy) || {};
+    const okazjePs = policzOkazje(bands.ps, poprzPoziomy.ps);
+    const okazjePc = policzOkazje(bands.pc, poprzPoziomy.pc);
+    okazjePs.poziomy = aktualizujPoziomy(poprzPoziomy.ps, bands.ps, at);
+    okazjePc.poziomy = aktualizujPoziomy(poprzPoziomy.pc, bands.pc, at);
     console.log(`okazje: konsola ${okazjePs.razem}, PC ${okazjePc.razem} (>10% pod dnem pasma)`);
 
     fields = {
