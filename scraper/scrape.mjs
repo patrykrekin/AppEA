@@ -9,10 +9,12 @@ import { readSbc, dniDo, dopiszKoszty } from "./lib/sbc.mjs";
 import { readCard, sekundyTemu } from "./lib/card.mjs";
 import { kandydaci, doOdczytu, dopiszObserwacje, plynnosc } from "./lib/obserwacja.mjs";
 
-/* Budżet czasu na całą watchlistę. Cron puka co 5 minut, a sam odczyt pasm
-   zajmuje kilkanaście sekund — 90 s zostawia zapas i gwarantuje, że krok
-   nie wyjdzie poza okno nawet przy ośmiu wolnych stronach. */
-const OBSERWACJA_BUDZET_MS = 90000;
+/* Budżet czasu na całą watchlistę. Przy zdrowej stronie karta schodzi w ~3 s,
+   więc osiem sztuk to ~25 s. Budżet jest na wypadek, gdy fut.gg zwalnia i każda
+   karta dobija do pełnego czekania — wtedy pętla urywa się sama, zamiast
+   rozjechać pięciominutowy harmonogram tak jak cykl `top` 27.09.
+   Sprawdzenie jest PRZED kartą, więc przekroczenie to najwyżej jeden odczyt. */
+const OBSERWACJA_BUDZET_MS = 130000;
 import { SEL as S2 } from "./config.js";
 
 /* node scrape.mjs fast   — Index, Momentum, pasma, snajpy (oba rynki z jednego wejścia)
@@ -316,8 +318,9 @@ try {
             plynnosc: plynnosc(r.sales, sekundyTemu),
             podaz: r.podaz
           });
+          console.log(`  ${poz.klucz}: ${r.diag}`);
         } catch (e) {
-          console.log(`watchlista: ${poz.klucz} — ${String(e.message || e).split("\n")[0]}`);
+          console.log(`  ${poz.klucz}: BŁĄD ${String(e.message || e).split("\n")[0]}`);
         }
       }
       if (odczyty.length){
