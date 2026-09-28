@@ -297,14 +297,20 @@ try {
        (50 kart) zakleszczył harmonogram na 2,5 h — to się nie powtórzy, bo
        pętla wychodzi po przekroczeniu budżetu, a nie po przejściu całej listy. */
     let obserwacja = prev.obserwacja || null;
+    /* Diagnostyka leci do data.json, nie tylko do loga przebiegu. Log widzi
+       tylko właściciel repo w zakładce Actions; data.json widać z zewnątrz,
+       więc awarię da się rozpoznać bez przeklejania niczego. Kilka linii,
+       kasowalne jednym usunięciem pola, jak watchlista zacznie działać. */
+    const diag = [];
     try {
       const kand = kandydaci(bands.ps, poprzPoziomy.ps);
       const plan = doOdczytu(prev.obserwacja, kand, at);
+      diag.push(`pasma=${Object.keys(bands.ps).length} poziomy=${Object.keys(poprzPoziomy.ps || {}).length} kandydaci=${kand.length} plan=${plan.length}`);
       const start = Date.now();
       const odczyty = [];
       for (const poz of plan){
         if (Date.now() - start > OBSERWACJA_BUDZET_MS){
-          console.log(`watchlista: budżet czasu wyczerpany po ${odczyty.length}/${plan.length} kartach`);
+          diag.push(`budżet czasu wyczerpany po ${odczyty.length}/${plan.length}`);
           break;
         }
         try {
@@ -318,9 +324,12 @@ try {
             plynnosc: plynnosc(r.sales, sekundyTemu),
             podaz: r.podaz
           });
+          diag.push(`${poz.klucz}: ${r.diag}`);
           console.log(`  ${poz.klucz}: ${r.diag}`);
         } catch (e) {
-          console.log(`  ${poz.klucz}: BŁĄD ${String(e.message || e).split("\n")[0]}`);
+          const m = String(e.message || e).split("\n")[0].slice(0, 120);
+          diag.push(`${poz.klucz}: BŁĄD ${m}`);
+          console.log(`  ${poz.klucz}: BŁĄD ${m}`);
         }
       }
       if (odczyty.length){
@@ -331,8 +340,13 @@ try {
         console.log("watchlista: żaden odczyt się nie udał — zostawiam poprzednią");
       }
     } catch (e) {
-      console.log("watchlista: " + String(e.message || e).split("\n")[0] + " — zostawiam poprzednią");
+      const m = String(e.message || e).split("\n")[0].slice(0, 200);
+      diag.push("KROK PRZERWANY: " + m);
+      console.log("watchlista: " + m + " — zostawiam poprzednią");
     }
+    /* Diagnostyka ma się zapisać nawet wtedy, gdy nie powstała ani jedna karta
+       — to jest dokładnie ten przypadek, który chcemy zobaczyć. */
+    obserwacja = { at, karty: (obserwacja && obserwacja.karty) || {}, diag: diag.slice(0, 12) };
 
     fields = {
       at, atFast: at,
