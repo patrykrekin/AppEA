@@ -9,7 +9,7 @@ on:
         description: "auto = wybierz po przeterminowaniu"
         default: auto
         type: choice
-        options: [auto, fast, slow, top]
+        options: [auto, fast, slow]
 
 # Push robi wbudowany GITHUB_TOKEN — żadnego własnego tokena, żadnego sekretu w repo.
 permissions:
