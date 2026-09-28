@@ -64,6 +64,15 @@
   .moje-nazwa small{display:block;font:11px "IBM Plex Mono",monospace;color:var(--soft)}
   .moje-val{font:12px "IBM Plex Mono",monospace;text-align:right;white-space:nowrap;color:var(--muted)}
   .moje-val.zysk{color:var(--green)} .moje-val.strata{color:var(--down)}
+  .moje-val small{display:block;font:11px "IBM Plex Mono",monospace;color:var(--soft);white-space:nowrap}
+  .moje-val small.ok{color:var(--green)}
+  /* Na telefonie pięć kolumn nie mieści się w 390 px — nazwa idzie nad liczby,
+     a liczby z przyciskiem dzielą szerokość. Wcześniej wiersz wystawał o 43 px. */
+  @media (max-width:640px){
+    .moje-row{grid-template-columns:repeat(3,1fr) 24px;gap:6px 8px}
+    .moje-row.head{display:none}
+    .moje-nazwa{grid-column:1 / -1}
+  }
   .moje-cena{width:78px;padding:3px 5px;border:1px solid var(--line);border-radius:5px;background:transparent;
     color:var(--ink);font:12px "IBM Plex Mono",monospace;text-align:right}
   .moje-usun{border:0;background:transparent;color:var(--soft);font-size:15px;cursor:pointer;line-height:1}
@@ -85,9 +94,9 @@
   .sbc-koszt small{display:block;font:11px "IBM Plex Mono",monospace;letter-spacing:.02em}
   .sbc-koszt small.gora{color:var(--green)}
   .sbc-koszt small.dol{color:var(--soft)}
-  .obs-row{display:grid;grid-template-columns:1fr 296px;align-items:baseline;gap:6px 12px;padding:8px 0;border-bottom:1px solid var(--line)}
+  .obs-row{display:grid;grid-template-columns:1fr 316px;align-items:baseline;gap:6px 12px;padding:8px 0;border-bottom:1px solid var(--line)}
   .obs-row:last-of-type{border-bottom:0}
-  .obs-liczby{display:grid;grid-template-columns:104px 84px 96px;gap:12px;align-items:baseline}
+  .obs-liczby{display:grid;grid-template-columns:100px 92px 100px;gap:12px;align-items:baseline}
   .obs-row.head .obs-val,.obs-row.head .obs-nazwa{font:10px "IBM Plex Mono",monospace;text-transform:uppercase;letter-spacing:.06em;color:var(--soft)}
   .obs-nazwa{color:var(--ink);font-size:14px;min-width:0}
   .obs-nazwa small{display:block;font:11px "IBM Plex Mono",monospace;color:var(--soft);letter-spacing:.02em}
@@ -95,6 +104,9 @@
   .obs-val small{display:block;font:11px "IBM Plex Mono",monospace;color:var(--soft);white-space:nowrap}
   .obs-val.gora{color:var(--green)}
   .obs-val.dol{color:var(--red)}
+  .obs-val small.ok{color:var(--green)}
+  .obs-val small.zle{color:var(--red)}
+  .obs-row.poza{opacity:.45}
   /* Na telefonie cztery kolumny obcinały liczby po prawej — nazwa idzie wtedy
      nad liczby, a same liczby dzielą całą szerokość po równo. */
   @media (max-width:640px){
@@ -109,6 +121,8 @@
   .ok-val{font:12px "IBM Plex Mono",monospace;text-align:right;white-space:nowrap;color:var(--muted)}
   .ok-val.zysk{color:var(--green)}
   .okazje-karty-box{margin:0 0 14px}
+  /* Na 360 px cztery kolumny po 84 px wystawały o 6 px poza ekran. */
+  @media (max-width:400px){ .ok-karta{grid-template-columns:1fr 72px 72px 72px;gap:8px} }
   .okazja-row{display:grid;grid-template-columns:60px 1fr 104px;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line)}
   .okazja-row:last-child{border-bottom:0}
   .okazja-godz{font:13px "IBM Plex Mono",monospace;color:var(--ink)}
@@ -203,13 +217,13 @@
   <section class="moves" id="moje-box">
     <div class="section-head"><h3>Moje pozycje</h3><span id="moje-caption"></span></div>
     <div id="moje-list"></div>
-    <p class="budget-note" style="margin-top:10px">Zapisane w tej przeglądarce, nigdzie nie wysyłane. Przy każdym odświeżeniu przeliczamy, ile zostałoby na rękę po 5% podatku, gdybyś wystawił teraz krok pod aktualnym dnem.</p>
+    <p class="budget-note" style="margin-top:10px">Zapisane w tej przeglądarce, nigdzie nie wysyłane. Przy każdym odświeżeniu przeliczamy, ile zostałoby na rękę po 5% podatku, gdybyś wystawił teraz krok pod aktualnym dnem. Karty przypięte z listy ruchów niosą swój <strong>cel</strong> — poziom sprzed przeceny; gdy rynek go dobije, piszemy „cel osiągnięty”. Cenę wejścia popraw na to, co naprawdę zapłaciłeś: wpisujemy tę z chwili przypięcia.</p>
   </section>
 
   <section class="moves" id="obs-box">
     <div class="section-head"><h3>Karty pod obserwacją</h3><span id="obs-caption"></span></div>
     <div id="obs-list"><div class="empty-moves">Szereg rusza przy najbliższym odczycie.</div></div>
-    <p class="budget-note" style="margin-top:10px">Własny szereg cen, zapisywany co pięć minut z listy ruchów fut.gg. Bierzemy karty, które spadły w dobę, i trzymamy je przez 12 godzin — także wtedy, gdy przestaną spadać, bo wyjście ze spadków to właśnie jest odbicie. <strong>Pół godziny</strong> liczymy tylko powyżej kroku zaokrąglenia fut.gg: przy cenie podanej jako „680K” krok to 1000 monet, a mniejszego ruchu nie da się odróżnić od samego zapisu — wtedy piszemy „bez ruchu” zamiast zmyślać procent.</p>
+    <p class="budget-note" style="margin-top:10px"><strong>Wczoraj</strong> to cena sprzed doby odtworzona z dzisiejszej ceny i zmiany dobowej — rachunek, nie prognoza. Od niej liczymy cenę wyjścia (krok siatki niżej, żeby schodziło) i <strong>kupno do</strong> — najwyższą cenę wejścia, przy której po 5% podatku zostaje jeszcze 5% marży. Wszystkie trzy liczby są w siatce FUT, więc da się je wpisać w grze.<br><strong>Kiedy wchodzić:</strong> nie w chwili spadku, tylko gdy karta przestaje robić nowe dno — dlatego przy każdej stoi, ile czasu minęło od ostatniego dna. Ile ten czas ma wynosić, jeszcze nie wiemy; od teraz zapisujemy wynik każdej obserwacji i policzymy to na danych. <strong>„W limicie” nie znaczy „warto”.</strong> Limit to rachunek: tyle możesz zapłacić, żeby po podatku została marża. Czy warto wchodzić, mówi dopiero druga część werdyktu — „zawraca” to jedyne potwierdzenie, jakie dziś mamy, i to z ostatniej półgodziny. Czego to nie mówi: <strong>że karta wróci</strong>. Ta, która spadła 15%, potrafi spadać dalej — dlatego przy karcie, która nadal leci w dół, piszemy „jeszcze leci” zamiast zachęcać do wejścia. Ruch półgodzinny liczymy tylko powyżej kroku zaokrąglenia fut.gg: przy cenie „680K” krok to 1000 monet, a mniejszego ruchu nie da się odróżnić od samego zapisu. Karty poza twoim limitem 10% są wygaszone. Werdykt „za drogo” przy płytkiej przecenie nie jest usterką: przy spadku mniejszym niż jakieś 10–13% powrót do wczorajszego poziomu daje po podatku ledwie parę procent, więc limit wejścia wypada poniżej dzisiejszej ceny.</p>
   </section>
 
   <section class="moves" id="sbc-box">
@@ -591,6 +605,12 @@
   /* Ile ta karta jest teraz warta. Najpierw dokładny BIN z listy snajperskiej,
      a gdy karty tam nie ma — dno jej pasma, i mówimy o tym wprost. */
   function kursKarty(nazwa, rating, platforma){
+    /* Karta przypięta z listy ruchów ma swoją własną cenę w naszym szeregu.
+       Bez tego spadałaby na "dno pasma", czyli cenę NAJTAŃSZEJ karty w tym
+       paśmie — a to przy Isaku 88 byłaby liczba nie mająca z nim nic wspólnego. */
+    var obs = (platforma === "ps") && data && data.obserwacja && data.obserwacja.karty
+      && data.obserwacja.karty[nazwa];
+    if (obs && obs.cena > 0) return { cena: obs.cena, zrodlo: "nasz szereg" };
     var rows = (data && data.snipe && data.snipe[platforma] && data.snipe[platforma].rows) || [];
     for (var i=0;i<rows.length;i++) if (rows[i][0] === nazwa && Number(rows[i][1]) > 0)
       return { cena: Number(rows[i][1]), zrodlo: "BIN karty" };
@@ -639,7 +659,18 @@
       });
 
       var r = document.createElement("span"); r.className = "moje-val";
-      r.textContent = kurs ? coins(kurs.cena) : "—";
+      r.append(document.createTextNode(kurs ? coins(kurs.cena) : "—"));
+      /* Cel wyjścia z listy ruchów: poziom sprzed przeceny, krok siatki niżej.
+         Gdy rynek go dobije — mówimy wprost, że to moment na wystawienie. */
+      var obsK = (p.platforma === "ps") && data && data.obserwacja && data.obserwacja.karty
+        && data.obserwacja.karty[p.nazwa];
+      var planK = obsK ? obsPlan(obsK) : null;
+      if (planK){
+        var celS = document.createElement("small");
+        if (kurs && kurs.cena >= planK.cel){ celS.className = "ok"; celS.textContent = "cel osiągnięty"; }
+        else celS.textContent = "cel " + coins(planK.cel);
+        r.appendChild(celS);
+      }
 
       var w = document.createElement("span"); w.className = "moje-val";
       if (kurs && p.cena > 0){
@@ -742,6 +773,43 @@
     if (h < 1) return Math.max(1, Math.round(sek / 60)) + " min";
     return h + " h";
   }
+  /* Z listy ruchów robimy konkret per karta: cenę wejścia i cenę wyjścia.
+
+     Co to odblokowało: mając cenę teraz i zmianę dobową, odtwarzamy cenę SPRZED
+     DOBY — cena / (1 + zmiana/100). To nie jest prognoza, tylko rachunek z dwóch
+     liczb, które i tak mamy. Poziom sprzed przeceny jest naturalnym celem wyjścia,
+     bo to po nim rynek handlował jeszcze wczoraj.
+
+     Stąd trzy liczby, wszystkie w siatce cen FUT, więc da się je wpisać w grze:
+     · cel      — krok pod wczorajszym poziomem, żeby schodziło
+     · kupno do — najwyższa cena wejścia, przy której po 5% podatku zostaje ≥5%
+     · na zero  — poniżej tego wyjścia tracisz, jeśli kupiłeś po dzisiejszej cenie
+
+     Czego to NIE mówi: że karta wróci. Karta, która spadła 15%, potrafi spadać
+     dalej. Dlatego "kupno do" jest limitem, a nie zachętą, a przy karcie, która
+     nadal leci w dół, piszemy to wprost. */
+  /* Skutek uboczny marży 5%, świadomy: żeby cena zmieściła się w limicie wejścia,
+     karta musi być przecenona mniej więcej o 10–13% względem wczoraj (im tańsza,
+     tym głębiej, bo siatka cen jest grubsza). Płytsze przeceny zostają na liście
+     jako obserwacja, ale z werdyktem "za drogo" — i tak ma być: przy spadku 7%
+     powrót do wczorajszego poziomu daje po podatku ledwie 1–2%, czyli nic. */
+  var OBS_MARZA = 0.05;
+
+  function obsPlan(w){
+    if (!(w.cena > 0) || typeof w.zmiana24 !== "number" || w.zmiana24 >= 0) return null;
+    var wczoraj = wDol(Math.round(w.cena / (1 + w.zmiana24 / 100)));
+    if (!(wczoraj > w.cena)) return null;
+    var cel = wystawPod(wczoraj);
+    var kupnoDo = wDol(Math.floor(cel * 0.95 / (1 + OBS_MARZA)));
+    if (!(kupnoDo > 0)) return null;
+    var naZero = wGoreSiatki(Math.ceil(w.cena / 0.95));
+    var netto = Math.floor(cel * 0.95 - kupnoDo);
+    if (netto <= 0) return null;
+    return { wczoraj: wczoraj, cel: cel, kupnoDo: kupnoDo, naZero: naZero, netto: netto,
+             wzasiegu: w.cena <= kupnoDo };
+  }
+  function wGoreSiatki(c){ var k = krokSiatki(c); return Math.ceil(c / k) * k; }
+
   function showObs(){
     var box = document.getElementById("obs-list");
     var cap = document.getElementById("obs-caption");
@@ -753,63 +821,128 @@
       setEmpty(box, loadError ? "Nie udało się pobrać danych." : "Szereg rusza przy najbliższym odczycie.", "empty-moves");
       return;
     }
-    var wiersze = klucze.map(function(k){ return obsWiersz(karty[k], o.at); });
+    var bank = budget();
+    var limitNaKarte = bank ? bank * 0.10 : 0;
+
+    var wiersze = klucze.map(function(k){
+      var w = karty[k];
+      var t = obsTrend(w, o.at);
+      /* Ile czasu od ostatniego dna. Dwa odczyty (10 min) to jeszcze nie
+         "przestało schodzić" — dlatego świeższe niż to liczymy jako nowe dno. */
+      var bezDna = (o.at && w.najnizszaAt) ? (o.at - w.najnizszaAt) : null;
+      return { w: w, trend: t.trend, plan: obsPlan(w),
+               bezDna: bezDna, noweDno: bezDna !== null && bezDna < 600,
+               stac: limitNaKarte > 0 && w.cena <= limitNaKarte };
+    });
+    /* Kolejność: najpierw na co cię stać, potem to, dla czego w ogóle mamy plan
+       wejścia, a na końcu po sile zawracania. Karta bez przeceny nie ma planu,
+       więc nie ma po co siedzieć na górze listy. */
+    wiersze.sort(function(a, b){
+      if (a.stac !== b.stac) return a.stac ? -1 : 1;
+      if (!!a.plan !== !!b.plan) return a.plan ? -1 : 1;
+      return (b.trend === null ? -999 : b.trend) - (a.trend === null ? -999 : a.trend);
+    });
+
+    var ileStac = wiersze.filter(function(x){ return x.stac; }).length;
     var wraca = wiersze.filter(function(x){ return x.trend !== null && x.trend > 0; }).length;
     cap.textContent = (o.at ? "Odczyt " + czasHM(o.at) + " · " : "")
       + klucze.length + " " + odm(klucze.length, "karta", "karty", "kart")
+      + (bank ? " · " + ileStac + " w twoim limicie" : "")
       + (wraca ? " · " + wraca + " zawraca" : "");
-
-    /* Najpierw to, co zawraca — reszta to karty, które nadal lecą w dół. */
-    wiersze.sort(function(a, b){ return (b.trend === null ? -999 : b.trend) - (a.trend === null ? -999 : a.trend); });
 
     box.replaceChildren();
     var head = document.createElement("div"); head.className = "obs-row head";
     var hNaz = document.createElement("span"); hNaz.className = "obs-nazwa"; hNaz.textContent = "Karta";
     var hLicz = document.createElement("span"); hLicz.className = "obs-liczby";
-    ["Cena teraz", "Doba", "Pół godziny"].forEach(function(t){
+    ["Teraz", "Kupno do", "Sprzedaj po"].forEach(function(t){
       var x = document.createElement("span"); x.className = "obs-val"; x.textContent = t; hLicz.appendChild(x);
     });
     head.append(hNaz, hLicz);
     box.appendChild(head);
 
     wiersze.forEach(function(r){
-      var w = r.w;
-      var row = document.createElement("div"); row.className = "obs-row";
+      var w = r.w, plan = r.plan;
+      var row = document.createElement("div");
+      row.className = "obs-row" + (bank && !r.stac ? " poza" : "");
 
       var n = document.createElement("span"); n.className = "obs-nazwa";
       n.append(document.createTextNode(w.klucz || "—"));
+      /* Kupiłeś? Przypnij do "Moich pozycji" z ceną, po której stoi teraz —
+         w pozycjach i tak poprawisz ją na to, co naprawdę zapłaciłeś. */
+      if (plan && w.cena > 0){
+        var pin = document.createElement("button");
+        pin.type = "button"; pin.className = "kopiuj sledze"; pin.textContent = "śledzę";
+        pin.title = "Dodaj do Moich pozycji po " + coins(w.cena);
+        pin.addEventListener("click", function(){
+          dodajPozycje(w.klucz, w.cena);
+          pin.dataset.ok = "1"; pin.textContent = "dodane";
+          setTimeout(function(){ delete pin.dataset.ok; pin.textContent = "śledzę"; }, 1600);
+        });
+        n.appendChild(pin);
+      }
       var meta = document.createElement("small");
-      var odIle = (o.at && w.odKiedy) ? obsGodziny(o.at - w.odKiedy) : null;
-      meta.textContent = (odIle ? "śledzimy " + odIle : "")
-        + ((w.hist && w.hist.length) ? " · " + w.hist.length + " " + odm(w.hist.length, "pomiar", "pomiary", "pomiarów") : "");
+      var czesci = [];
+      if (typeof w.zmiana24 === "number") czesci.push("doba " + procTekst(w.zmiana24));
+      if (r.trend === null) czesci.push("30 min: za mało pomiarów");
+      else if (r.trend === 0) czesci.push("30 min bez ruchu");
+      else czesci.push("30 min " + procTekst(r.trend));
+      if (r.bezDna !== null) czesci.push(r.noweDno ? "dno przed chwilą" : "bez nowego dna " + obsGodziny(r.bezDna));
+      if (bank && !r.stac) czesci.push("poza limitem 10%");
+      meta.textContent = czesci.join(" · ");
       n.appendChild(meta);
 
       var c = document.createElement("span"); c.className = "obs-val";
       c.append(document.createTextNode(w.cena > 0 ? coins(w.cena) : "—"));
-      if (r.odDna !== null && r.odDna > 0){
-        var dn = document.createElement("small");
-        dn.textContent = "dno " + coins(w.najnizsza);
-        c.appendChild(dn);
+      if (plan){
+        var wcz = document.createElement("small");
+        wcz.textContent = "wczoraj " + coins(plan.wczoraj);
+        c.appendChild(wcz);
       }
 
-      var d = document.createElement("span"); d.className = "obs-val";
-      if (typeof w.zmiana24 === "number"){
-        d.classList.add(w.zmiana24 >= 0 ? "gora" : "dol");
-        d.textContent = procTekst(w.zmiana24);
-      } else { d.textContent = "—"; }
-
-      var t = document.createElement("span"); t.className = "obs-val";
-      if (r.trend === null){
-        t.append(document.createTextNode("—"));
-        t.title = r.powod || "";
+      var kup = document.createElement("span"); kup.className = "obs-val";
+      var sprz = document.createElement("span"); sprz.className = "obs-val";
+      if (!plan){
+        kup.textContent = "—"; sprz.textContent = "—";
+        kup.title = "Karta nie spadła w dobę — nie ma poziomu sprzed przeceny, do którego mierzyć.";
       } else {
-        if (r.trend !== 0) t.classList.add(r.trend > 0 ? "gora" : "dol");
-        t.append(document.createTextNode(r.trend === 0 ? "bez ruchu" : procTekst(r.trend)));
-        if (r.trend === 0) t.title = "Ruch mniejszy niż krok zaokrąglenia fut.gg ("
-          + coins(w.krok) + ") — nie da się odróżnić od zapisu ceny.";
+        kup.append(document.createTextNode(coins(plan.kupnoDo)));
+        /* DWIE RÓŻNE RZECZY, wcześniej sklejone w jedno "w zasięgu":
+           czy cena mieści się w limicie wejścia (rachunek — zawsze wiemy)
+           i czy w ogóle warto wchodzić (tego nie wiemy, mamy tylko ruch
+           z ostatniej półgodziny). Dlatego werdykt jest osobny od liczby. */
+        var stan = document.createElement("small");
+        /* "Kiedy skupić" to pytanie o czas, nie o cenę. Najmocniejszy sygnał,
+           jaki dziś mamy, to: od jak dawna karta NIE zrobiła nowego dna.
+           Świeże dno = nóż nadal leci. Godzina bez nowego dna = przestało schodzić.
+           To obserwacja, nie prognoza — progu jeszcze nie znamy, zbieramy wyniki. */
+        if (!plan.wzasiegu){
+          stan.textContent = "za drogo";
+        } else if (r.noweDno){
+          stan.textContent = "nowe dno";
+          stan.className = "zle";
+        } else if (r.trend !== null && r.trend < 0){
+          stan.textContent = "leci dalej";
+          stan.className = "zle";
+        } else if (r.trend !== null && r.trend > 0){
+          stan.textContent = "zawraca";
+          stan.className = "ok";
+        } else if (r.bezDna !== null){
+          stan.textContent = "dno " + obsGodziny(r.bezDna) + " temu";
+        } else {
+          stan.textContent = "w limicie";
+        }
+        kup.appendChild(stan);
+
+        sprz.append(document.createTextNode(coins(plan.cel)));
+        var zysk = document.createElement("small");
+        zysk.className = "ok";
+        zysk.textContent = "+" + coins(plan.netto) + " netto";
+        sprz.appendChild(zysk);
+        sprz.title = "Po dzisiejszej cenie wyjście na zero to " + coins(plan.naZero) + ".";
       }
+
       var liczby = document.createElement("span"); liczby.className = "obs-liczby";
-      liczby.append(c, d, t);
+      liczby.append(c, kup, sprz);
       row.append(n, liczby); box.appendChild(row);
     });
   }
