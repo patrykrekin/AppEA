@@ -77,6 +77,14 @@ jobs:
         working-directory: scraper
         run: node validate.mjs ${{ github.workspace }}/data.json
 
+      # 28.09.2026: każde wgranie pliku wywalało przebieg na czerwono i gubiło odczyt.
+      # Przyczyna: workflow robi checkout na starcie, mieli ~minutę, a potem pcha.
+      # Jeżeli w tym czasie ktoś wypchnie cokolwiek na main (choćby okazje.mjs),
+      # `git push` leci non-fast-forward i job pada — mimo że scrape zdążył policzyć.
+      # Skutek był gorszy niż czerwona kropka: przepadał CAŁY odczyt, więc rwały się
+      # serie trwałości i szeregi cen. Teraz przy odrzuceniu robimy rebase i próbujemy
+      # ponownie. Prawdziwy konflikt na data.json (dwa przebiegi naraz) ma paść głośno,
+      # a nie po cichu nadpisać cudzy pomiar.
       - name: Wyślij, jeśli się zmienił
         run: |
           git config user.name  "Terminal FUT"
@@ -87,4 +95,17 @@ jobs:
             exit 0
           fi
           git commit -q -m "ceny $(TZ=Europe/Warsaw date '+%d.%m %H:%M')"
-          git push
+          for i in 1 2 3; do
+            if git push -q; then
+              echo "Wysłane za $i. razem."
+              exit 0
+            fi
+            echo "Push odrzucony — ktoś wypchnął na main w międzyczasie (próba $i/3)."
+            if ! git pull --rebase -q; then
+              echo "BŁĄD: konflikt na data.json przy rebase — nie nadpisuję cudzego odczytu."
+              exit 1
+            fi
+            sleep 3
+          done
+          echo "BŁĄD: trzy próby wysyłki nieudane."
+          exit 1
