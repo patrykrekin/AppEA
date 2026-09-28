@@ -4,7 +4,7 @@ import { patch, read } from "./lib/store.mjs";
 import { validate } from "./validate.mjs";
 import { listBelow, onGrid, snapDown, net } from "./lib/grid.mjs";
 import { policz, dopisz, floorsZPasm } from "./lib/indeks.mjs";
-import { policzOkazje, dopiszOkazje, aktualizujPoziomy, aktualizujPoziomyD, policzInwestycje } from "./lib/okazje.mjs";
+import { policzOkazje, dopiszOkazje, aktualizujPoziomy, aktualizujPoziomyD, policzInwestycje, aktualizujTrwalosc } from "./lib/okazje.mjs";
 import { readSbc, dniDo, dopiszKoszty } from "./lib/sbc.mjs";
 import { zWierszy, dopiszRuchy, odbicia } from "./lib/ruchy.mjs";
 
@@ -316,12 +316,20 @@ try {
        i stoi tam od godzin, a nie mignięcie, które zabierze bot. Pozycje liczymy
        na poziomach SPRZED tego odczytu, tak samo jak okazje. */
     const poprzD = (prev.okazje && prev.okazje.poziomyD) || {};
+    const poprzT = (prev.okazje && prev.okazje.trwalosc) || {};
+    /* Trwałość aktualizujemy PRZED policzeniem pozycji, żeby karta stojąca tanio
+       już szósty odczyt z rzędu została zgłoszona w tym przebiegu, a nie dopiero
+       w następnym. Poziomy zostają na wersji sprzed odczytu — tak jak przy okazjach. */
+    const trwaloscPs = aktualizujTrwalosc(poprzT.ps, bands.ps, poprzD.ps, at);
+    const trwaloscPc = aktualizujTrwalosc(poprzT.pc, bands.pc, poprzD.pc, at);
     const inwestycje = {
-      ps: policzInwestycje(bands.ps, poprzD.ps),
-      pc: policzInwestycje(bands.pc, poprzD.pc)
+      ps: policzInwestycje(bands.ps, poprzD.ps, trwaloscPs, at),
+      pc: policzInwestycje(bands.pc, poprzD.pc, trwaloscPc, at)
     };
     okazjePs.poziomyD = aktualizujPoziomyD(poprzD.ps, poprzPoziomy.ps, bands.ps, at);
     okazjePc.poziomyD = aktualizujPoziomyD(poprzD.pc, poprzPoziomy.pc, bands.pc, at);
+    okazjePs.trwalosc = trwaloscPs;
+    okazjePc.trwalosc = trwaloscPc;
     console.log(`inwestycje: konsola ${inwestycje.ps.length} (w zasięgu ${inwestycje.ps.filter(x => x.wzasiegu).length}), PC ${inwestycje.pc.length}`);
     console.log(`okazje: konsola ${okazjePs.razem}, PC ${okazjePc.razem} (>10% pod własnym poziomem)`);
 
