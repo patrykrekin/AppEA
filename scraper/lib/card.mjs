@@ -22,7 +22,18 @@
 
 /* 12 s × 50 kart = kwadrans, a cron puka co 5 minut — tak zakleszczyliśmy
    harmonogram 27.09. Przy watchliście 8 kart sześć sekund daje ~50 s na krok. */
-const CZEKAJ_MS = 6000;
+/* 28.09 wieczorem: pierwszy przebieg watchlisty wrócił z zerem kart. Krok się
+   wykonał (data.json ma świeże `obserwacja.at`), ale każdy odczyt miał bin=null,
+   więc nic nie weszło do rejestru. Zmierzone na żywej stronie: tabela sprzedaży
+   i liczba przy "Lowest BIN" pojawiają się RAZEM po ~1,9 s przy dobrym łączu.
+   Runner GitHuba jest wolniejszy, a do tego przed kartami klikamy PC na liście
+   pasm, więc strona karty potrafi wstać w stanie przeładowywania cen.
+
+   Stąd trzy zmiany: czekamy na samą LICZBĘ BIN-u (nie na obecność tabeli, która
+   bywa gotowa wcześniej), dajemy więcej czasu, a jak mimo to nie ma ceny —
+   jedna dogrywka i podmiana na najtańszą żywą aukcję. */
+const CZEKAJ_MS = 10000;
+const DOGRYWKA_MS = 1800;
 
 /** "49 seconds ago" → 49. Zwraca null dla tego, czego nie rozumiemy —
  *  zgadywanie zera zrobiłoby ze starej sprzedaży świeżą. */
@@ -56,13 +67,23 @@ export async function readCard(page, url, navTimeoutMs){
   try {
     await page.waitForFunction(() => {
       const txt = e => (e && e.innerText ? e.innerText : "").trim();
-      return [...document.querySelectorAll("table")]
+      const tabela = [...document.querySelectorAll("table")]
         .some(t => [...t.querySelectorAll("th")].some(h => txt(h) === "Time Sold")
                 && t.querySelectorAll("tbody tr").length > 0);
+      if (!tabela) return false;
+      /* Kluczowe: czekamy na samą liczbę BIN-u. To ona nam zniknęła. */
+      const l = [...document.querySelectorAll("*")].find(e => e.children.length === 0 && txt(e) === "Lowest BIN");
+      if (!l) return false;
+      let b = l;
+      for (let i = 0; i < 4 && b.parentElement; i++){
+        b = b.parentElement;
+        if (txt(b).split("\n").map(s => s.trim()).some(s => /^[\d][\d,]{2,}$/.test(s))) return true;
+      }
+      return false;
     }, { timeout: CZEKAJ_MS });
   } catch { dorenderowane = false; }
 
-  const out = await page.evaluate(() => {
+  const czytaj = () => page.evaluate(() => {
     const txt = e => (e && e.innerText ? e.innerText : "").trim();
     const num = s => { const n = parseInt(String(s).replace(/[^\d]/g, ""), 10); return Number.isFinite(n) ? n : null; };
     const tabela = naglowek => [...document.querySelectorAll("table")]
@@ -106,5 +127,27 @@ export async function readCard(page, url, navTimeoutMs){
     return { bin, binWiek, sales, podaz };
   });
 
-  return { ...out, platforma, dorenderowane };
+  let out = await czytaj();
+  /* Dogrywka: jeden raz, tylko gdy naprawdę nie ma ceny. Tanie, a ratuje
+     przebieg, w którym strona akurat przeładowywała ceny po zmianie platformy. */
+  let dogrywka = false;
+  if (!Number.isFinite(out.bin)){
+    await page.waitForTimeout(DOGRYWKA_MS);
+    out = await czytaj();
+    dogrywka = true;
+  }
+
+  /* Ostatnia deska: najtańsza żywa aukcja. To ta sama liczba, którą widzi
+     kupujący, tylko z innej tabeli — zapisujemy źródło, żeby nie udawać BIN-u. */
+  let binZrodlo = Number.isFinite(out.bin) ? "bin" : null;
+  if (!binZrodlo && out.podaz && Number.isFinite(out.podaz.najtanszy)){
+    out.bin = out.podaz.najtanszy;
+    binZrodlo = "aukcje";
+  }
+
+  return {
+    ...out, platforma, dorenderowane, dogrywka, binZrodlo,
+    /* Diagnostyka do loga przebiegu — bez niej zgadywaliśmy, czemu nie ma ceny. */
+    diag: `bin=${out.bin ?? "brak"}(${binZrodlo || "brak"}) sprzedaże=${(out.sales || []).length} aukcje=${(out.podaz && out.podaz.sztuk) || 0}${dorenderowane ? "" : " NIEDORENDEROWANE"}${dogrywka ? " dogrywka" : ""}`
+  };
 }
