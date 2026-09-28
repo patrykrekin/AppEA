@@ -53,7 +53,8 @@ export const PROG_INW = 0.08;      // ile pod poziomem dobowym to już przecena,
 export const MIN_ODCZYTOW_D = 24;  // dwie godziny obserwacji, zanim uwierzymy w poziom dobowy
 export const INW_MARZA = 0.05;     // marża netto, której wymagamy od pozycji
 export const INW_LIMIT = 12;
-export const MIN_TRWALOSC = 6;     // 30 minut pod progiem, zanim nazwiemy to pozycją
+export const MIN_TRWALOSC = 6;        // sześć odczytów z rzędu
+export const MIN_TRWALOSC_SEK = 1500; // i co najmniej 25 minut zegarowych
 
 /* TRWAŁOŚĆ — bez tego poziom dobowy nie wystarcza i przekonałem się o tym na żywo.
    28.09 o 18:40 Fernández 86 stał po 3 000 przy poziomie dobowym 3 983 (−24,7%)
@@ -66,7 +67,7 @@ export const MIN_TRWALOSC = 6;     // 30 minut pod progiem, zanim nazwiemy to po
    swoim poziomem, tylko JAK DŁUGO. Pojedyncze tanie wystawienie żyje minuty.
    Prawdziwa przecena stoi godzinami. Dlatego liczymy, ile odczytów z rzędu karta
    jest pod progiem, i zerujemy licznik, gdy tylko z niego wyjdzie. */
-export function aktualizujTrwalosc(stare, bands, poziomyD, at, prog = PROG_INW, maxWiek = KART_WIEK){
+export function aktualizujTrwalosc(stare, bands, poziomyD, at, prog = PROG_INW){
   const out = {};
   const s = stare && typeof stare === "object" ? stare : {};
   const p = poziomyD || {};
@@ -91,12 +92,12 @@ export function aktualizujTrwalosc(stare, bands, poziomyD, at, prog = PROG_INW, 
       }
     }
   }
-  /* Przenosimy tylko wpisy z niezerowym licznikiem i tylko póki są świeże —
-     karta, której nie widzieliśmy w tym odczycie, nie powinna zbierać stażu. */
-  for (const k of Object.keys(s)){
-    if (out[k] || widziane.has(k)) continue;          // widziana i ponad progiem = staż przepada
-    if ((s[k].n || 0) > 0 && (at - (s[k].t || 0)) <= maxWiek) out[k] = s[k];
-  }
+  /* Karty NIEWIDZIANEJ w tym odczycie nie przenosimy — i to jest sedno.
+     28.09 przy walidacji wyszło, że Foden 84 miał staż 4, ale pierwszy odczyt
+     sprzed DWÓCH GODZIN. Karta wypada z jedenastu najtańszych w paśmie i wraca,
+     a licznik rósł dalej — więc "6 odczytów" znaczyło "6 zauważeń rozrzuconych
+     po kilku godzinach", a nie "pół godziny pod progiem".
+     Skoro karty nie widzimy, nie wiemy, po ile stoi. Uczciwie jest zerwać serię. */
   return out;
 }
 
@@ -142,6 +143,9 @@ export function policzInwestycje(bands, poziomyD, trwalosc, at, prog = PROG_INW,
          tylko czyjeś tanie wystawienie, które zniknie, zanim zdążysz spojrzeć. */
       const t = tr[klucz];
       if (!t || (t.n || 0) < minTrwalosc) continue;
+      /* Dwa warunki, nie jeden: tyle odczytów ORAZ tyle czasu. Sam licznik można
+         uzbierać na przeskokach, sam czas nie mówi, czy patrzyliśmy. */
+      if (!(t.od > 0) || (at - t.od) < MIN_TRWALOSC_SEK) continue;
 
       const cel = listBelow(w.p);
       if (!(cel > 0)) continue;
