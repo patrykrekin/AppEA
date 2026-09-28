@@ -11,7 +11,10 @@
    odpowiadał "za krótki tape" dla każdej karty po kolei.
    Zamiast czekać na ślepo, czekamy na konkretny element i mówimy wprost, gdy go nie ma. */
 
-const CZEKAJ_MS = 12000;
+/* 12 s × 50 kart = kwadrans, a cron puka co 5 minut. Sześć sekund wystarcza
+   na dorenderowanie (zmierzone: tabela jest po ~0,7 s), a w najgorszym razie
+   połowi długość całego cyklu. */
+const CZEKAJ_MS = 6000;
 
 export async function readCard(page, url, navTimeoutMs){
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: navTimeoutMs });
