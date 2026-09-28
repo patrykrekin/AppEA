@@ -26,12 +26,29 @@ export const MIN_ODCZYTOW = 6;     // pół godziny obserwacji, zanim uwierzymy 
 
 /* Wersja definicji okazji. 1 — tanio względem dna pasma (dawało wieczne "okazje"
    w rodzaju Gabriela). 2 — tanio względem własnego poziomu karty. Liczby z jednej
-   definicji nie znaczą tego samego co z drugiej, więc przy zmianie rejestr startuje
-   od zera zamiast sklejać dwa różne pomiary w jedną statystykę. */
+   definicji nie znaczą tego samego co z drugiej i sklejać ich nie wolno.
+
+   Do 28.09.2026 rozwiązywaliśmy to KASOWANIEM całego rejestru przy zmianie
+   wersji. To był błąd i widać go dopiero, gdy rejestr zaczyna do czegoś służyć:
+   zmiana progu wyrzucała dokładnie ten materiał, na którym dałoby się sprawdzić,
+   czy zmiana progu pomogła. Dowód ginął razem z powodem, dla którego się go
+   zbierało — a każde wdrożenie startowało od zera.
+
+   Teraz każda karta w rejestrze nosi podpis definicji, pod którą jej licznik
+   rośnie. Zmiana definicji nie kasuje rejestru; zeruje licznik POJEDYNCZEJ karty
+   przy pierwszym odczycie w nowej definicji (bo mieszanie jej widzeń z dwóch
+   progów byłoby zwykłym fałszem), a resztę zostawia z podpisem starym, do
+   osobnego rachunku. */
 export const WERSJA = 2;
 export const LOG_LIMIT = 288;      // doba przy przebiegu co 5 minut
 export const KART_LIMIT = 80;      // ile kart trzymamy w rejestrze przeżywalności
 export const KART_WIEK = 3 * 86400;
+
+/** Podpis definicji okazji. Wchodzą parametry, które zmieniają znaczenie wpisu:
+ *  wersja definicji, próg i ile odczytów musi mieć poziom, żebyśmy mu wierzyli. */
+export function definicjaOkazji(){
+  return `w${WERSJA}-p${Math.round(PROG * 100)}-o${MIN_ODCZYTOW}`;
+}
 
 /* ── Poziom DOBOWY i pozycje inwestycyjne ────────────────────────────────────
 
@@ -255,12 +272,14 @@ export function dopiszOkazje(stan, at, ps, pc, limit = LOG_LIMIT){
 
   /* Rejestry trzymamy osobno per platforma — ta sama karta ma inną cenę na PC
      i na konsoli, więc mieszanie ich zafałszowałoby i rabat, i przeżywalność. */
-  /* Rejestr z poprzedniej definicji odpada w całości — patrz WERSJA. */
-  const zgodna = (s.wersja || 1) === WERSJA;
-  const poprz = zgodna ? (s.ostatnie || {}) : {};
-  const stareKarty = zgodna ? (s.karty || {}) : {};
-  const kartyPs = dopiszKarty(stareKarty.ps, ps?.karty, poprz.ps, at);
-  const kartyPc = dopiszKarty(stareKarty.pc, pc?.karty, poprz.pc, at);
+  /* Rejestru NIE kasujemy przy zmianie definicji — patrz komentarz przy WERSJA.
+     Podpis jedzie na każdej karcie i to on pilnuje, żeby nie liczyć dwóch
+     progów jako jednej statystyki. */
+  const def = definicjaOkazji();
+  const poprz = s.ostatnie || {};
+  const stareKarty = s.karty || {};
+  const kartyPs = dopiszKarty(stareKarty.ps, ps?.karty, poprz.ps, at, KART_LIMIT, KART_WIEK, def);
+  const kartyPc = dopiszKarty(stareKarty.pc, pc?.karty, poprz.pc, at, KART_LIMIT, KART_WIEK, def);
 
   /* Sam licznik nie wystarczy: "3 okazje" bez nazw jest nie do wykorzystania.
      Zapisujemy karty z BIEŻĄCEGO odczytu, żeby strona mogła je wypisać z ceną,
@@ -271,7 +290,7 @@ export function dopiszOkazje(stan, at, ps, pc, limit = LOG_LIMIT){
   };
 
   return {
-    prog: PROG, wersja: WERSJA, odKiedy: s.odKiedy || at, godziny, log, teraz, terazAt: at,
+    prog: PROG, wersja: WERSJA, def, odKiedy: s.odKiedy || at, godziny, log, teraz, terazAt: at,
     poziomy: { ps: ps?.poziomy || (s.poziomy || {}).ps || {}, pc: pc?.poziomy || (s.poziomy || {}).pc || {} },
     /* Poziom dobowy jedzie tą samą drogą co szybki — bez tego wracałby do zera
        przy każdym przebiegu i pozycje inwestycyjne nigdy by się nie ustabilizowały. */
@@ -311,15 +330,22 @@ export function najlepszeGodziny(stan, minPrzebiegow = 6){
    nikt nie poluje, bywa kartą, której nikt nie kupuje — dlatego przy wysokim
    wyniku trzeba jeszcze sprawdzić, czy w ogóle schodzi. */
 
-/** Aktualizuje rejestr kart. poprzednie: tablica kluczy z poprzedniego odczytu. */
-export function dopiszKarty(stanKart, kartyTeraz, poprzednie, at, limit = KART_LIMIT, maxWiek = KART_WIEK){
+/** Aktualizuje rejestr kart. poprzednie: tablica kluczy z poprzedniego odczytu.
+ *  def: podpis bieżącej definicji — karta z innym podpisem liczy od nowa, ale
+ *  reszta rejestru zostaje na miejscu. */
+export function dopiszKarty(stanKart, kartyTeraz, poprzednie, at, limit = KART_LIMIT, maxWiek = KART_WIEK, def = definicjaOkazji()){
   const karty = { ...(stanKart && typeof stanKart === "object" ? stanKart : {}) };
   const byly = new Set(Array.isArray(poprzednie) ? poprzednie : []);
 
   for (const k of (kartyTeraz || [])){
-    const w = karty[k.klucz] || { widziano: 0, utrzymal: 0, rabat: 0, najlepszyRabat: 0 };
+    const stary = karty[k.klucz];
+    /* Karta zliczana pod inną definicją startuje od zera — jej dotychczasowe
+       widzenia mierzyły inny próg. Kasujemy jedną kartę, nie rejestr. */
+    const w = (stary && stary.def === def)
+      ? stary
+      : { widziano: 0, utrzymal: 0, rabat: 0, najlepszyRabat: 0, def };
     w.widziano += 1;
-    if (byly.has(k.klucz)) w.utrzymal += 1;
+    if (byly.has(k.klucz) && w.widziano > 1) w.utrzymal += 1;
     w.rabat = k.rabat;
     w.najlepszyRabat = Math.max(w.najlepszyRabat || 0, k.rabat);
     w.rating = k.rating;
@@ -339,8 +365,9 @@ export function dopiszKarty(stanKart, kartyTeraz, poprzednie, at, limit = KART_L
 }
 
 /** Karty, na które nikt nie poluje: utrzymują się mimo taniej ceny.
- *  minWidzen odcina te, które mignęły raz — z jednego wystąpienia nic nie wynika. */
-export function najmniejPolowane(stanKart, minWidzen = 3){
+ *  minWidzen odcina te, które mignęły raz — z jednego wystąpienia nic nie wynika.
+ *  def: gdy podany, liczymy tylko karty zmierzone pod tą definicją. */
+export function najmniejPolowane(stanKart, minWidzen = 3, def = null){
   const k = stanKart || {};
   return Object.keys(k)
     .map(klucz => {
@@ -351,6 +378,6 @@ export function najmniejPolowane(stanKart, minWidzen = 3){
         przezywalnosc: widziano > 1 ? +((w.utrzymal || 0) / (widziano - 1) * 100).toFixed(0) : 0
       };
     })
-    .filter(x => x.widziano >= minWidzen)
+    .filter(x => x.widziano >= minWidzen && (!def || x.def === def))
     .sort((a, b) => b.przezywalnosc - a.przezywalnosc || b.najlepszyRabat - a.najlepszyRabat);
 }
