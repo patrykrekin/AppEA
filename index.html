@@ -85,6 +85,23 @@
   .sbc-koszt small{display:block;font:11px "IBM Plex Mono",monospace;letter-spacing:.02em}
   .sbc-koszt small.gora{color:var(--green)}
   .sbc-koszt small.dol{color:var(--soft)}
+  .obs-row{display:grid;grid-template-columns:1fr 296px;align-items:baseline;gap:6px 12px;padding:8px 0;border-bottom:1px solid var(--line)}
+  .obs-row:last-of-type{border-bottom:0}
+  .obs-liczby{display:grid;grid-template-columns:104px 84px 96px;gap:12px;align-items:baseline}
+  .obs-row.head .obs-val,.obs-row.head .obs-nazwa{font:10px "IBM Plex Mono",monospace;text-transform:uppercase;letter-spacing:.06em;color:var(--soft)}
+  .obs-nazwa{color:var(--ink);font-size:14px;min-width:0}
+  .obs-nazwa small{display:block;font:11px "IBM Plex Mono",monospace;color:var(--soft);letter-spacing:.02em}
+  .obs-val{font:12px "IBM Plex Mono",monospace;text-align:right;white-space:nowrap;color:var(--muted);min-width:0}
+  .obs-val small{display:block;font:11px "IBM Plex Mono",monospace;color:var(--soft);white-space:nowrap}
+  .obs-val.gora{color:var(--green)}
+  .obs-val.dol{color:var(--red)}
+  /* Na telefonie cztery kolumny obcinały liczby po prawej — nazwa idzie wtedy
+     nad liczby, a same liczby dzielą całą szerokość po równo. */
+  @media (max-width:640px){
+    .obs-row{grid-template-columns:1fr}
+    .obs-liczby{grid-template-columns:1fr 1fr 1fr;gap:8px}
+    .obs-row.head{display:none}
+  }
   .ok-karta{display:grid;grid-template-columns:1fr 84px 84px 84px;align-items:baseline;gap:10px;padding:7px 0;border-bottom:1px solid var(--line)}
   .ok-karta:last-of-type{border-bottom:0}
   .ok-karta.head span{font:10px "IBM Plex Mono",monospace;text-transform:uppercase;letter-spacing:.06em;color:var(--soft)}
@@ -187,6 +204,12 @@
     <div class="section-head"><h3>Moje pozycje</h3><span id="moje-caption"></span></div>
     <div id="moje-list"></div>
     <p class="budget-note" style="margin-top:10px">Zapisane w tej przeglądarce, nigdzie nie wysyłane. Przy każdym odświeżeniu przeliczamy, ile zostałoby na rękę po 5% podatku, gdybyś wystawił teraz krok pod aktualnym dnem.</p>
+  </section>
+
+  <section class="moves" id="obs-box">
+    <div class="section-head"><h3>Karty pod obserwacją</h3><span id="obs-caption"></span></div>
+    <div id="obs-list"><div class="empty-moves">Obserwacja rusza przy najbliższym odczycie.</div></div>
+    <p class="budget-note" style="margin-top:10px">Lista najtańszych w paśmie pokazuje ~11 kart na pasmo, więc karta, która odbija, z niej wypada — tracimy ją w momencie, który jest całym sensem. Te karty czytamy ze strony karty co pięć minut przez 12 godzin, niezależnie od tego, czy nadal są tanie. <strong>Schodzi</strong> to sztuki na godzinę policzone z taśmy 50 ostatnich sprzedaży; znak „+” oznacza, że taśma się skończyła wcześniej niż godzina, czyli prawdziwa liczba jest wyższa. Ceny konsolowe.</p>
   </section>
 
   <section class="moves" id="sbc-box">
@@ -479,7 +502,7 @@
     });
   }
 
-  function render(){ showMarket(); showTrades(); showMoves(); showMoje(); showSbc(); showOkazje(); showPolowanie(); showPlans(); updateBudgetControls(); }
+  function render(){ showMarket(); showTrades(); showMoves(); showMoje(); showObs(); showSbc(); showOkazje(); showPolowanie(); showPlans(); updateBudgetControls(); }
 
   /* ── Moje pozycje ─────────────────────────────────────────────────────────
      Do tej pory strona mówiła, po ile kupić i po ile wystawić, a potem gracz
@@ -645,6 +668,102 @@
     if (d === 1) return "jutro";
     return "za " + d + " dni";
   }
+  /* Watchlista. Scraper czyta strony pojedynczych kart, więc widzi cenę także wtedy,
+     gdy karta przestała być jedną z najtańszych w paśmie — czyli dokładnie wtedy,
+     gdy odbija. Tu tylko wypisujemy, co z tego wyszło. */
+  /* Polska odmiana po liczbie: 1 karta, 2–4 karty, 5+ kart (z wyjątkiem 12–14). */
+  function odm(n, jedna, kilka, wiele){
+    var a = Math.abs(n) % 100, b = a % 10;
+    if (n === 1) return jedna;
+    if (b >= 2 && b <= 4 && (a < 12 || a > 14)) return kilka;
+    return wiele;
+  }
+  function obsGodziny(sek){
+    var h = Math.floor(sek / 3600);
+    if (h < 1) return Math.max(1, Math.round(sek / 60)) + " min";
+    return h + " h";
+  }
+  function showObs(){
+    var box = document.getElementById("obs-list");
+    var cap = document.getElementById("obs-caption");
+    var o = data && data.obserwacja;
+    var karty = (o && o.karty && typeof o.karty === "object") ? o.karty : null;
+    var klucze = karty ? Object.keys(karty) : [];
+    if (!klucze.length){
+      cap.textContent = "";
+      setEmpty(box, loadError ? "Nie udało się pobrać danych." : "Obserwacja rusza przy najbliższym odczycie.", "empty-moves");
+      return;
+    }
+    cap.textContent = (o.at ? "Odczyt " + czasHM(o.at) + " · " : "")
+      + klucze.length + " " + odm(klucze.length, "karta", "karty", "kart");
+
+    var wiersze = klucze.map(function(k){
+      var w = karty[k];
+      var zmiana = (w.wejscie > 0 && w.cena > 0) ? ((w.cena / w.wejscie) - 1) * 100 : null;
+      return { klucz: k, w: w, zmiana: zmiana };
+    }).sort(function(a, b){ return (b.zmiana === null ? -999 : b.zmiana) - (a.zmiana === null ? -999 : a.zmiana); });
+
+    box.replaceChildren();
+    var head = document.createElement("div"); head.className = "obs-row head";
+    var hNaz = document.createElement("span"); hNaz.className = "obs-nazwa"; hNaz.textContent = "Karta";
+    var hLicz = document.createElement("span"); hLicz.className = "obs-liczby";
+    ["Cena teraz", "Od wejścia", "Schodzi"].forEach(function(t){
+      var x = document.createElement("span"); x.className = "obs-val"; x.textContent = t; hLicz.appendChild(x);
+    });
+    head.append(hNaz, hLicz);
+    box.appendChild(head);
+
+    wiersze.forEach(function(r){
+      var w = r.w;
+      var row = document.createElement("div"); row.className = "obs-row";
+
+      var n = document.createElement("span"); n.className = "obs-nazwa";
+      n.append(document.createTextNode(w.nazwa + (w.rating ? " " + w.rating : "")));
+      var meta = document.createElement("small");
+      var odIle = (o.at && w.odKiedy) ? obsGodziny(o.at - w.odKiedy) : null;
+      meta.textContent = (odIle ? "obserwujemy " + odIle : "")
+        + ((w.hist && w.hist.length) ? " · " + w.hist.length + " " + odm(w.hist.length, "pomiar", "pomiary", "pomiarów") : "");
+      n.appendChild(meta);
+
+      var c = document.createElement("span"); c.className = "obs-val";
+      c.append(document.createTextNode(w.cena > 0 ? coins(w.cena) : "—"));
+      /* Mediana faktycznych sprzedaży z ostatniej godziny. Potrafi stać wyraźnie
+         nad najniższym BIN-em i wtedy to jest cała informacja o marży. */
+      if (w.plynnosc && w.plynnosc.mediana > 0){
+        var med = document.createElement("small");
+        med.textContent = "sprzedaż " + coins(w.plynnosc.mediana);
+        c.appendChild(med);
+      }
+
+      var z = document.createElement("span"); z.className = "obs-val";
+      if (r.zmiana === null){ z.textContent = "—"; }
+      else {
+        z.classList.add(r.zmiana >= 0 ? "gora" : "dol");
+        z.append(document.createTextNode((r.zmiana > 0 ? "+" : r.zmiana < 0 ? "−" : "")
+          + Math.abs(r.zmiana).toFixed(1).replace(".", ",") + "%"));
+        var od = document.createElement("small");
+        od.textContent = "od " + coins(w.wejscie);
+        z.appendChild(od);
+      }
+
+      var s = document.createElement("span"); s.className = "obs-val";
+      if (w.plynnosc && w.plynnosc.naGodzine > 0){
+        s.append(document.createTextNode(w.plynnosc.naGodzine + (w.plynnosc.obciete ? "+" : "") + "/h"));
+        if (w.plynnosc.obciete) s.title = "Taśma 50 sprzedaży skończyła się po "
+          + Math.round(w.plynnosc.oknoSek / 60) + " min — prawdziwa liczba jest wyższa.";
+      } else { s.append(document.createTextNode("—")); }
+      if (w.podaz && w.podaz.sztuk > 0){
+        var pd = document.createElement("small");
+        pd.textContent = w.podaz.sztuk + " " + odm(w.podaz.sztuk, "wystawienie", "wystawienia", "wystawień");
+        s.appendChild(pd);
+      }
+
+      var liczby = document.createElement("span"); liczby.className = "obs-liczby";
+      liczby.append(c, z, s);
+      row.append(n, liczby); box.appendChild(row);
+    });
+  }
+
   function showSbc(){
     var box = document.getElementById("sbc-list");
     var cap = document.getElementById("sbc-caption");
