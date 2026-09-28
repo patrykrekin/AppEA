@@ -15,6 +15,18 @@ import { kandydaci, doOdczytu, dopiszObserwacje, plynnosc } from "./lib/obserwac
    rozjechać pięciominutowy harmonogram tak jak cykl `top` 27.09.
    Sprawdzenie jest PRZED kartą, więc przekroczenie to najwyżej jeden odczyt. */
 const OBSERWACJA_BUDZET_MS = 130000;
+
+/* 28.09 wieczorem — watchlista WYŁĄCZONA. Powód, sprawdzony na żywo:
+   · /cheapest-by-rating/ renderuje ceny po stronie serwera, zero zapytań do API
+     — dlatego odczyt pasm działa z runnera od tygodnia
+   · strona pojedynczej karty bierze ceny inaczej: najpierw /api/fut/price-access/sign/,
+     potem /api/fut/player-prices/27/{id}/?verify=<token>. To samo zapytanie bez tokenu
+     wraca z 403 i stroną Cloudflare.
+   Z runnera GitHuba bramka nie przechodzi: w każdym odczycie było
+   "sprzedaże=0 aukcje=0 NIEDORENDEROWANE". Obchodzenia tej bramki nie robimy.
+   Zostawiam kod i diagnostykę, ale krok nie startuje — inaczej każdy przebieg pali
+   130 s na strony, które i tak nie oddadzą ceny. */
+const OBSERWACJA_WLACZONA = false;
 import { SEL as S2 } from "./config.js";
 
 /* node scrape.mjs fast   — Index, Momentum, pasma, snajpy (oba rynki z jednego wejścia)
@@ -303,6 +315,7 @@ try {
        kasowalne jednym usunięciem pola, jak watchlista zacznie działać. */
     const diag = [];
     try {
+      if (!OBSERWACJA_WLACZONA) throw new Error("watchlista wyłączona: ceny per karta za bramką (403 na player-prices)");
       const kand = kandydaci(bands.ps, poprzPoziomy.ps);
       const plan = doOdczytu(prev.obserwacja, kand, at);
       diag.push(`pasma=${Object.keys(bands.ps).length} poziomy=${Object.keys(poprzPoziomy.ps || {}).length} kandydaci=${kand.length} plan=${plan.length}`);
