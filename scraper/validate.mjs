@@ -50,6 +50,40 @@ export function validate(d){
 
   if (!Array.isArray(d.movers) || d.movers.length < 5) warn.push("movers ma mniej niż 5 wierszy");
 
+  /* Rejestr pozycji. Tu nie chodzi o kompletność, a o spójność: wiersz, który
+     sam sobie przeczy, nie wywala strony — po cichu fałszuje skuteczność, czyli
+     jedyną liczbę, po którą ten rejestr powstał. Dlatego to BŁĘDY, nie uwagi. */
+  for (const p of ["ps", "pc"]){
+    const r = d.rejestr?.[p];
+    if (!r) continue;                     // rejestr narasta; pierwszy przebieg go nie ma
+    for (const [k, o] of Object.entries(r.otwarte || {})){
+      if (!o.def) err.push(`rejestr.${p} ${k}: wiersz bez podpisu definicji — nie da się go potem odsiać`);
+      if (!Number.isFinite(o.wejscie) || o.wejscie <= 0) err.push(`rejestr.${p} ${k}: cena wejścia ${o.wejscie}`);
+      if (!onGrid(o.cel0)) err.push(`rejestr.${p} ${k}: cel ${o.cel0} nie leży na siatce`);
+      if (!(o.cel0 > o.wejscie)) err.push(`rejestr.${p} ${k}: cel ${o.cel0} nie jest nad wejściem ${o.wejscie}`);
+      if (net(o.wejscie, o.cel0) <= 0) err.push(`rejestr.${p} ${k}: netto ${net(o.wejscie, o.cel0)} po podatku — pozycja do niczego`);
+    }
+    (r.wyniki || []).forEach((o, i) => {
+      const gdzie = `rejestr.${p}.wyniki[${i}] ${o.klucz}`;
+      if (!o.def) err.push(`${gdzie}: wynik bez podpisu definicji`);
+      if (o.werdykt === "cel" && !Number.isFinite(o.doCelu)) err.push(`${gdzie}: werdykt "cel" bez czasu dojścia`);
+      if (o.werdykt !== "cel" && Number.isFinite(o.doCelu)) err.push(`${gdzie}: czas dojścia przy werdykcie "${o.werdykt}"`);
+      if (o.werdykt === "poziom" && !(o.poziomMin <= o.wejscie)) err.push(`${gdzie}: werdykt "poziom", ale poziom ${o.poziomMin} nie zszedł do wejścia ${o.wejscie}`);
+    });
+    const sk = d.skutecznosc?.[p];
+    if (sk){
+      if (sk.znane > sk.probek) err.push(`skutecznosc.${p}: znanych ${sk.znane} więcej niż próbek ${sk.probek}`);
+      if (sk.trafienie !== null && (sk.trafienie < 0 || sk.trafienie > 100)) err.push(`skutecznosc.${p}: trafienie ${sk.trafienie}%`);
+      if (sk.gotowe && sk.znane === 0) err.push(`skutecznosc.${p}: ogłasza gotowość bez ani jednego znanego wyniku`);
+    }
+  }
+
+  /* Podpis platformy. Koszty SBC i szereg momentum różnią się między PC i konsolą
+     (28.09: 2 550 vs 3 900 na tej samej SBC), więc dane bez podpisu są liczbą bez
+     jednostki. Uwaga, nie błąd — stary plik ma prawo wyjść na produkcję. */
+  if (d.sbc && d.sbc.platforma !== "console") warn.push("sbc bez podpisu platformy — koszty zależą od platformy");
+  if (d.obserwacja && d.obserwacja.platforma !== "console") warn.push("obserwacja bez podpisu platformy — ceny zależą od platformy");
+
   return { err, warn };
 }
 
