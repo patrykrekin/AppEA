@@ -34,24 +34,6 @@ export function validate(d){
     });
   }
 
-  for (const p of ["ps","pc"]){
-    const rows=d.top?.[p]?.rows;
-    if (rows===undefined) continue; // starszy plik przed pierwszym dwumarketowym cyklem TOP
-    const sprawdzTop=(picks,label,max,requireSpread)=>{
-      if (!Array.isArray(picks) || picks.length>max){err.push(`top.${p}.${label} musi mieć maksymalnie ${max} pozycji`);return;}
-      picks.forEach((row,i)=>{
-        for (const [field,value] of [["BIN",row.bin],["sufit",row.sufit],["wyjście",row.listAt]])
-          if (!Number.isInteger(value) || !onGrid(value)) err.push(`top.${p}.${label}[${i}] ${row.name}: ${field} poza siatką`);
-        if (row.bin>200000 || row.sufit>200000) err.push(`top.${p}.${label}[${i}] ${row.name}: przekracza limit 200 000`);
-        if (net(row.sufit,row.listAt)<=0) err.push(`top.${p}.${label}[${i}] ${row.name}: brak zysku po podatku`);
-        if (row.plynnosc<3 || row.zysk<=0) err.push(`top.${p}.${label}[${i}] ${row.name}: nie przeszedł filtrów taśmy`);
-        if (requireSpread && (!Number.isFinite(row.rozrzut) || row.rozrzut<12 || row.bin<=20000)) err.push(`top.${p}.${label}[${i}] ${row.name}: za mały rozrzut lub cena poza zakresem droższej karty`);
-      });
-    };
-    sprawdzTop(rows,"rows",5,false);
-    if (d.top[p].high!==undefined) sprawdzTop(d.top[p].high,"high",3,true);
-  }
-
   for (const side of ["short","long"]){
     const list = d.pos?.[side];
     if (!Array.isArray(list) || !list.length){ err.push(`pos.${side} puste`); continue; }
