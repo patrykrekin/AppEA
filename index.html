@@ -397,6 +397,26 @@
     return best;
   }
 
+  /* Pozycja inwestycyjna: karta stojąca wyraźnie pod swoim POZIOMEM DOBOWYM.
+     To jest inne pytanie niż snajp. Snajp łapie cudze tanie wystawienie — żyje
+     minuty, wygrywa je bot i trzeba siedzieć przy wyszukiwarce. Poziom dobowy
+     ma kilkanaście godzin pamięci, więc łapie kartę, która NAPRAWDĘ zeszła
+     niżej i stoi tam od godzin. Taką da się kupić spokojnie.
+
+     Liczby przychodzą policzone ze scrapera (lib/okazje.mjs), bo tam są dokładne
+     ceny pasm i poziomy. Strona tylko filtruje po budżecie i wypisuje. */
+  function inwestycjaPick(bank){
+    var lista = (data && data.inwestycje && data.inwestycje[platform]) || [];
+    var limit = bank * 0.10;
+    for (var i = 0; i < lista.length; i++){
+      var x = lista[i];
+      if (!(x.kupnoDo > 0) || x.kupnoDo > limit) continue;
+      if (!x.wzasiegu) continue;
+      return x;
+    }
+    return null;
+  }
+
   function showAdvice(rows, allRows){
     var label = document.getElementById("advice-label");
     var title = document.getElementById("advice-title");
@@ -420,6 +440,23 @@
     /* Najpierw pozycja, której nie trzeba snajpić. Dopiero jak jej nie ma —
        stary pick pod flip, ale podpisany uczciwie: on wymaga siedzenia przy
        wyszukiwarce i przegrywania z botami. */
+    /* Kolejność jest celowa: najpierw pozycja, którą można kupić spokojnie,
+       potem odbicie z listy ruchów, a snajp dopiero na końcu — bo on wymaga
+       siedzenia przy wyszukiwarce i nie jest inwestycją. */
+    var inw = inwestycjaPick(bank);
+    if (inw){
+      label.textContent = labels[platform] + " · " + coins(bank) + " monet · pozycja inwestycyjna";
+      title.textContent = inw.klucz + (inw.pos ? " " + inw.pos : "") + ": bierz do " + coins(inw.kupnoDo);
+      text.textContent = "Ta karta chodzi zwykle po " + coins(inw.poziom)
+        + " — to jej własny poziom z kilkunastu godzin, policzony z " + inw.odczytow + " naszych odczytów, nie z jednego wystawienia. "
+        + "Teraz stoi po " + coins(inw.cena) + ", czyli " + inw.rabat.toFixed(1).replace(".", ",") + "% niżej. "
+        + "Wystawiasz po " + coins(inw.cel) + " — krok siatki pod jej poziomem, więc schodzi. "
+        + "Zostaje około +" + coins(inw.netto) + " monet netto na sztuce po podatku, to " + inw.zwrot.toFixed(1).replace(".", ",") + "% zwrotu. "
+        + "Nie musisz siedzieć przy wyszukiwarce: ta cena stoi od godzin, nie od sekund."
+        + copiesNote(bank, inw.kupnoDo) + stalenessNote();
+      return;
+    }
+
     var sp = odbiciePick(bank);
     if (sp){
       label.textContent = labels[platform] + " · " + coins(bank) + " monet · z naszego szeregu cen";
