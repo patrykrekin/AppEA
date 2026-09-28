@@ -4,7 +4,7 @@ import { patch, read } from "./lib/store.mjs";
 import { validate } from "./validate.mjs";
 import { listBelow, onGrid, snapDown, net } from "./lib/grid.mjs";
 import { policz, dopisz, floorsZPasm } from "./lib/indeks.mjs";
-import { policzOkazje, dopiszOkazje, aktualizujPoziomy } from "./lib/okazje.mjs";
+import { policzOkazje, dopiszOkazje, aktualizujPoziomy, aktualizujPoziomyD, policzInwestycje } from "./lib/okazje.mjs";
 import { readSbc, dniDo, dopiszKoszty } from "./lib/sbc.mjs";
 import { zWierszy, dopiszRuchy, odbicia } from "./lib/ruchy.mjs";
 
@@ -310,6 +310,19 @@ try {
     const okazjePc = policzOkazje(bands.pc, poprzPoziomy.pc);
     okazjePs.poziomy = aktualizujPoziomy(poprzPoziomy.ps, bands.ps, at);
     okazjePc.poziomy = aktualizujPoziomy(poprzPoziomy.pc, bands.pc, at);
+
+    /* Drugi, wolniejszy poziom: kilkanaście godzin pamięci zamiast godziny.
+       Z niego liczymy pozycje inwestycyjne — kartę, która naprawdę zeszła niżej
+       i stoi tam od godzin, a nie mignięcie, które zabierze bot. Pozycje liczymy
+       na poziomach SPRZED tego odczytu, tak samo jak okazje. */
+    const poprzD = (prev.okazje && prev.okazje.poziomyD) || {};
+    const inwestycje = {
+      ps: policzInwestycje(bands.ps, poprzD.ps),
+      pc: policzInwestycje(bands.pc, poprzD.pc)
+    };
+    okazjePs.poziomyD = aktualizujPoziomyD(poprzD.ps, poprzPoziomy.ps, bands.ps, at);
+    okazjePc.poziomyD = aktualizujPoziomyD(poprzD.pc, poprzPoziomy.pc, bands.pc, at);
+    console.log(`inwestycje: konsola ${inwestycje.ps.length} (w zasięgu ${inwestycje.ps.filter(x => x.wzasiegu).length}), PC ${inwestycje.pc.length}`);
     console.log(`okazje: konsola ${okazjePs.razem}, PC ${okazjePc.razem} (>10% pod własnym poziomem)`);
 
     /* Szereg cen z momentum. Zastąpił watchlistę na stronach kart, bo tamte ceny
@@ -360,6 +373,7 @@ try {
       hist: { ps: histPs, pc: histPc },
       nasz: { ps: policz(histPs), pc: policz(histPc) },
       okazje: dopiszOkazje(prev.okazje, at, okazjePs, okazjePc),
+      inwestycje,
       ...(obserwacja ? { obserwacja } : {}),
       /* Index 100 i Momentum są tylko na Futbinie, a ten blokuje serwerownie.
          Przenosimy poprzednie wartości bez zmian i zapisujemy, kiedy były świeże,
