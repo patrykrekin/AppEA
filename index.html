@@ -170,7 +170,7 @@
       <div class="trade-head"><span>Zawodnik</span><span>Najniższy BIN</span><span>Kup maks.</span><span>Cel sprzedaży</span><span>Kiedy</span><span>Netto / szt.</span></div>
       <div id="trade-list"><div class="trade-empty">Wczytuję listę kart…</div></div>
     </div>
-    <p class="budget-note">Zwykłe okazje trzymają dotychczasowy limit na kartę. Droższe kandydatury do 200 000 monet trafiają tu tylko po przejściu analizy taśmy; traktuj je jako alternatywy i wybierz najwyżej jedną. Sprzedaż i zysk są szacunkiem opartym na ostatnich transakcjach, nie gwarancją.</p>
+    <p class="budget-note">Limit 10% banku na jedną kartę trzyma cię przy życiu, gdy pozycja nie wypali. Cena sprzedaży i zysk to szacunek z ostatniego odczytu rynku, nie gwarancja.</p>
   </section>
 
   <section class="moves" id="moje-box">
@@ -311,7 +311,7 @@
     change.className = "change " + (move > 0.15 ? "up" : move < -0.15 ? "down" : "flat");
   }
 
-  function showAdvice(rows, allRows, highRows){
+  function showAdvice(rows, allRows){
     var label = document.getElementById("advice-label");
     var title = document.getElementById("advice-title");
     var text = document.getElementById("advice-text");
@@ -337,10 +337,6 @@
       text.textContent = "Dno stało na " + coins(first[1]) + ". Kupujesz pod dnem, wystawiasz od razu po " + coins(cel)
         + " — krok siatki niżej, więc schodzi w kilka minut. Około " + (net>0?"+":"") + coins(net) + " monet netto na sztuce po podatku."
         + copiesNote(bank, cap) + stalenessNote();
-    } else if (highRows && highRows.length){
-      var candidate=highRows[0];
-      title.textContent=candidate.name+": poluj do "+coins(candidate.buy);
-      text.textContent="BIN "+coins(candidate.market)+" · cel "+coins(candidate.sell)+" do "+candidate.sellBy+" · taśma: "+candidate.plynnosc+" sprzedaży w 10 min · około "+(candidate.net>0?"+":"")+coins(candidate.net)+" monet netto. To alternatywa dla tanich flipów; maksymalnie jedna sztuka.";
     } else if (planOptions(bank).length){
       var pick = planOptions(bank)[0];
       var cel = Number(pick.sellPrice);
@@ -372,26 +368,17 @@
 
   function showTrades(){
     var target = document.getElementById("trade-list");
-    var bank=budget(), standardCap=Math.floor(bank*0.10), expensiveCap=Math.min(bank,200000);
-    var tapeAt=Number(data && data.atTop), tapeStamp=tapeAt?new Date(tapeAt*1000).toLocaleString("pl-PL",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"brak odczytu";
-    document.getElementById("trade-caption").textContent = "Fut.gg · " + labels[platform] + " · ceny " + priceTimestamp() + (priceAgeMin() === null ? "" : " (" + priceAgeMin() + " min temu)") + " · taśma " + tapeStamp + " · standardowo do " + coins(standardCap) + " / karta · taśma do " + coins(expensiveCap);
+    var bank=budget(), standardCap=Math.floor(bank*0.10);
+    document.getElementById("trade-caption").textContent = "Fut.gg · " + labels[platform] + " · ceny " + priceTimestamp() + (priceAgeMin() === null ? "" : " (" + priceAgeMin() + " min temu)") + " · standardowo do " + coins(standardCap) + " / karta";
     target.replaceChildren();
     if (loadError){ setEmpty(target, "Nie udało się pobrać data.json."); showAdvice([],[],[]); return; }
     if (!data){ setEmpty(target, "Wczytuję listę kart…"); showAdvice([],[],[]); return; }
     var allRows = data.snipe && data.snipe[platform] && Array.isArray(data.snipe[platform].rows) ? data.snipe[platform].rows : [];
     var rows = allRows.filter(function(row){ var plan=planFor(row); return bank > 0 && plan && buyLimit(row) <= bank * 0.10; });
     rows.sort(function(a,b){ return buyLimit(a) - buyLimit(b); });
-    var topSet=data.top && data.top[platform];
-    var topRows=topSet && Array.isArray(topSet.rows) ? topSet.rows : (platform==="ps" && data.top && Array.isArray(data.top.rows) ? data.top.rows : []);
-    var highCandidates=topSet && Array.isArray(topSet.high) ? topSet.high : topRows;
-    var topAgeHours=data.atTop ? (Date.now()/1000-Number(data.atTop))/3600 : Infinity;
-    var expensiveRows=topAgeHours<=12 ? highCandidates.filter(function(row){
-      return bank>0 && Number(row.bin)>20000 && Number(row.bin)<=200000 && Number(row.sufit)>0 && Number(row.sufit)<=expensiveCap && Number(row.listAt)>0 && Number(row.zysk)>0 && Number(row.plynnosc)>=3 && Number(row.rozrzut)>=12;
-    }).sort(function(a,b){return Number(b.score||b.zysk)-Number(a.score||a.zysk);}).slice(0,3).map(function(row){return {name:row.name,market:Number(row.bin),buy:Number(row.sufit),sell:Number(row.listAt),sellBy:row.sellBy||"około 3 dni",net:Number(row.zysk),plynnosc:Number(row.plynnosc),source:"tape"};}) : [];
-    showAdvice(rows, allRows, expensiveRows);
+    showAdvice(rows, allRows);
     if (!bank){ setEmpty(target, "Wpisz budżet, żeby zobaczyć pasujące karty."); return; }
-    if (!rows.length && !expensiveRows.length){
-      if (!allRows.length && topAgeHours>12) { setEmpty(target, "Brak świeżej analizy taśmy dla droższych kart. Pojawią się po cyklu TOP, jeśli przejdą filtry."); return; }
+    if (!rows.length){
       if (!allRows.length) { setEmpty(target, "Brak kart z aktualnego odczytu dla tego rynku."); return; }
       var candidates = allRows.filter(function(row){return planFor(row);});
       if (!candidates.length){ setEmpty(target,"Brak kart z aktywnym celem sprzedaży w planie."); return; }
@@ -420,17 +407,6 @@
       });
       target.appendChild(line);
     });
-    expensiveRows.forEach(function(row){
-      var line=document.createElement("div"); line.className="trade";
-      [[nazwaZPrzyciskiem(row.name, row.buy),"Analiza taśmy · maks. 1 szt.","trade-player"],[coins(row.market),"Najniższy BIN","trade-value"],[coins(row.buy),"Kup maks.","trade-value trade-buy"],[coins(row.sell),"Cel sprzedaży","trade-value trade-sell"],["do "+row.sellBy,"Kiedy","trade-value trade-time"],[(row.net>0?"+":"")+coins(row.net),"Netto / szt.","trade-value trade-net"]].forEach(function(item){
-        var cell=document.createElement("span"); cell.className=item[2];
-        if(item[0] instanceof Node) cell.appendChild(item[0]); else cell.textContent=item[0];
-        if(item[1]){var small=document.createElement("small");small.textContent=item[1];cell.appendChild(small);}
-        line.appendChild(cell);
-      });
-      target.appendChild(line);
-    });
-    if (!expensiveRows.length){var note=document.createElement("div");note.className="trade-empty";note.textContent=topAgeHours>12?"Droższe karty: brak świeżych wyników analizy taśmy; po kolejnym cyklu pojawią się tylko trafione okazje.":"Droższe karty: taśma nie wskazuje teraz okazji do 200 000 monet.";target.appendChild(note);}
   }
 
   function numericChange(value){
