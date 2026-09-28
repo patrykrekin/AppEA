@@ -208,8 +208,8 @@
 
   <section class="moves" id="obs-box">
     <div class="section-head"><h3>Karty pod obserwacją</h3><span id="obs-caption"></span></div>
-    <div id="obs-list"><div class="empty-moves">Obserwacja rusza przy najbliższym odczycie.</div></div>
-    <p class="budget-note" style="margin-top:10px">Lista najtańszych w paśmie pokazuje ~11 kart na pasmo, więc karta, która odbija, z niej wypada — tracimy ją w momencie, który jest całym sensem. Te karty czytamy ze strony karty co pięć minut przez 12 godzin, niezależnie od tego, czy nadal są tanie. <strong>Schodzi</strong> to sztuki na godzinę policzone z taśmy 50 ostatnich sprzedaży; znak „+” oznacza, że taśma się skończyła wcześniej niż godzina, czyli prawdziwa liczba jest wyższa. Ceny konsolowe.</p>
+    <div id="obs-list"><div class="empty-moves">Wstrzymane — patrz pod tabelą.</div></div>
+    <p class="budget-note" style="margin-top:10px">Wstrzymane. Ceny pojedynczych kart fut.gg podaje przez zapytanie podpisane tokenem i z naszego serwera wraca na nie 403 — obchodzenia tej bramki nie robimy. Lista pasm, na której stoi reszta strony, jest renderowana po stronie serwera i działa normalnie.</p>
   </section>
 
   <section class="moves" id="sbc-box">
@@ -768,7 +768,7 @@
     var klucze = karty ? Object.keys(karty) : [];
     if (!klucze.length){
       cap.textContent = "";
-      setEmpty(box, loadError ? "Nie udało się pobrać danych." : "Obserwacja rusza przy najbliższym odczycie.", "empty-moves");
+      setEmpty(box, loadError ? "Nie udało się pobrać danych." : "Wstrzymane — patrz pod tabelą.", "empty-moves");
       return;
     }
     cap.textContent = (o.at ? "Odczyt " + czasHM(o.at) + " · " : "")
