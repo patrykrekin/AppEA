@@ -53,6 +53,41 @@ export const PROG_INW = 0.08;      // ile pod poziomem dobowym to już przecena,
 export const MIN_ODCZYTOW_D = 24;  // dwie godziny obserwacji, zanim uwierzymy w poziom dobowy
 export const INW_MARZA = 0.05;     // marża netto, której wymagamy od pozycji
 export const INW_LIMIT = 12;
+export const MIN_TRWALOSC = 6;     // 30 minut pod progiem, zanim nazwiemy to pozycją
+
+/* TRWAŁOŚĆ — bez tego poziom dobowy nie wystarcza i przekonałem się o tym na żywo.
+   28.09 o 18:40 Fernández 86 stał po 3 000 przy poziomie dobowym 3 983 (−24,7%)
+   i wyglądał jak pozycja inwestycyjna. Siedem minut później na fut.gg stał
+   z powrotem po 4 100. To nie była przecena, tylko jedno tanie wystawienie —
+   czyli dokładnie ten snajp, od którego chcieliśmy uciec, tylko wykryty innym
+   poziomem.
+
+   Różnica między okazją a pozycją nie leży w tym, JAK GŁĘBOKO karta stoi pod
+   swoim poziomem, tylko JAK DŁUGO. Pojedyncze tanie wystawienie żyje minuty.
+   Prawdziwa przecena stoi godzinami. Dlatego liczymy, ile odczytów z rzędu karta
+   jest pod progiem, i zerujemy licznik, gdy tylko z niego wyjdzie. */
+export function aktualizujTrwalosc(stare, bands, poziomyD, at, prog = PROG_INW, maxWiek = KART_WIEK){
+  const out = {};
+  const s = stare && typeof stare === "object" ? stare : {};
+  const p = poziomyD || {};
+  for (const r of KOSZYK){
+    for (const c of (bands[r] || [])){
+      if (!c || !Number.isFinite(c.price) || c.price <= 0) continue;
+      const k = `${c.name} ${r}`;
+      const w = p[k];
+      if (!w || !(w.p > 0)) continue;
+      const pod = c.price <= w.p * (1 - prog);
+      const było = s[k];
+      out[k] = pod
+        ? { n: ((było && było.n) || 0) + 1, od: (było && było.n && było.od) || at, t: at }
+        : { n: 0, od: null, t: at };
+    }
+  }
+  for (const k of Object.keys(s)){
+    if (!out[k] && (at - (s[k].t || 0)) <= maxWiek) out[k] = s[k];
+  }
+  return out;
+}
 
 export function aktualizujPoziomyD(stareD, szybkie, bands, at, alfa = ALFA_D, maxWiek = KART_WIEK){
   const out = {};
@@ -80,8 +115,9 @@ export function aktualizujPoziomyD(stareD, szybkie, bands, at, alfa = ALFA_D, ma
 /* Pozycje inwestycyjne: karta stojąca wyraźnie pod swoim poziomem dobowym.
    Cel wyjścia to ten poziom (krok siatki niżej, żeby schodziło), a cena wejścia
    jest liczona wstecz od celu tak, żeby po 5% podatku została marża. */
-export function policzInwestycje(bands, poziomyD, prog = PROG_INW, minOdczytow = MIN_ODCZYTOW_D, limit = INW_LIMIT){
+export function policzInwestycje(bands, poziomyD, trwalosc, at, prog = PROG_INW, minOdczytow = MIN_ODCZYTOW_D, limit = INW_LIMIT, minTrwalosc = MIN_TRWALOSC){
   const p = poziomyD || {};
+  const tr = trwalosc || {};
   const out = [];
   for (const r of KOSZYK){
     for (const c of (bands[r] || [])){
@@ -90,6 +126,11 @@ export function policzInwestycje(bands, poziomyD, prog = PROG_INW, minOdczytow =
       const w = p[klucz];
       if (!w || !(w.p > 0) || (w.n || 0) < minOdczytow) continue;
       if (c.price > w.p * (1 - prog)) continue;
+
+      /* Pod progiem od co najmniej pół godziny — inaczej to nie pozycja,
+         tylko czyjeś tanie wystawienie, które zniknie, zanim zdążysz spojrzeć. */
+      const t = tr[klucz];
+      if (!t || (t.n || 0) < minTrwalosc) continue;
 
       const cel = listBelow(w.p);
       if (!(cel > 0)) continue;
@@ -102,6 +143,7 @@ export function policzInwestycje(bands, poziomyD, prog = PROG_INW, minOdczytow =
         cena: c.price, poziom: w.p, odczytow: w.n,
         rabat: +((1 - c.price / w.p) * 100).toFixed(1),
         cel, kupnoDo, netto,
+        podProgiem: t.n, odSekund: (at && t.od) ? Math.max(0, at - t.od) : null,
         wzasiegu: c.price <= kupnoDo,
         zwrot: +((netto / kupnoDo) * 100).toFixed(1)
       });
@@ -219,6 +261,7 @@ export function dopiszOkazje(stan, at, ps, pc, limit = LOG_LIMIT){
     /* Poziom dobowy jedzie tą samą drogą co szybki — bez tego wracałby do zera
        przy każdym przebiegu i pozycje inwestycyjne nigdy by się nie ustabilizowały. */
     poziomyD: { ps: ps?.poziomyD || (s.poziomyD || {}).ps || {}, pc: pc?.poziomyD || (s.poziomyD || {}).pc || {} },
+    trwalosc: { ps: ps?.trwalosc || (s.trwalosc || {}).ps || {}, pc: pc?.trwalosc || (s.trwalosc || {}).pc || {} },
     karty: { ps: kartyPs, pc: kartyPc },
     ostatnie: {
       ps: (ps?.karty || []).map(k => k.klucz),
