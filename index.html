@@ -189,13 +189,13 @@
     <div class="section-head"><h3>Kiedy pojawiają się okazje</h3><span id="okazje-caption"></span></div>
     <p class="okazje-teraz" id="okazje-teraz">—</p>
     <div id="okazje-list"></div>
-    <p class="budget-note" style="margin-top:10px">Karta stojąca co najmniej 10% pod medianą dna swojego pasma. Takie wystawienia żyją minuty i nie trafiają do żadnego cennika — dlatego liczymy je sami, co pięć minut.</p>
+    <p class="budget-note" style="margin-top:10px">Karta tańsza o co najmniej 10% od <strong>własnego zwykłego poziomu</strong> z ostatniej godziny — nie od reszty pasma. Karta, która zawsze stoi tanio, nie jest okazją, tylko kartą, której nikt nie chce.</p>
   </section>
 
   <section class="moves" id="polowanie-box">
     <div class="section-head"><h3>Na które karty nikt nie poluje</h3><span id="polowanie-caption"></span></div>
     <div id="polowanie-list"></div>
-    <p class="budget-note" style="margin-top:10px">Karta tania w jednym odczycie i tania <strong>znowu</strong> pięć minut później to karta, której nikt nie sprząta. Im wyższy wynik, tym większa szansa, że wejdziesz i ona tam jeszcze będzie. Wysoki wynik bywa też sygnałem, że karta po prostu słabo schodzi — sprawdź, czy ma popyt, zanim wejdziesz większą kwotą.</p>
+    <p class="budget-note" style="margin-top:10px">Karta przeceniona w jednym odczycie i wciąż przeceniona pięć minut później to karta, której nikt nie sprząta. Im wyższy wynik, tym większa szansa, że wejdziesz i ona tam jeszcze będzie.</p>
   </section>
 
   <section class="moves">
@@ -602,7 +602,7 @@
     lista.sort(function(a,b){ return b.przezywalnosc - a.przezywalnosc || b.rabat - a.rabat; });
     box.replaceChildren();
     var head = document.createElement("div"); head.className = "pol-row head";
-    ["Karta","Utrzymuje się","Najlepszy rabat","Ostatnia cena"].forEach(function(t){
+    ["Karta","Utrzymuje się","Najgłębsza przecena","Ostatnia cena"].forEach(function(t){
       var x = document.createElement("span"); x.textContent = t; head.appendChild(x);
     });
     box.appendChild(head);
