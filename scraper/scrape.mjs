@@ -2,13 +2,13 @@ import { open } from "./lib/browser.mjs";
 import { SOURCES, SEL, CYCLES, OUT, PACING, SNIPE_BANDS, SNIPE_DISCOUNT } from "./config.js";
 import { patch, read } from "./lib/store.mjs";
 import { validate } from "./validate.mjs";
-import { listBelow, onGrid, snapDown, net } from "./lib/grid.mjs";
 import { policz, dopisz, floorsZPasm } from "./lib/indeks.mjs";
-import { policzOkazje, dopiszOkazje, aktualizujPoziomy, aktualizujPoziomyD, policzInwestycje, aktualizujTrwalosc } from "./lib/okazje.mjs";
+import { policzOkazje, dopiszOkazje, aktualizujPoziomy, aktualizujPoziomyD, policzInwestycje, aktualizujTrwalosc, MIN_ODCZYTOW } from "./lib/okazje.mjs";
 import { readSbc, dopiszKoszty } from "./lib/sbc.mjs";
 import { zWierszy, dopiszRuchy, odbicia } from "./lib/ruchy.mjs";
 import { zbuduj as zbudujKalendarz } from "./lib/kalendarz.mjs";
 import { dopiszRejestr, zrodloCen, skutecznoscInw } from "./lib/rejestr.mjs";
+import { toSnipeRows } from "./lib/snajperka.mjs";
 
 /* SBC co godzinę, nie dwa razy na dobę. 28.09: SBC z terminem 24 h potrafi
    wygasnąć i zostać zastąpiona nową, a cykl `slow` pokazywał nieistniejącą
@@ -199,30 +199,7 @@ async function readMovers(page){
 /* Z dna pasma robi wiersz snajperski.
    Sufit zakupu jest PONIŻEJ dna rynku — kupujesz taniej niż najtańsza oferta,
    inaczej nie ma z czego wziąć marży. Wystawienie: jeden krok pod rynkiem. */
-function toSnipeRows(bands){
-  /* Po równo z każdego pasma, nie globalny top. Sortowanie po zysku netto wypychało
-     wszystkie 86-ki, bo 87-ki dają dwa razy więcej na sztukę — a to właśnie na 86
-     mamy jedyne zmierzone trafienie i to ono jest w zasięgu mniejszych budżetów. */
-  const naPasmo = Math.max(1, Math.floor(12 / SNIPE_BANDS.length));
-  const rows = [];
 
-  for (const band of SNIPE_BANDS){
-    const zPasma = [];
-    for (const c of (bands[band] || [])){
-      if (!onGrid(c.price)) continue;
-      const market = c.price;
-      const buy    = snapDown(market * (1 - SNIPE_DISCOUNT));
-      const list   = listBelow(market);
-      if (net(buy, list) <= 0) continue;
-      zPasma.push([`${c.name} ${band}${c.pos ? " " + c.pos : ""}`, market, buy, list]);
-    }
-    zPasma.sort((a, b) => net(b[2], b[3]) - net(a[2], a[3]));
-    rows.push(...zPasma.slice(0, naPasmo));
-  }
-
-  // najtańsze wejścia na górze — tam trafia większość budżetów
-  return rows.sort((a, b) => a[2] - b[2]).slice(0, 12);
-}
 
 /* Strona potrzebuje nazw konkretnych kart do kalendarza, nie samej ceny pasma.
    Bierzemy kilku najtańszych graczy z każdego ratingu i platformy. */
@@ -338,9 +315,6 @@ let fields = {};
 try {
   if (cycle === "fast"){
     const bands = await readBandsGG(page);
-    const ps = toSnipeRows(bands.ps), pc = toSnipeRows(bands.pc);
-    if (!ps.length || !pc.length) throw new Error("brak wierszy snajperskich po filtrach");
-
     const prev = read(OUT);
 
     /* Własny indeks z dna pasm. PC i konsola liczone osobno — to dwa rynki.
@@ -359,6 +333,16 @@ try {
     const okazjePc = policzOkazje(bands.pc, poprzPoziomy.pc);
     okazjePs.poziomy = aktualizujPoziomy(poprzPoziomy.ps, bands.ps, at);
     okazjePc.poziomy = aktualizujPoziomy(poprzPoziomy.pc, bands.pc, at);
+
+    /* Wiersze snajperskie liczymy DOPIERO TERAZ, bo cel sprzedaży bierze się
+       z poziomu karty, a nie z pojedynczej oferty — szczegóły przy toSnipeRows.
+       Poziom podajemy ten PO tym odczycie: do celu sprzedaży dzisiejsza cena ma
+       się liczyć, w odróżnieniu od okazji, gdzie sama obniżałaby próg, który ma pobić. */
+    const ps = toSnipeRows(bands.ps, okazjePs.poziomy, SNIPE_BANDS, SNIPE_DISCOUNT, MIN_ODCZYTOW);
+    const pc = toSnipeRows(bands.pc, okazjePc.poziomy, SNIPE_BANDS, SNIPE_DISCOUNT, MIN_ODCZYTOW);
+    if (!ps.length || !pc.length) throw new Error("brak wierszy snajperskich po filtrach");
+    const zPoziomu = r => r.filter(x => x[5] > 0).length;
+    console.log(`snajperka: konsola ${ps.length} wierszy (${zPoziomu(ps)} z poziomu karty), PC ${pc.length} (${zPoziomu(pc)} z poziomu)`);
 
     /* Drugi, wolniejszy poziom: kilkanaście godzin pamięci zamiast godziny.
        Z niego liczymy pozycje inwestycyjne — kartę, która naprawdę zeszła niżej
