@@ -345,6 +345,56 @@
     change.className = "change " + (move > 0.15 ? "up" : move < -0.15 ? "down" : "flat");
   }
 
+  /* Pozycja z taśmy sprzedaży: cena wejścia liczona od tego, PO ILE KARTA
+     FAKTYCZNIE SCHODZI, a nie od pojedynczego taniego wystawienia.
+     Różnica jest zasadnicza. Tanie wystawienie to cudzy błąd — żyje sekundy
+     i wygrywa je bot. Mediana 50 ostatnich transakcji to cena, po której rynek
+     się rozlicza; ona nie znika, bo ktoś kliknął szybciej.
+     Dlatego nagłówek podaje LIMIT ("nie płać więcej niż"), nie okazję do wyrwania.
+
+     Watchlista jest konsolowa — na PC tej sekcji nie pokazujemy, zamiast
+     podpisywać konsolowe liczby jako pecetowe. */
+  var SPREAD_MIN_PLYNNOSC = 8;     // mniej niż sprzedaż co ~7 min i nie ma po co wchodzić
+  var SPREAD_MIN_MARZA = 0.04;     // poniżej 4% netto to nie jest pozycja, tylko szum
+  var SPREAD_MAX_WIEK = 25 * 60;   // odczyt starszy niż 25 minut przestaje być ceną "teraz"
+
+  function spreadPick(bank){
+    if (platform !== "ps") return null;
+    var o = data && data.obserwacja;
+    var karty = (o && o.karty && typeof o.karty === "object") ? o.karty : null;
+    if (!karty || !o.at) return null;
+
+    var best = null;
+    Object.keys(karty).forEach(function(k){
+      var w = karty[k], p = w && w.plynnosc;
+      if (!p || !(p.mediana > 0) || !(p.naGodzine >= SPREAD_MIN_PLYNNOSC)) return;
+      if (!(w.ostatnio > 0) || (o.at - w.ostatnio) > SPREAD_MAX_WIEK) return;
+
+      var cel = wystawPod(p.mediana);
+      if (!(cel > 0)) return;
+      /* Najwyższa cena, przy której po 5% podatku zostaje jeszcze marża. */
+      var limit = wDol(Math.floor(cel * 0.95 / (1 + SPREAD_MIN_MARZA)));
+      if (!(limit > 0) || limit > bank * 0.10) return;
+      var netto = Math.floor(cel * 0.95 - limit);
+      if (netto <= 0) return;
+
+      var kand = {
+        nazwa: w.nazwa, rating: w.rating, limit: limit, cel: cel, netto: netto,
+        cena: w.cena > 0 ? w.cena : null,
+        mediana: p.mediana, naGodzine: p.naGodzine, wGodzine: p.wGodzine || 0,
+        obciete: !!p.obciete, podaz: (w.podaz && w.podaz.sztuk) || 0,
+        zwrot: netto / limit
+      };
+      kand.wzasiegu = kand.cena !== null && kand.cena <= limit;
+      /* Karta, którą da się wziąć TERAZ, bije kartę z lepszą marżą, ale poza
+         zasięgiem — nagłówek ma być czynnością, nie ciekawostką. */
+      if (!best
+          || (kand.wzasiegu && !best.wzasiegu)
+          || (kand.wzasiegu === best.wzasiegu && kand.zwrot > best.zwrot)) best = kand;
+    });
+    return best;
+  }
+
   function showAdvice(rows, allRows){
     var label = document.getElementById("advice-label");
     var title = document.getElementById("advice-title");
@@ -364,12 +414,39 @@
       return;
     }
     label.textContent = labels[platform] + " · " + coins(bank) + " monet";
+
+    /* Najpierw pozycja, której nie trzeba snajpić. Dopiero jak jej nie ma —
+       stary pick pod flip, ale podpisany uczciwie: on wymaga siedzenia przy
+       wyszukiwarce i przegrywania z botami. */
+    var sp = spreadPick(bank);
+    if (sp){
+      label.textContent = labels[platform] + " · " + coins(bank) + " monet · z taśmy sprzedaży";
+      title.textContent = sp.wzasiegu
+        ? sp.nazwa + " " + sp.rating + ": bierz do " + coins(sp.limit)
+        : sp.nazwa + " " + sp.rating + ": nie płać więcej niż " + coins(sp.limit);
+      text.textContent = "Przez ostatnią godzinę ta karta schodziła po " + coins(sp.mediana)
+        + " — to " + sp.wGodzine + " " + odm(sp.wGodzine, "zamknięta transakcja", "zamknięte transakcje", "zamkniętych transakcji")
+        + ", nie cena z pojedynczego wystawienia. Wystawiasz po " + coins(sp.cel)
+        + ", zostaje około " + (sp.netto > 0 ? "+" : "") + coins(sp.netto) + " monet netto na sztuce po podatku. "
+        + (sp.wzasiegu
+            ? "Najtańsza sztuka stoi teraz po " + coins(sp.cena) + ", czyli w limicie. "
+            : "Najtańsza sztuka stoi teraz po " + coins(sp.cena) + " — powyżej limitu, więc dziś czekasz. ")
+        + "Tempo " + sp.naGodzine + (sp.obciete ? "+" : "") + " szt./h"
+        + (sp.podaz ? ", w tej chwili " + sp.podaz + " " + odm(sp.podaz, "wystawienie", "wystawienia", "wystawień") : "")
+        + " — to nie jest wyrywanie cudzej pomyłki, tylko pilnowanie ceny wejścia."
+        + copiesNote(bank, sp.limit);
+      return;
+    }
+
     if (rows.length){
       var first = rows[0];
       var cap = buyLimit(first), cel = sellTarget(first), net = Math.floor(cel*0.95-cap);
+      label.textContent = labels[platform] + " · " + coins(bank) + " monet · wymaga wyszukiwarki";
       title.textContent = first[0] + ": kupuj do " + coins(cap);
-      text.textContent = "Dno stało na " + coins(first[1]) + ". Kupujesz pod dnem, wystawiasz od razu po " + coins(cel)
-        + " — krok siatki niżej, więc schodzi w kilka minut. Około " + (net>0?"+":"") + coins(net) + " monet netto na sztuce po podatku."
+      text.textContent = "Dno stało na " + coins(first[1]) + ". Kupujesz pod dnem, wystawiasz po " + coins(cel)
+        + " — około " + (net>0?"+":"") + coins(net) + " monet netto na sztuce po podatku. "
+        + "To pozycja pod snajpa: trzeba siedzieć przy wyszukiwarce i odświeżać, bo tanie wystawienia znikają w sekundy. "
+        + "Nie mamy dziś nic, co dałoby się wziąć bez tego."
         + copiesNote(bank, cap) + stalenessNote();
     } else if (planOptions(bank).length){
       var pick = planOptions(bank)[0];
