@@ -6,6 +6,13 @@ import { listBelow, onGrid, snapDown, net } from "./lib/grid.mjs";
 import { policz, dopisz, floorsZPasm } from "./lib/indeks.mjs";
 import { policzOkazje, dopiszOkazje, aktualizujPoziomy } from "./lib/okazje.mjs";
 import { readSbc, dniDo, dopiszKoszty } from "./lib/sbc.mjs";
+import { readCard, sekundyTemu } from "./lib/card.mjs";
+import { kandydaci, doOdczytu, dopiszObserwacje, plynnosc } from "./lib/obserwacja.mjs";
+
+/* Budżet czasu na całą watchlistę. Cron puka co 5 minut, a sam odczyt pasm
+   zajmuje kilkanaście sekund — 90 s zostawia zapas i gwarantuje, że krok
+   nie wyjdzie poza okno nawet przy ośmiu wolnych stronach. */
+const OBSERWACJA_BUDZET_MS = 90000;
 import { SEL as S2 } from "./config.js";
 
 /* node scrape.mjs fast   — Index, Momentum, pasma, snajpy (oba rynki z jednego wejścia)
@@ -280,13 +287,56 @@ try {
     const okazjePc = policzOkazje(bands.pc, poprzPoziomy.pc);
     okazjePs.poziomy = aktualizujPoziomy(poprzPoziomy.ps, bands.ps, at);
     okazjePc.poziomy = aktualizujPoziomy(poprzPoziomy.pc, bands.pc, at);
-    console.log(`okazje: konsola ${okazjePs.razem}, PC ${okazjePc.razem} (>10% pod dnem pasma)`);
+    console.log(`okazje: konsola ${okazjePs.razem}, PC ${okazjePc.razem} (>10% pod własnym poziomem)`);
+
+    /* Watchlista: kilka kart czytanych ze strony karty, żeby nie tracić ich
+       z oczu, gdy przestają być najtańsze w paśmie. Cały krok jest opcjonalny:
+       własny try, własny budżet czasu i twardy limit sztuk. 27.09 podobny krok
+       (50 kart) zakleszczył harmonogram na 2,5 h — to się nie powtórzy, bo
+       pętla wychodzi po przekroczeniu budżetu, a nie po przejściu całej listy. */
+    let obserwacja = prev.obserwacja || null;
+    try {
+      const kand = kandydaci(bands.ps, poprzPoziomy.ps);
+      const plan = doOdczytu(prev.obserwacja, kand, at);
+      const start = Date.now();
+      const odczyty = [];
+      for (const poz of plan){
+        if (Date.now() - start > OBSERWACJA_BUDZET_MS){
+          console.log(`watchlista: budżet czasu wyczerpany po ${odczyty.length}/${plan.length} kartach`);
+          break;
+        }
+        try {
+          const r = await readCard(page, poz.url, PACING.navTimeoutMs);
+          const zKand = kand.find(x => x.klucz === poz.klucz);
+          odczyty.push({
+            ...poz,
+            bin: r.bin,
+            poziom: zKand ? zKand.poziom : null,
+            rabat: zKand ? zKand.rabat : null,
+            plynnosc: plynnosc(r.sales, sekundyTemu),
+            podaz: r.podaz
+          });
+        } catch (e) {
+          console.log(`watchlista: ${poz.klucz} — ${String(e.message || e).split("\n")[0]}`);
+        }
+      }
+      if (odczyty.length){
+        obserwacja = dopiszObserwacje(prev.obserwacja, at, odczyty);
+        const zCena = odczyty.filter(o => Number.isFinite(o.bin)).length;
+        console.log(`watchlista: ${zCena}/${odczyty.length} z ceną, ${Object.keys(obserwacja.karty).length} na liście, ${Math.round((Date.now() - start) / 1000)} s`);
+      } else {
+        console.log("watchlista: żaden odczyt się nie udał — zostawiam poprzednią");
+      }
+    } catch (e) {
+      console.log("watchlista: " + String(e.message || e).split("\n")[0] + " — zostawiam poprzednią");
+    }
 
     fields = {
       at, atFast: at,
       hist: { ps: histPs, pc: histPc },
       nasz: { ps: policz(histPs), pc: policz(histPc) },
       okazje: dopiszOkazje(prev.okazje, at, okazjePs, okazjePc),
+      ...(obserwacja ? { obserwacja } : {}),
       /* Index 100 i Momentum są tylko na Futbinie, a ten blokuje serwerownie.
          Przenosimy poprzednie wartości bez zmian i zapisujemy, kiedy były świeże,
          żeby strona mogła uczciwie pokazać ich wiek zamiast udawać, że są z teraz. */
