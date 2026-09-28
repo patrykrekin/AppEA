@@ -26,6 +26,7 @@ export const LIMIT = 30;                // ile kart trzymamy w szeregu
 export const OKNO = 12 * 3600;          // jak długo karta zostaje po ostatnim widzeniu
 export const HIST_LIMIT = 72;           // 6 h przy odczycie co 5 minut
 export const OKNO_TRENDU = 1800;        // 30 minut — tyle wystarczy, żeby zobaczyć zawracanie
+export const WYNIKI_LIMIT = 400;        // ~tydzień zamkniętych obserwacji
 
 /** "17.5K" → { cena: 17500, krok: 100 }. Krok to wartość ostatniej podanej cyfry,
  *  czyli najmniejsza różnica, jaką ten zapis w ogóle potrafi pokazać. */
@@ -85,26 +86,97 @@ export function dopiszRuchy(stan, at, wpisy, limit = LIMIT, okno = OKNO, histLim
     karty[w.klucz] = zapisz(null, w, at, histLimit);
   }
 
-  /* Sprzątanie po oknie — rejestr ma nie puchnąć. */
+  /* Sprzątanie po oknie. Karta, która z niego wypada, NIE znika po cichu —
+     zamykamy jej obserwację i odkładamy wynik do rejestru. To on jest materiałem
+     na licznik trafień; bez niego po tygodniu nadal nie wiedzielibyśmy nic. */
   const out = {};
+  const wyniki = [...((stan && Array.isArray(stan.wyniki)) ? stan.wyniki : [])];
   for (const k of Object.keys(karty)){
     if ((at - (karty[k].ostatnio || 0)) <= okno) out[k] = karty[k];
+    else wyniki.push(zamknij(karty[k], at));
   }
-  return { at, karty: out };
+  return { at, karty: out, wyniki: wyniki.slice(-WYNIKI_LIMIT) };
+}
+
+/* Podsumowanie rejestru: ile kart doszło do celu i po jakim czasie.
+   minProb pilnuje, żeby nie ogłaszać skuteczności z trzech obserwacji. */
+export function skutecznosc(stan, minProb = 20){
+  const w = (stan && Array.isArray(stan.wyniki)) ? stan.wyniki : [];
+  if (w.length < minProb) return { probek: w.length, gotowe: false };
+  const doszly = w.filter(x => Number.isFinite(x.doCelu));
+  const czasy = doszly.map(x => x.doCelu).sort((a, b) => a - b);
+  const doDna = w.map(x => x.doDna).filter(Number.isFinite).sort((a, b) => a - b);
+  const med = a => a.length ? a[Math.floor(a.length / 2)] : null;
+  return {
+    probek: w.length, gotowe: true,
+    doszly: doszly.length,
+    trafienie: +((doszly.length / w.length) * 100).toFixed(0),
+    medianaDoCelu: med(czasy),
+    medianaDoDna: med(doDna)
+  };
 }
 
 function zapisz(stary, w, at, histLimit){
   const hist = [...((stary && Array.isArray(stary.hist)) ? stary.hist : []), [at, w.cena]];
+
+  /* Dno i MOMENT dna. Sam poziom dna nie wystarcza: "kiedy skupić" to pytanie
+     o czas, a nie o cenę. Karta, która przed minutą zrobiła nowe dno, i karta,
+     która nie robi nowego dna od godziny, mają tę samą wartość `najnizsza`
+     i zupełnie inne znaczenie. */
+  const bylo = stary && Number.isFinite(stary.najnizsza) ? stary.najnizsza : null;
+  const noweDno = bylo === null || w.cena < bylo;
+  const najnizsza = noweDno ? w.cena : bylo;
+  const najnizszaAt = noweDno ? at : (stary && stary.najnizszaAt) || at;
+
+  /* Poziom sprzed przeceny, zamrożony w chwili wejścia na listę. Późniejsza
+     zmiana dobowa przesuwałaby cel pod wynik — a wtedy nie dałoby się uczciwie
+     policzyć, czy karta do niego doszła. */
+  const celStart = (stary && Number.isFinite(stary.celStart))
+    ? stary.celStart
+    : (w.zmiana24 < 0 ? Math.round(w.cena / (1 + w.zmiana24 / 100)) : null);
+
+  const osiagnietyAt = (stary && stary.osiagnietyAt)
+    || (celStart && w.cena >= celStart ? at : null);
+
+  /* Najwyższa cena PO dnie — z tego liczymy, jak mocno odbiła, nawet gdy nie
+     doszła do celu. Reset przy nowym dnie, bo poprzedni szczyt przestaje mieć
+     związek z tym, co mierzymy. */
+  const najwyzszaPoDnie = noweDno ? w.cena
+    : Math.max((stary && stary.najwyzszaPoDnie) || w.cena, w.cena);
+
   return {
     klucz: w.klucz,
     cena: w.cena,
     krok: w.krok,
     zmiana24: w.zmiana24,
     wejscie: (stary && Number.isFinite(stary.wejscie)) ? stary.wejscie : w.cena,
+    spadekStart: (stary && Number.isFinite(stary.spadekStart)) ? stary.spadekStart : w.zmiana24,
+    celStart,
     odKiedy: (stary && stary.odKiedy) || at,
-    najnizsza: Math.min((stary && stary.najnizsza) || w.cena, w.cena),
+    najnizsza, najnizszaAt, najwyzszaPoDnie, osiagnietyAt,
     ostatnio: at,
     hist: hist.slice(-histLimit)
+  };
+}
+
+/* Zamknięta obserwacja — jeden wiersz do rejestru wyników. Z tego policzymy,
+   ile kart w ogóle wraca i po jakim czasie, czyli odpowiemy na "kiedy skupić"
+   liczbą, a nie przeczuciem. */
+function zamknij(w, at){
+  const minut = s => Math.max(0, Math.round(s / 60));
+  const odbicie = (w.najnizsza > 0 && w.najwyzszaPoDnie > 0)
+    ? +(((w.najwyzszaPoDnie / w.najnizsza) - 1) * 100).toFixed(1) : null;
+  return {
+    klucz: w.klucz,
+    spadek: w.spadekStart ?? w.zmiana24 ?? null,
+    cenaStart: w.wejscie ?? null,
+    cel: w.celStart ?? null,
+    dno: w.najnizsza ?? null,
+    doDna: (w.najnizszaAt && w.odKiedy) ? minut(w.najnizszaAt - w.odKiedy) : null,
+    doCelu: w.osiagnietyAt ? minut(w.osiagnietyAt - w.odKiedy) : null,
+    odbicie,
+    trwala: minut(at - (w.odKiedy || at)),
+    zamkniete: at
   };
 }
 
