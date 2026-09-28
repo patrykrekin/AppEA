@@ -5,7 +5,7 @@ import { validate } from "./validate.mjs";
 import { listBelow, onGrid, snapDown, net } from "./lib/grid.mjs";
 import { policz, dopisz, floorsZPasm } from "./lib/indeks.mjs";
 import { policzOkazje, dopiszOkazje, aktualizujPoziomy } from "./lib/okazje.mjs";
-import { readSbc, dniDo } from "./lib/sbc.mjs";
+import { readSbc, dniDo, dopiszKoszty } from "./lib/sbc.mjs";
 import { SEL as S2 } from "./config.js";
 
 /* node scrape.mjs fast   — Index, Momentum, pasma, snajpy (oba rynki z jednego wejścia)
@@ -322,9 +322,15 @@ try {
       if (!r.dorenderowane) console.log("SBC: strona nie dorenderowała listy — zostawiam poprzednie terminy");
       else if (!r.lista.length) console.log("SBC: pusta lista po parsowaniu — zostawiam poprzednie terminy");
       else {
-        sbc = { at, lista: r.lista };
-        const naj = r.lista.find(x => x.wygasaAt);
-        console.log(`SBC: ${r.lista.length} pozycji` + (naj ? `, najbliższy termin: ${naj.nazwa} za ${dniDo(naj, at)} dni` : ""));
+        /* Koszt rozwiązania porównujemy z poprzednim wolnym cyklem — jego ruch to
+           nasza miara popytu na fodder, jedyna dostępna, bo wymogu składu fut.gg
+           nie podaje. Bez poprzedniego pliku po prostu nie ma z czym porównać. */
+        const lista = dopiszKoszty(r.lista, read(OUT).sbc);
+        sbc = { at, lista };
+        const naj = lista.find(x => x.wygasaAt);
+        const ruszone = lista.filter(x => Number.isFinite(x.kosztZmiana) && Math.abs(x.kosztZmiana) >= 5).length;
+        console.log(`SBC: ${lista.length} pozycji, z kosztem ${lista.filter(x => x.koszt).length}, ruszone ${ruszone}`
+          + (naj ? `, najbliższy termin: ${naj.nazwa} za ${dniDo(naj, at)} dni` : ""));
       }
     } catch (e) {
       console.log("SBC: " + String(e.message || e).split("\n")[0] + " — zostawiam poprzednie terminy");
