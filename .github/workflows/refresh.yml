@@ -15,9 +15,14 @@ on:
 permissions:
   contents: write
 
+# 28.09.2026: jeden wspólny tor zakleszczył wszystko. Cykl top potrafi chodzić
+# kilkanaście minut (50 kart × czekanie na dorenderowanie), a cron puka co 5 minut —
+# każde kolejne pukanie lądowało w kolejce za nim i było anulowane. Skutek: ceny
+# stanęły na dwie godziny, choć i cron, i Actions raportowały "normalnie".
+# Osobny tor per cykl: długi top mieli sobie z boku, a fast leci dalej.
 concurrency:
-  group: refresh
-  cancel-in-progress: false      # dwa cykle nie mogą pisać naraz
+  group: refresh-${{ github.event.inputs.cycle || 'auto' }}
+  cancel-in-progress: false      # dwa przebiegi tego samego cyklu nie mogą pisać naraz
 
 jobs:
   refresh:
