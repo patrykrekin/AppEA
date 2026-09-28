@@ -70,21 +70,32 @@ export function aktualizujTrwalosc(stare, bands, poziomyD, at, prog = PROG_INW, 
   const out = {};
   const s = stare && typeof stare === "object" ? stare : {};
   const p = poziomyD || {};
+  /* Karty widziane w TYM odczycie. Bez tego przenoszenie starych wpisów cofałoby
+     wyzerowanie: karta, która właśnie wyszła ponad próg, wracałaby ze swoim
+     poprzednim stażem i pozycja nigdy by nie znikła. */
+  const widziane = new Set();
   for (const r of KOSZYK){
     for (const c of (bands[r] || [])){
       if (!c || !Number.isFinite(c.price) || c.price <= 0) continue;
       const k = `${c.name} ${r}`;
       const w = p[k];
       if (!w || !(w.p > 0)) continue;
+      widziane.add(k);
       const pod = c.price <= w.p * (1 - prog);
-      const było = s[k];
-      out[k] = pod
-        ? { n: ((było && było.n) || 0) + 1, od: (było && było.n && było.od) || at, t: at }
-        : { n: 0, od: null, t: at };
+      /* Zer NIE zapisujemy. Brak wpisu znaczy dokładnie to samo co licznik zero,
+         a 28.09 na 190 kart w rejestrze 179 miało zero — 18 kB w data.json,
+         który strona i tak pobiera co minutę. */
+      if (pod){
+        const było = s[k];
+        out[k] = { n: ((było && było.n) || 0) + 1, od: (było && było.n && było.od) || at, t: at };
+      }
     }
   }
+  /* Przenosimy tylko wpisy z niezerowym licznikiem i tylko póki są świeże —
+     karta, której nie widzieliśmy w tym odczycie, nie powinna zbierać stażu. */
   for (const k of Object.keys(s)){
-    if (!out[k] && (at - (s[k].t || 0)) <= maxWiek) out[k] = s[k];
+    if (out[k] || widziane.has(k)) continue;          // widziana i ponad progiem = staż przepada
+    if ((s[k].n || 0) > 0 && (at - (s[k].t || 0)) <= maxWiek) out[k] = s[k];
   }
   return out;
 }
