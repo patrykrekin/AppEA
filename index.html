@@ -221,10 +221,16 @@
     <p class="budget-note" style="margin-top:10px">Zapisane w tej przeglądarce, nigdzie nie wysyłane. Przy każdym odświeżeniu przeliczamy, ile zostałoby na rękę po 5% podatku, gdybyś wystawił teraz krok pod aktualnym dnem. Karty przypięte z listy ruchów niosą swój <strong>cel</strong> — poziom sprzed przeceny; gdy rynek go dobije, piszemy „cel osiągnięty”. Cenę wejścia popraw na to, co naprawdę zapłaciłeś: wpisujemy tę z chwili przypięcia.</p>
   </section>
 
+  <section class="moves" id="monitor-box">
+    <div class="section-head"><h3>Przecenione w twoim przedziale</h3><span id="monitor-caption"></span></div>
+    <div id="monitor-list"><div class="empty-moves">Lista powstaje z kolejnych odczytów pasm.</div></div>
+    <p class="budget-note" style="margin-top:10px">Te karty liczymy z <strong>własnych pasm</strong> (83–89), które i tak czytamy co pięć minut — nie z listy momentum fut.gg, gdzie najtańsza karta kosztuje 15 000 i przy normalnym banku nie da się z niej nic kupić. Kryterium: karta stoi co najmniej 5% <strong>i co najmniej jeden krok siatki</strong> pod swoim własnym poziomem dobowym (~11,5 h pamięci), a poziom ma za sobą minimum 24 odczyty. Sam procent nie wystarczy — przy karcie za 650 pięć procent to 32 monety, czyli mniej niż krok, więc byłby to wyłącznie artefakt zaokrąglenia.<br><strong>Zawraca</strong> znaczy, że krótka średnia (~1 h) podniosła się o ponad krok siatki nad swoje dno z ostatniego pół godziny. <strong>Nowe dno</strong> znaczy, że dalej schodzi — wtedy nie wchodzisz, bo karta przeceniona o 15% potrafi spaść o kolejne 15. To obserwacja, nie prognoza: nie twierdzimy, że wróci. Czy z tego są pieniądze, rozstrzygnie rejestr wyników, a nie ta lista.</p>
+  </section>
+
   <section class="moves" id="obs-box">
-    <div class="section-head"><h3>Karty pod obserwacją</h3><span id="obs-caption"></span></div>
+    <div class="section-head"><h3>Ruch na drogich kartach</h3><span id="obs-caption"></span></div>
     <div id="obs-list"><div class="empty-moves">Szereg rusza przy najbliższym odczycie.</div></div>
-    <p class="budget-note" style="margin-top:10px"><strong>Ceny w tej sekcji są zaokrąglone przez fut.gg</strong> — „680K” to 680 000 z krokiem 1000, a nie dokładny BIN. <strong>Wczoraj</strong> to cena sprzed doby odtworzona z dzisiejszej ceny i zmiany dobowej — rachunek, nie prognoza. Od niej liczymy cenę wyjścia (krok siatki niżej, żeby schodziło) i <strong>kupno do</strong> — najwyższą cenę wejścia, przy której po 5% podatku zostaje jeszcze 5% marży. Wszystkie trzy liczby są w siatce FUT, więc da się je wpisać w grze.<br><strong>Kiedy wchodzić:</strong> nie w chwili spadku, tylko gdy karta przestaje robić nowe dno — dlatego przy każdej stoi, ile czasu minęło od ostatniego dna. Ile ten czas ma wynosić, jeszcze nie wiemy; od teraz zapisujemy wynik każdej obserwacji i policzymy to na danych. <strong>„W limicie” nie znaczy „warto”.</strong> Limit to rachunek: tyle możesz zapłacić, żeby po podatku została marża. Czy warto wchodzić, mówi dopiero druga część werdyktu — „zawraca” to jedyne potwierdzenie, jakie dziś mamy, i to z ostatniej półgodziny. Czego to nie mówi: <strong>że karta wróci</strong>. Ta, która spadła 15%, potrafi spadać dalej — dlatego przy karcie, która nadal leci w dół, piszemy „jeszcze leci” zamiast zachęcać do wejścia. Ruch półgodzinny liczymy tylko powyżej kroku zaokrąglenia fut.gg: przy cenie „680K” krok to 1000 monet, a mniejszego ruchu nie da się odróżnić od samego zapisu. Karty poza twoim limitem 10% są wygaszone. Werdykt „za drogo” przy płytkiej przecenie nie jest usterką: przy spadku mniejszym niż jakieś 10–13% powrót do wczorajszego poziomu daje po podatku ledwie parę procent, więc limit wejścia wypada poniżej dzisiejszej ceny.</p>
+    <p class="budget-note" style="margin-top:10px"><strong>To jest szereg momentum z fut.gg i on nie zawiera fodderu.</strong> Siedzą tam zwykłe wysokie karty, TOTW, karty eventowe i Bohaterowie — ale najtańsza pozycja w całym szeregu kosztuje kilkanaście tysięcy, a mediana grubo ponad sto. Przy regule 10% banku na kartę większość z nich wymaga banku, którego po prostu nie masz, i dlatego są wygaszone. Traktuj tę sekcję jak wskaźnik nastroju górnej półki: kiedy tu leci na czerwono, zwykle leci wszędzie. Karty do kupienia w twoim przedziale są w sekcji wyżej.<br><strong>Ceny w tej sekcji są zaokrąglone przez fut.gg</strong> — „680K” to 680 000 z krokiem 1000, a nie dokładny BIN. <strong>Wczoraj</strong> to cena sprzed doby odtworzona z dzisiejszej ceny i zmiany dobowej — rachunek, nie prognoza. Od niej liczymy cenę wyjścia (krok siatki niżej, żeby schodziło) i <strong>kupno do</strong> — najwyższą cenę wejścia, przy której po 5% podatku zostaje jeszcze 5% marży. Wszystkie trzy liczby są w siatce FUT, więc da się je wpisać w grze.<br><strong>Kiedy wchodzić:</strong> nie w chwili spadku, tylko gdy karta przestaje robić nowe dno — dlatego przy każdej stoi, ile czasu minęło od ostatniego dna. Ile ten czas ma wynosić, jeszcze nie wiemy; od teraz zapisujemy wynik każdej obserwacji i policzymy to na danych. <strong>„W limicie” nie znaczy „warto”.</strong> Limit to rachunek: tyle możesz zapłacić, żeby po podatku została marża. Czy warto wchodzić, mówi dopiero druga część werdyktu — „zawraca” to jedyne potwierdzenie, jakie dziś mamy, i to z ostatniej półgodziny. Czego to nie mówi: <strong>że karta wróci</strong>. Ta, która spadła 15%, potrafi spadać dalej — dlatego przy karcie, która nadal leci w dół, piszemy „jeszcze leci” zamiast zachęcać do wejścia. Ruch półgodzinny liczymy tylko powyżej kroku zaokrąglenia fut.gg: przy cenie „680K” krok to 1000 monet, a mniejszego ruchu nie da się odróżnić od samego zapisu. Karty poza twoim limitem 10% są wygaszone. Werdykt „za drogo” przy płytkiej przecenie nie jest usterką: przy spadku mniejszym niż jakieś 10–13% powrót do wczorajszego poziomu daje po podatku ledwie parę procent, więc limit wejścia wypada poniżej dzisiejszej ceny.</p>
   </section>
 
   <section class="moves" id="sbc-box">
@@ -675,7 +681,7 @@
     });
   }
 
-  function render(){ showMarket(); showTrades(); showMoves(); showMoje(); showObs(); showSbc(); showOkazje(); showSkutecznosc(); showPolowanie(); showPlans(); updateBudgetControls(); }
+  function render(){ showMarket(); showTrades(); showMoves(); showMoje(); showMonitor(); showObs(); showSbc(); showOkazje(); showSkutecznosc(); showPolowanie(); showPlans(); updateBudgetControls(); }
 
   /* ── Moje pozycje ─────────────────────────────────────────────────────────
      Do tej pory strona mówiła, po ile kupić i po ile wystawić, a potem gracz
@@ -985,6 +991,86 @@
              wzasiegu: w.cena <= kupnoDo };
   }
   function wGoreSiatki(c){ var k = krokSiatki(c); return Math.ceil(c / k) * k; }
+
+  /* Przecenione karty z naszych pasm. Bliźniak showObs, ale na danych, które
+     liczymy sami — i dlatego jako jedyna z tych dwóch sekcji zawiera karty,
+     które da się kupić przy normalnym banku. */
+  function showMonitor(){
+    var box = document.getElementById("monitor-list");
+    var cap = document.getElementById("monitor-caption");
+    var lista = data && data.monitor && data.monitor[platform];
+    if (!lista || !lista.length){
+      cap.textContent = "";
+      setEmpty(box, loadError ? "Nie udało się pobrać danych."
+        : "Żadna karta nie stoi teraz wyraźnie pod swoim poziomem. To dobra wiadomość o rynku, nie usterka.", "empty-moves");
+      return;
+    }
+    var bank = budget();
+    var limitNaKarte = bank ? bank * 0.10 : 0;
+    var wStac = lista.filter(function(w){ return limitNaKarte > 0 && w.sufit <= limitNaKarte; }).length;
+    var zawraca = lista.filter(function(w){ return w.zawraca; }).length;
+    cap.textContent = labels[platform] + " · " + lista.length + " " + odm(lista.length, "karta", "karty", "kart")
+      + (bank ? " · " + wStac + " w twoim limicie" : "")
+      + (zawraca ? " · " + zawraca + " zawraca" : "");
+
+    box.replaceChildren();
+    var head = document.createElement("div"); head.className = "obs-row head";
+    var hn = document.createElement("span"); hn.className = "obs-nazwa"; hn.textContent = "Karta";
+    var hl = document.createElement("span"); hl.className = "obs-liczby";
+    ["Teraz", "Licytuj do", "Sprzedaj po"].forEach(function(t){
+      var x = document.createElement("span"); x.className = "obs-val"; x.textContent = t; hl.appendChild(x);
+    });
+    head.append(hn, hl); box.appendChild(head);
+
+    lista.forEach(function(w){
+      var stac = limitNaKarte > 0 && w.sufit <= limitNaKarte;
+      var row = document.createElement("div");
+      row.className = "obs-row" + (bank && !stac ? " poza" : "");
+
+      var n = document.createElement("span"); n.className = "obs-nazwa";
+      n.append(document.createTextNode(w.klucz));
+      var pin = document.createElement("button");
+      pin.type = "button"; pin.className = "pin"; pin.textContent = "śledzę";
+      pin.addEventListener("click", function(){ dodajPozycje(w.klucz, w.cena); });
+      n.appendChild(pin);
+      var pod = document.createElement("small");
+      /* Głębokość przeceny mówi, ile zostało do odrobienia; staż mówi, czy to
+         mignięcie, czy stan. Jedno bez drugiego nie znaczy nic. */
+      pod.textContent = "−" + String(w.rabat).replace(".", ",") + "% pod poziomem " + coins(w.poziom)
+        + " · " + w.odczytow + " " + odm(w.odczytow, "pomiar", "pomiary", "pomiarów")
+        + (w.odSekund ? " · pod progiem od " + obsGodziny(w.odSekund) : "");
+      n.appendChild(pod);
+
+      var c = document.createElement("span"); c.className = "obs-val";
+      c.append(document.createTextNode(coins(w.cena)));
+      var stan = document.createElement("small");
+      if (w.zawraca){ stan.textContent = "zawraca +" + String(w.zwrot).replace(".", ",") + "%"; stan.className = "ok"; }
+      else if (w.leci){ stan.textContent = "nowe dno"; stan.className = "zle"; }
+      else stan.textContent = "stoi w miejscu";
+      c.appendChild(stan);
+
+      var kup = document.createElement("span"); kup.className = "obs-val";
+      kup.append(document.createTextNode(coins(w.sufit)));
+      var kupS = document.createElement("small");
+      /* Sufit bywa równy albo wyższy od dzisiejszej ceny — wtedy licytacja nie
+         ma sensu, bo karta stoi taniej, niż jesteś gotów zapłacić. Mówimy to
+         wprost zamiast wysyłać kogoś na aukcję po coś, co leży na półce. */
+      kupS.textContent = (w.sufit >= w.cena)
+        ? "stoi taniej — bierz kup-teraz"
+        : (stac ? "w limicie" : (bank ? "poza limitem" : "wpisz bank"));
+      kup.appendChild(kupS);
+
+      var sprz = document.createElement("span"); sprz.className = "obs-val";
+      sprz.append(document.createTextNode(coins(w.cel)));
+      var zysk = document.createElement("small"); zysk.className = "ok";
+      zysk.textContent = "+" + coins(w.netto) + " netto";
+      sprz.appendChild(zysk);
+
+      var liczby = document.createElement("span"); liczby.className = "obs-liczby";
+      liczby.append(c, kup, sprz);
+      row.append(n, liczby); box.appendChild(row);
+    });
+  }
 
   function showObs(){
     var box = document.getElementById("obs-list");
