@@ -1178,7 +1178,12 @@
            Świeże dno = nóż nadal leci. Godzina bez nowego dna = przestało schodzić.
            To obserwacja, nie prognoza — progu jeszcze nie znamy, zbieramy wyniki. */
         if (!plan.wzasiegu){
-          stan.textContent = "za drogo";
+          /* "za drogo" czytało się jak "za drogo na twój bank", a to jest zdanie
+             o RYNKU: karta kosztuje dziś więcej, niż wolno zapłacić, żeby po
+             podatku została marża. Bank jest osobną sprawą i mówi o nim
+             wygaszenie wiersza. Podajemy różnicę, żeby nie było wątpliwości,
+             czego te dwie liczby dotyczą. */
+          stan.textContent = "o " + coins(w.cena - plan.kupnoDo) + " za drogo";
         } else if (r.noweDno){
           stan.textContent = "nowe dno";
           stan.className = "zle";
