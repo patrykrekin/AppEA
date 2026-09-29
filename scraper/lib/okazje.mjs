@@ -296,6 +296,10 @@ export function dopiszOkazje(stan, at, ps, pc, limit = LOG_LIMIT){
        przy każdym przebiegu i pozycje inwestycyjne nigdy by się nie ustabilizowały. */
     poziomyD: { ps: ps?.poziomyD || (s.poziomyD || {}).ps || {}, pc: pc?.poziomyD || (s.poziomyD || {}).pc || {} },
     trwalosc: { ps: ps?.trwalosc || (s.trwalosc || {}).ps || {}, pc: pc?.trwalosc || (s.trwalosc || {}).pc || {} },
+    /* Szereg szybkiego poziomu — ta sama droga co poziomy. Bez przeniesienia
+       przy pustym odczycie kasowałby się co przebieg i sygnał zwrotu nigdy by
+       nie powstał, bo potrzebuje sześciu kolejnych wartości. */
+    szereg: { ps: ps?.szereg || (s.szereg || {}).ps || {}, pc: pc?.szereg || (s.szereg || {}).pc || {} },
     karty: { ps: kartyPs, pc: kartyPc },
     ostatnie: {
       ps: (ps?.karty || []).map(k => k.klucz),
