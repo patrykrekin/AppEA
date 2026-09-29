@@ -209,7 +209,7 @@
   <section class="section">
     <div class="section-head"><h3>Karty do kupienia</h3><span id="trade-caption">Konsola · aktualny odczyt</span></div>
     <div class="trade-list">
-      <div class="trade-head"><span>Zawodnik</span><span>Najtańsza oferta</span><span>Kup maks.</span><span>Cel sprzedaży</span><span>Kiedy</span><span>Netto / szt.</span></div>
+      <div class="trade-head"><span>Zawodnik</span><span>Najtańsza oferta</span><span>Licytuj do</span><span>Cel sprzedaży</span><span>Kiedy</span><span>Netto / szt.</span></div>
       <div id="trade-list"><div class="trade-empty">Wczytuję listę kart…</div></div>
     </div>
     <p class="budget-note">Limit 10% banku na jedną kartę trzyma cię przy życiu, gdy pozycja nie wypali. Cena sprzedaży i zysk to szacunek z ostatniego odczytu rynku, nie gwarancja.</p>
@@ -263,7 +263,8 @@
 
   <section class="sell">
     <h3>Jak użyć cen z listy</h3>
-    <p>Kupuj po cenie „Kup maks.” albo niżej. Wystawiaj za podaną cenę sprzedaży. Jeśli nie ma karty w twoim budżecie, poczekaj na kolejny odczyt — nie podnoś limitu na siłę.</p>
+    <p><strong>Wchodzisz licytacją, nie kup-teraz.</strong> „Licytuj do” to sufit: najwyższa oferta, przy której po 5% podatku zostaje jeszcze 5% marży. Wpisz w wyszukiwarce nazwę karty, ustaw filtr ceny kup-teraz odrobinę nad jej poziomem, posortuj po czasie do końca i licytuj aukcje kończące się za kilka minut. Wygrana niżej niż sufit to po prostu większy zysk — sufit nie jest ceną docelową, tylko granicą, powyżej której nie opłaca się przebijać.</p>
+    <p>Kolumna „kup teraz do” jest dla sytuacji, gdy akurat trafisz tanie wystawienie. Nie poluj na nie: z naszego rejestru 22 z 26 takich ofert znika przed następnym odczytem, czyli w ciągu pięciu minut. Cena wyjścia to krok siatki pod zwykłym poziomem karty, żeby schodziła jako pierwsza. Jeśli nic nie mieści się w budżecie, poczekaj na kolejny odczyt — nie podnoś limitu na siłę.</p>
   </section>
   <footer><span>Plan i kalendarz pochodzą z analizy zapisanej w projekcie.</span><span>Ceny kart i ruchy rynku są pobierane osobno.</span></footer>
 </main>
@@ -483,16 +484,24 @@
       var first = rows[0];
       var cap = buyLimit(first), cel = sellTarget(first), net = Math.floor(cel*0.95-cap);
       label.textContent = labels[platform] + " · " + coins(bank) + " monet · wymaga wyszukiwarki";
-      title.textContent = first[0] + ": kupuj do " + coins(cap);
+      var sufitN = bidLimit(first);
+      title.textContent = first[0] + (sufitN !== null ? ": licytuj do " + coins(sufitN) : ": kupuj do " + coins(cap));
       var skadCel = Number(first[5]) > 0
         ? " Cel nie jest liczony z tej jednej oferty, tylko z poziomu tej karty z " + first[5] + " pomiarów — pojedyncze tanie wystawienie nie ma zaniżać ceny wyjścia."
         : " Tej karty mamy za mało pomiarów, więc cel liczymy z tej jednej oferty. Traktuj go ostrożnie.";
-      text.textContent = first[0] + " stoi po " + coins(first[1]) + ". Kupujesz pod tą ceną, wystawiasz po " + coins(cel)
-        + " — około " + (net>0?"+":"") + coins(net) + " monet netto na sztuce po podatku. "
-        + "To pozycja pod snajpa: trzeba siedzieć przy wyszukiwarce i odświeżać, bo tanie wystawienia znikają w sekundy. "
-        + "Nie mamy dziś nic, co dałoby się wziąć bez tego."
+      var sufit = sufitN !== null ? sufitN : cap, nettoSufit = Math.floor(cel * 0.95 - sufit);
+      text.textContent = sufitN === null
+        ? first[0] + " stoi po " + coins(first[1]) + ". Kupujesz do " + coins(cap) + ", wystawiasz po " + coins(cel)
+          + " — około " + (net>0?"+":"") + coins(net) + " monet netto na sztuce po podatku. Sufit licytacji dojdzie przy kolejnym odczycie scrapera."
+          + copiesNote(bank, cap) + stalenessNote() + skadCel
+        : first[0] + " stoi po " + coins(first[1]) + ". Wchodzisz LICYTACJĄ do " + coins(sufit)
+        + ", wystawiasz po " + coins(cel) + " — przy maksymalnej ofercie zostaje około "
+        + (nettoSufit>0?"+":"") + coins(nettoSufit) + " monet netto na sztuce po podatku, wygrana taniej daje więcej. "
+        + "Szukaj tej karty z filtrem ceny kup-teraz odrobinę nad jej poziomem, sortuj po czasie do końca i licytuj to, "
+        + "co kończy się za kilka minut — nigdy powyżej sufitu. Kup-teraz po " + coins(cap) + " też jest okej, jeśli akurat trafisz, "
+        + "ale takie wystawienia znikają w sekundy i nie ma sensu na nie polować."
         + skadCel
-        + copiesNote(bank, cap) + stalenessNote();
+        + copiesNote(bank, sufit) + stalenessNote();
     /* Tu stała gałąź wołająca planOptions() — funkcję usuniętą razem z ręczną
        drabiną pozycji. Wywołania zostały i rzucały ReferenceError, który zabijał
        CAŁY render: wszystko po showTrades (ruchy, obserwacja, SBC, okazje,
@@ -534,7 +543,7 @@
        z dnia na dzień — nie z powodu rynku, tylko dlatego, że minęła data wklepana
        ręcznie trzy dni wcześniej. Cel sprzedaży i tak liczy dziś scraper z poziomu
        karty, więc plan nie wnosił tu nic poza wygasaniem. */
-    var rows = allRows.filter(function(row){ return bank > 0 && buyLimit(row) <= bank * 0.10; });
+    var rows = allRows.filter(function(row){ var wejscie = bidLimit(row); if (wejscie === null) wejscie = buyLimit(row); return bank > 0 && wejscie <= bank * 0.10; });
     rows.sort(function(a,b){ return buyLimit(a) - buyLimit(b); });
     showAdvice(rows, allRows);
     if (!bank){ setEmpty(target, "Wpisz budżet, żeby zobaczyć pasujące karty."); return; }
@@ -551,7 +560,11 @@
     rows.forEach(function(row){
       var line = document.createElement("div");
       line.className = "trade";
-      var cap=buyLimit(row), targetPrice=sellTarget(row), net=Math.floor(targetPrice*0.95-cap);
+      var sufitR=bidLimit(row), binCap=buyLimit(row), targetPrice=sellTarget(row);
+      var cap = sufitR !== null ? sufitR : binCap;
+      /* Netto liczymy przy MAKSYMALNEJ ofercie, czyli w najgorszym wariancie.
+         Aukcja wygrana taniej daje więcej — obiecywać w drugą stronę nie wolno. */
+      var net=Math.floor(targetPrice*0.95-cap);
       /* Skąd są te liczby — widoczne na stałe, nie tylko na telefonie.
          "Najniższy BIN 3 800" czytało się jak cena karty, a to była najtańsza
          oferta z jednego odczytu, która zwykle nie dożywa następnego. */
@@ -559,18 +572,27 @@
       var wiek = priceAgeMin();
       /* Limit kupna bierze się z NIŻSZEJ z dwóch liczb, więc piszemy, która wygrała —
          "pod niższą z dwóch" nic nie mówi komuś, kto patrzy na wiersz przez sekundę. */
-      var zKtorej = (pomiarow && Number(row[4]) < Number(row[1])) ? "15% pod poziomem" : "15% pod ofertą";
+      var zKtorej = sufitR !== null
+        ? "kup teraz do " + coins(binCap)
+        : "sufit licytacji dojdzie przy kolejnym odczycie";
       var zrodla = [
         null,
         wiek === null ? (priceTimestamp() ? "widziana " + priceTimestamp() : null)
                       : "widziana " + wiek + " min temu",
         zKtorej,
-        pomiarow ? "krok pod poziomem · " + pomiarow + " " + odm(pomiarow, "pomiar", "pomiary", "pomiarów")
-                 : "krok pod ofertą · 1 odczyt",
+        /* Cel liczymy z poziomu, więc bywa RÓWNY albo WYŻSZY od dzisiejszej
+           najtańszej oferty. To jest zamierzone — tamta oferta zniknie w kilka
+           minut — ale nie wolno tego przemilczeć: twoje wystawienie zejdzie
+           dopiero po niej. */
+        (Number(targetPrice) >= Number(row[1])
+          ? "nad obecną ofertą — zejdzie po niej · "
+          : "")
+        + (pomiarow ? "krok pod poziomem · " + pomiarow + " " + odm(pomiarow, "pomiar", "pomiary", "pomiarów")
+                    : "krok pod ofertą · 1 odczyt"),
         null, null
       ];
       var komorki = [];
-      [[nazwaZPrzyciskiem(row[0], cap),"", "trade-player"],[coins(row[1]),"Najtańsza oferta","trade-value"],[coins(cap),"Kup maks.","trade-value trade-buy"],[coins(targetPrice),"Cel sprzedaży","trade-value trade-sell"],["od razu po kupnie","Kiedy","trade-value trade-time"],[(net>0?"+":"")+coins(net),"Netto / szt.","trade-value trade-net"]].forEach(function(item){
+      [[nazwaZPrzyciskiem(row[0], cap),"", "trade-player"],[coins(row[1]),"Najtańsza oferta","trade-value"],[coins(cap), sufitR !== null ? "Licytuj do" : "Kup maks.","trade-value trade-buy"],[coins(targetPrice),"Cel sprzedaży","trade-value trade-sell"],[sufitR !== null ? "licytacja kończąca się za kilka minut" : "od razu po kupnie","Kiedy","trade-value trade-time"],[(net>0?"+":"")+coins(net),"Netto / szt. (przy maks. ofercie)","trade-value trade-net"]].forEach(function(item){
         var cell = document.createElement("span");
         cell.className = item[2];
         /* Pierwsza kolumna dostaje gotowy węzeł z przyciskiem, reszta zwykły tekst. */
@@ -1520,6 +1542,15 @@
      z datą wyjścia za cztery dni. To nie jest jeden trade, tylko dwa sklejone. */
   function buyLimit(row){ return Number(row && row[2]); }
   function sellTarget(row){ return Number(row && row[3]); }
+  /* Sufit licytacji — od 29.09 to JEST cena wejścia, którą podajemy.
+     buyLimit został jako druga liczba: ile zapłacić, jeśli akurat trafisz BIN.
+
+     Zwracamy null, a NIE limit BIN, gdy pola [6] nie ma. Przez kilka minut po
+     wgraniu samej strony data.json jest jeszcze ze starego scrapera i wiersze
+     mają sześć pól. Podstawienie tam limitu BIN pod etykietę "licytuj do"
+     byłoby po prostu kłamstwem o 300 monet — wiersz ma wtedy pokazać starą
+     nazwę i starą liczbę, aż scraper dośle sufit. */
+  function bidLimit(row){ var b = Number(row && row[6]); return b > 0 ? b : null; }
 
   /* Dno sprzed pół godziny to na rozgrzanej karcie inna cena. 27.09 Dimarco
      poszedł 3 700 → 4 300 w 42 minuty, a strona dalej podawała cel 3 600. */
