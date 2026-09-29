@@ -13,6 +13,28 @@ export const PASMA = [86, 87];   // domyślne tylko na wypadek wywołania bez ar
 export const RABAT = 0.15;
 export const MIN_ODCZYTOW = 6;
 export const LIMIT = 12;         // ile wierszy oddajemy stronie
+export const MARZA = 0.05;       // marża netto, której wymagamy — ta sama co w policzInwestycje
+
+/* SUFIT LICYTACJI, dodany 29.09.2026.
+
+   Powód jest prosty i wyszedł z używania strony na telefonie: "kup teraz do
+   3 200" to cena, której na BIN praktycznie nie zobaczysz — z rejestru
+   przeżywalności 22 z 26 takich wystawień znika przed następnym odczytem.
+   Ta sama liczba jako MAKSYMALNA OFERTA w licytacji jest zwyczajnie osiągalna,
+   bo aukcja trwa godzinami i nie trzeba przy niej siedzieć z odświeżaniem.
+
+   Sufit liczymy z wymaganej marży, nie z arbitralnych 15%: najwyższa oferta,
+   przy której po 5% podatku zostaje jeszcze MARZA. To dokładnie ten sam
+   rachunek, co kupnoDo w policzInwestycje — do tej pory dwa silniki na jednej
+   stronie liczyły granicę wejścia inaczej.
+
+   Dlatego sufit wychodzi WYŻEJ niż limit BIN (3 500 vs 3 200 przy celu 3 900)
+   i o to chodzi: za nisko ustawiony sufit nie wygrywa żadnej aukcji. */
+export function sufitLicytacji(cel, marza = MARZA){
+  if (!(cel > 0)) return null;
+  const s = snapDown(Math.floor(cel * 0.95 / (1 + marza)));
+  return (s > 0 && net(s, cel) > 0) ? s : null;
+}
 
 /* 28.09.2026, wieczorem. Do tej pory i cel sprzedaży, i limit kupna liczyły się
    z `c.price` — czyli z NAJTAŃSZEJ OFERTY z jednego odczytu. To jest próbka n=1,
@@ -66,11 +88,14 @@ export function toSnipeRows(bands, poziomy, pasma = PASMA, rabat = RABAT, minOdc
       const list = listBelow(odniesienie);
       const buy  = snapDown(Math.min(odniesienie, market) * (1 - rabat));
       if (net(buy, list) <= 0) continue;
+      const sufit = sufitLicytacji(list);
+      if (!sufit) continue;
 
       zPasma.push([
         `${c.name} ${band}${c.pos ? " " + c.pos : ""}`, market, buy, list,
         dojrzaly ? Math.round(w.p) : null,        // [4] poziom, z którego jest cel
-        dojrzaly ? (w.n || 0) : 0                 // [5] ile pomiarów za tym stoi
+        dojrzaly ? (w.n || 0) : 0,                // [5] ile pomiarów za tym stoi
+        sufit                                     // [6] maksymalna oferta w licytacji
       ]);
     }
     zPasma.sort((a, b) => net(b[2], b[3]) - net(a[2], a[3]));
