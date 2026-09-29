@@ -26,7 +26,7 @@ export function validate(d){
   for (const p of ["ps","pc"]){
     const rows = d.snipe?.[p]?.rows;
     if (!Array.isArray(rows) || !rows.length){ err.push(`snipe.${p}.rows puste`); continue; }
-    rows.forEach(([name, market, buy, list, poziom, pomiarow], i) => {
+    rows.forEach(([name, market, buy, list, poziom, pomiarow, sufit], i) => {
       for (const [label, v] of [["oferta",market],["snajpuj do",buy],["wystaw",list]])
         if (!onGrid(v)) err.push(`snipe.${p}[${i}] ${name}: ${label} ${v} nie leży na siatce`);
       if (net(buy, list) <= 0) err.push(`snipe.${p}[${i}] ${name}: netto ${net(buy,list)} — pozycja do niczego`);
@@ -45,6 +45,16 @@ export function validate(d){
         warn.push(`snipe.${p}[${i}] ${name}: wystawienie ${list} nie jest pod ${Number.isFinite(poziom) && poziom > 0 ? `poziomem ${poziom}` : `ofertą ${market}`}`);
       if (Number.isFinite(poziom) && poziom > 0 && !(pomiarow > 0))
         err.push(`snipe.${p}[${i}] ${name}: poziom ${poziom} bez liczby pomiarów — nie wiadomo, ile za nim stoi`);
+
+      /* Sufit licytacji — od 29.09 to główna cena wejścia na stronie, więc
+         sprawdzamy ją ostrzej niż limit BIN. Sufit, przy którym po podatku nie
+         zostaje marża, to zaproszenie do przelicytowania się do zera. */
+      if (sufit !== undefined && sufit !== null){
+        if (!onGrid(sufit)) err.push(`snipe.${p}[${i}] ${name}: sufit licytacji ${sufit} nie leży na siatce`);
+        if (net(sufit, list) <= 0) err.push(`snipe.${p}[${i}] ${name}: przy suficie ${sufit} netto ${net(sufit,list)} — licytowanie do tej ceny to strata`);
+        if (sufit >= list) err.push(`snipe.${p}[${i}] ${name}: sufit ${sufit} nie jest pod celem ${list}`);
+        if (sufit < buy) warn.push(`snipe.${p}[${i}] ${name}: sufit licytacji ${sufit} poniżej limitu kup-teraz ${buy} — sufit powinien być wyżej, inaczej nie wygra aukcji`);
+      }
     });
   }
 
