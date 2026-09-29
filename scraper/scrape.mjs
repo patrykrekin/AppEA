@@ -9,6 +9,7 @@ import { zWierszy, dopiszRuchy, odbicia } from "./lib/ruchy.mjs";
 import { zbuduj as zbudujKalendarz } from "./lib/kalendarz.mjs";
 import { dopiszRejestr, zrodloCen, skutecznoscInw } from "./lib/rejestr.mjs";
 import { toSnipeRows } from "./lib/snajperka.mjs";
+import { dopiszSzereg, policzMonitor } from "./lib/monitor.mjs";
 
 /* SBC co godzinę, nie dwa razy na dobę. 28.09: SBC z terminem 24 h potrafi
    wygasnąć i zostać zastąpiona nową, a cykl `slow` pokazywał nieistniejącą
@@ -363,6 +364,22 @@ try {
     okazjePc.poziomyD = aktualizujPoziomyD(poprzD.pc, poprzPoziomy.pc, bands.pc, at);
     okazjePs.trwalosc = trwaloscPs;
     okazjePc.trwalosc = trwaloscPc;
+
+    /* Karty warte obserwacji z NASZYCH pasm. Sekcja "pod obserwacją" stała
+       dotąd wyłącznie na szeregu momentum z fut.gg, a tam najtańsza karta
+       kosztuje 15 000 — przy regule 10% banku wszystko było wyszarzone przy
+       każdym realnym budżecie. To źródło nie zawiera fodderu w ogóle.
+       Tu liczymy to samo dla pasm 83–89, bez ani jednego wejścia na fut.gg:
+       cena z pasma, poziom dobowy jako norma, szereg szybkiego poziomu jako
+       sygnał zwrotu. Szczegóły w lib/monitor.mjs. */
+    const poprzSzereg = (prev.okazje && prev.okazje.szereg) || {};
+    okazjePs.szereg = dopiszSzereg(poprzSzereg.ps, okazjePs.poziomy, at);
+    okazjePc.szereg = dopiszSzereg(poprzSzereg.pc, okazjePc.poziomy, at);
+    const monitor = {
+      ps: policzMonitor(bands.ps, okazjePs.poziomyD, okazjePs.szereg, trwaloscPs, at),
+      pc: policzMonitor(bands.pc, okazjePc.poziomyD, okazjePc.szereg, trwaloscPc, at)
+    };
+    console.log(`monitor: konsola ${monitor.ps.length} kart (${monitor.ps.filter(x => x.zawraca).length} zawraca, ${monitor.ps.filter(x => x.leci).length} leci), PC ${monitor.pc.length}`);
     console.log(`inwestycje: konsola ${inwestycje.ps.length} (w zasięgu ${inwestycje.ps.filter(x => x.wzasiegu).length}), PC ${inwestycje.pc.length}`);
     console.log(`okazje: konsola ${okazjePs.razem}, PC ${okazjePc.razem} (>10% pod własnym poziomem)`);
 
@@ -469,6 +486,7 @@ try {
       nasz: { ps: policz(histPs), pc: policz(histPc) },
       okazje: dopiszOkazje(prev.okazje, at, okazjePs, okazjePc),
       inwestycje,
+      monitor,
       rejestr,
       skutecznosc,
       ...(obserwacja ? { obserwacja } : {}),
