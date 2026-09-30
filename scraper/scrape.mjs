@@ -526,10 +526,30 @@ try {
   warn.forEach(w => console.log("uwaga:", w));
   if (err.length){ err.forEach(e => console.log("BŁĄD :", e)); throw new Error(`${err.length} błędów walidacji — nic nie zapisuję`); }
 
-  patch(OUT, fields);
+  /* awaria: null kasuje ślad po poprzednim nieudanym przebiegu — inaczej komunikat
+     o awarii wisiałby na stronie długo po tym, jak wszystko wróciło do normy. */
+  patch(OUT, { ...fields, awaria: null });
   console.log(`${cycle}: zapisano ${OUT} (${stamp})`);
 } catch (e) {
-  console.error(`${cycle}: PRZERWANE — ${e.message}`);
+  const powod = String((e && e.message) || e).split("\n")[0].slice(0, 300);
+  console.error(`${cycle}: PRZERWANE — ${powod}`);
+
+  /* 30.09.2026: dziewięć przebiegów z rzędu padło na „Pobierz ceny" i przez godzinę
+     nie dało się powiedzieć DLACZEGO. Tekst błędu szedł wyłącznie do logu Actions,
+     a log wymaga tokena — czyli dokładnie w chwili, gdy diagnoza jest najbardziej
+     potrzebna, byliśmy ślepi. To już drugi raz (27.09 to samo z watchlistą).
+     Od teraz powód awarii ląduje w data.json.
+
+     Czego NIE robimy: nie ruszamy `at`. Dane dalej mają być oznaczone jako stare,
+     bo stare są. Dokładamy wyłącznie jeden klucz. patch() zapisuje przez plik
+     tymczasowy i atomową podmianę, więc nawet awaria w tym miejscu nie zostawi
+     obciętego data.json. */
+  try {
+    patch(OUT, { awaria: { at, cykl: cycle, powod } });
+    console.error("powód awarii zapisany do data.json");
+  } catch (e2) {
+    console.error("nie udało się zapisać nawet powodu awarii — " + String((e2 && e2.message) || e2));
+  }
   process.exitCode = 1;
 } finally {
   await browser.close();
