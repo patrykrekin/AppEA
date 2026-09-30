@@ -61,6 +61,20 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-chromium-${{ runner.os }}
 
+      # 30.09.2026: sześć przebiegów na 150 padło na wysyłce mimo udanego scrape'a.
+      # To NIE był wyścig dwóch przebiegów — concurrency działa poprawnie, sprawdzone
+      # na czasach faktycznego wykonania: ani jednej nakładki. Przyczyna jest inna:
+      # zakolejkowany przebieg dostaje commit z chwili WYZWOLENIA, nie z chwili startu.
+      # Gdy poprzedni przebieg zwolnił (30.09 rekord: 679 s zamiast typowych 70),
+      # następny odczekiwał swoje w kolejce, startował ze starym SHA, robił checkout
+      # nieaktualnego drzewa i przy wysyłce dostawał non-fast-forward.
+      # Dowód: przebiegi #878 i #880 miały ten sam head_sha 25dd3ac, a #880 padł.
+      # Dociągamy świeży main PRZED pracą — wtedy wysyłka jest zawsze fast-forward
+      # i nie ma czego rebase'ować. --autostash, bo drzewo ma tu być czyste, ale
+      # nie chcemy paść, gdyby jednak coś w nim siedziało.
+      - name: Dociągnij świeży main
+        run: git pull --rebase --autostash origin main
+
       - name: Chromium
         working-directory: scraper
         run: npx playwright install --with-deps chromium
@@ -84,7 +98,8 @@ jobs:
       # Skutek był gorszy niż czerwona kropka: przepadał CAŁY odczyt, więc rwały się
       # serie trwałości i szeregi cen. Teraz przy odrzuceniu robimy rebase i próbujemy
       # ponownie. Prawdziwy konflikt na data.json (dwa przebiegi naraz) ma paść głośno,
-      # a nie po cichu nadpisać cudzy pomiar.
+      # a nie po cichu nadpisać cudzy pomiar. Po poprawce z 30.09 ta ścieżka jest już
+      # tylko ostatnią linią obrony, nie codziennym zdarzeniem.
       - name: Wyślij, jeśli się zmienił
         run: |
           git config user.name  "Terminal FUT"
