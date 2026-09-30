@@ -18,7 +18,7 @@
    zgadywać przesunięcia i żeby zmiana czasu nie rozjechała kubełków. */
 
 import { KOSZYK } from "./indeks.mjs";
-import { listBelow, snapDown, net } from "./grid.mjs";
+import { listBelow, snapDown, net, stepFor } from "./grid.mjs";
 
 export const PROG = 0.10;          // ile pod WŁASNYM poziomem karty liczy się za okazję
 export const ALFA = 0.05;          // waga nowego odczytu w poziomie karty (~1 h półtrwania)
@@ -66,7 +66,22 @@ export function definicjaOkazji(){
    inaczej pierwszego dnia każda karta miałaby poziom równy swojej cenie i nic
    by się nie zgłaszało. */
 export const ALFA_D = 0.005;
-export const PROG_INW = 0.08;      // ile pod poziomem dobowym to już przecena, nie szum
+/* 30.09.2026, po dobie pomiaru. Było 0,08 i przez to rejestr miał WYŁĄCZNIE karty
+   po 32 000–152 000. Przyczyna nie jest oczywista: procent zderza się z siatką cen.
+
+     karta    650, krok  50  →  8% to 1,04 kroku, więc realnie potrzeba DWÓCH = 15,4%
+     karta  1 800, krok 100  →  8% to 1,44 kroku, więc dwóch                  = 11,1%
+     karta  3 900, krok 100  →  8% to 3,12 kroku, więc czterech               = 10,3%
+     karta 32 000, krok 250  →  8% to 10,2 kroku — płynnie, bez zaokrągleń
+
+   Czyli na tanim foderze próg 8% oznaczał w praktyce wymaganie piętnastoprocentowej
+   przeceny, a na drogich kartach dokładnie to, co napisane. Nie mierzyliśmy tego
+   samego zjawiska w obu przedziałach, tylko dwóch różnych.
+
+   monitor.mjs miał to od początku dobrze: procent ORAZ minimum jeden krok siatki.
+   Zrównujemy — teraz oba moduły stosują to samo kryterium do tego samego pytania. */
+export const PROG_INW = 0.05;      // ile pod poziomem dobowym to już przecena, nie szum
+export const MIN_KROKOW = 1;       // i co najmniej tyle kroków siatki, żeby to nie było zaokrąglenie
 export const MIN_ODCZYTOW_D = 24;  // dwie godziny obserwacji, zanim uwierzymy w poziom dobowy
 export const INW_MARZA = 0.05;     // marża netto, której wymagamy od pozycji
 export const INW_LIMIT = 12;
@@ -84,6 +99,17 @@ export const MIN_TRWALOSC_SEK = 1500; // i co najmniej 25 minut zegarowych
    swoim poziomem, tylko JAK DŁUGO. Pojedyncze tanie wystawienie żyje minuty.
    Prawdziwa przecena stoi godzinami. Dlatego liczymy, ile odczytów z rzędu karta
    jest pod progiem, i zerujemy licznik, gdy tylko z niego wyjdzie. */
+/** Czy karta stoi wyraźnie pod swoim poziomem: procentowo ORAZ o co najmniej
+ *  krok siatki. Jeden warunek bez drugiego jest bezużyteczny — sam procent
+ *  przepuszcza zaokrąglenia na tanich kartach, sam krok przepuszcza wszystko
+ *  na drogich. Trwałość i pozycje MUSZĄ pytać tym samym predykatem, inaczej
+ *  licznik stażu rósłby kartom, które i tak nigdy nie zostaną zgłoszone. */
+export function podProgiem(cena, poziom, prog = PROG_INW, minKrokow = MIN_KROKOW){
+  if (!(cena > 0) || !(poziom > 0)) return false;
+  if (cena > poziom * (1 - prog)) return false;
+  return (poziom - cena) >= minKrokow * stepFor(poziom);
+}
+
 export function aktualizujTrwalosc(stare, bands, poziomyD, at, prog = PROG_INW){
   const out = {};
   const s = stare && typeof stare === "object" ? stare : {};
@@ -99,7 +125,7 @@ export function aktualizujTrwalosc(stare, bands, poziomyD, at, prog = PROG_INW){
       const w = p[k];
       if (!w || !(w.p > 0)) continue;
       widziane.add(k);
-      const pod = c.price <= w.p * (1 - prog);
+      const pod = podProgiem(c.price, w.p, prog);
       /* Zer NIE zapisujemy. Brak wpisu znaczy dokładnie to samo co licznik zero,
          a 28.09 na 190 kart w rejestrze 179 miało zero — 18 kB w data.json,
          który strona i tak pobiera co minutę. */
@@ -154,7 +180,7 @@ export function policzInwestycje(bands, poziomyD, trwalosc, at, prog = PROG_INW,
       const klucz = `${c.name} ${r}`;
       const w = p[klucz];
       if (!w || !(w.p > 0) || (w.n || 0) < minOdczytow) continue;
-      if (c.price > w.p * (1 - prog)) continue;
+      if (!podProgiem(c.price, w.p, prog)) continue;
 
       /* Pod progiem od co najmniej pół godziny — inaczej to nie pozycja,
          tylko czyjeś tanie wystawienie, które zniknie, zanim zdążysz spojrzeć. */
@@ -242,7 +268,7 @@ export function policzOkazje(bands, poziomy, prog = PROG, minOdczytow = MIN_ODCZ
       const k = `${c.name} ${r}`;
       const w = poz[k];
       if (!w || !(w.p > 0) || (w.n || 0) < minOdczytow) continue;   // za mało obserwacji
-      if (c.price > w.p * (1 - prog)) continue;
+      if (!podProgiem(c.price, w.p, prog)) continue;
       tanie.push(c);
       karty.push({
         klucz: k, nazwa: c.name, rating: r, cena: c.price, poziom: w.p,
