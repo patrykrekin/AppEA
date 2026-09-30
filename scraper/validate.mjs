@@ -85,7 +85,15 @@ export function validate(d){
       if (!Number.isFinite(o.wejscie) || o.wejscie <= 0) err.push(`rejestr.${p} ${k}: cena wejścia ${o.wejscie}`);
       if (!onGrid(o.cel0)) err.push(`rejestr.${p} ${k}: cel ${o.cel0} nie leży na siatce`);
       if (!(o.cel0 > o.wejscie)) err.push(`rejestr.${p} ${k}: cel ${o.cel0} nie jest nad wejściem ${o.wejscie}`);
-      if (net(o.wejscie, o.cel0) <= 0) err.push(`rejestr.${p} ${k}: netto ${net(o.wejscie, o.cel0)} po podatku — pozycja do niczego`);
+      /* Opłacalność liczymy od SUFITU LICYTACJI, nie od ceny rynkowej — po cenie
+         rynkowej nikt tu nie kupuje, wchodzi się aukcją niżej. Stara wersja tej
+         reguły porównywała cel z ceną rynkową i wywalała zdrowe pozycje
+         (30.09: pięć przebiegów z rzędu). Wiersze sprzed tej zmiany nie mają
+         pola `sufit` i ich po prostu nie sprawdzamy. */
+      if (Number.isFinite(o.sufit) && o.sufit > 0){
+        if (!onGrid(o.sufit)) err.push(`rejestr.${p} ${k}: sufit ${o.sufit} nie leży na siatce`);
+        if (net(o.sufit, o.cel0) <= 0) err.push(`rejestr.${p} ${k}: przy suficie ${o.sufit} netto ${net(o.sufit, o.cel0)} — pozycja do niczego`);
+      }
     }
     (r.wyniki || []).forEach((o, i) => {
       const gdzie = `rejestr.${p}.wyniki[${i}] ${o.klucz}`;
