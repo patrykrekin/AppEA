@@ -524,7 +524,16 @@ try {
 
   const { err, warn } = validate({ ...read(OUT), ...fields });
   warn.forEach(w => console.log("uwaga:", w));
-  if (err.length){ err.forEach(e => console.log("BŁĄD :", e)); throw new Error(`${err.length} błędów walidacji — nic nie zapisuję`); }
+  if (err.length){
+    err.forEach(e => console.log("BŁĄD :", e));
+    /* Sama liczba błędów nic nie daje — 30.09 przez godzinę wiedzieliśmy tylko,
+       że jest ich pięć. Doczepiamy listę do wyjątku, żeby trafiła do data.json
+       razem z powodem awarii. Osiem wystarczy: jak jest ich więcej, to i tak
+       jedna przyczyna. */
+    const wyjatek = new Error(`${err.length} błędów walidacji — nic nie zapisuję`);
+    wyjatek.szczegoly = err.slice(0, 8);
+    throw wyjatek;
+  }
 
   /* awaria: null kasuje ślad po poprzednim nieudanym przebiegu — inaczej komunikat
      o awarii wisiałby na stronie długo po tym, jak wszystko wróciło do normy. */
@@ -545,7 +554,7 @@ try {
      tymczasowy i atomową podmianę, więc nawet awaria w tym miejscu nie zostawi
      obciętego data.json. */
   try {
-    patch(OUT, { awaria: { at, cykl: cycle, powod } });
+    patch(OUT, { awaria: { at, cykl: cycle, powod, szczegoly: (e && e.szczegoly) || null } });
     console.error("powód awarii zapisany do data.json");
   } catch (e2) {
     console.error("nie udało się zapisać nawet powodu awarii — " + String((e2 && e2.message) || e2));
