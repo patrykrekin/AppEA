@@ -31,7 +31,13 @@ export function patch(path, fields){
     const cur = read(path);
     const next = { ...cur, ...fields, at: fields.at ?? cur.at };
     const tmp = path + ".tmp";
-    writeFileSync(tmp, JSON.stringify(next, null, 2) + "\n");
+    /* 30.09.2026: zapis BEZ wcięć. Plik urósł do 555 kB, a strona pobiera go co
+       minutę — przy 100 GB miesięcznego limitu GitHub Pages to jakieś cztery osoby
+       z otwartą kartą przez dobę. Z tych 555 kB aż 335 to były same spacje i znaki
+       nowej linii, bo zapisywaliśmy z wcięciem dwóch spacji. Sam plik czyta wyłącznie
+       maszyna i przeglądarka; do zaglądania gołym okiem jest widok na GitHubie,
+       który i tak formatuje JSON sam. Treść bez zmian, ruch o 60% mniejszy. */
+    writeFileSync(tmp, JSON.stringify(next) + "\n");
     renameSync(tmp, path);          // atomowa podmiana — czytelnik nigdy nie zobaczy połówki pliku
     return next;
   } finally { try { unlinkSync(lf); } catch {} }
