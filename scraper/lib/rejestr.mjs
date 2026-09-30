@@ -104,7 +104,7 @@ export function werdykt(r, at){
 function zamknij(r, at){
   return {
     klucz: r.klucz, rating: r.rating ?? null, def: r.def,
-    wejscie: r.wejscie, cel: r.cel0, poziom: r.poziom0, rabat: r.rabat0,
+    wejscie: r.wejscie, sufit: r.sufit ?? null, cel: r.cel0, poziom: r.poziom0, rabat: r.rabat0,
     dno: Number.isFinite(r.min) ? r.min : null,
     doDna: r.minAt ? minuty(r.minAt - r.od) : null,
     szczyt: Number.isFinite(r.max) ? r.max : null,
@@ -136,6 +136,13 @@ export function dopiszRejestr(stan, at, inwestycje, ceny, poziomyD, def = defini
     otwarte[w.klucz] = {
       klucz: w.klucz, rating: w.rating ?? null, def,
       wejscie: w.cena, poziom0: w.poziom, cel0: w.cel, rabat0: w.rabat,
+      /* 30.09: sufit licytacji, czyli cena, po której NAPRAWDĘ się wchodzi.
+         `wejscie` to cena rynkowa w chwili wykrycia — dobra do opisu sytuacji,
+         ale bezużyteczna do liczenia opłacalności, bo nikt po niej nie kupuje.
+         Bez tego pola walidator liczył zysk jako cel − cena rynkowa i słusznie
+         wychodziło mu ujemnie: Barella 87 netto −105, Kohler 89 −200. Pozycje
+         były zdrowe, nieprawdziwe było pytanie. */
+      sufit: Number.isFinite(w.kupnoDo) ? w.kupnoDo : null,
       od: at, ostatnio: at,
       cena: w.cena, min: w.cena, minAt: at, max: w.cena,
       poziom: w.poziom, poziomMin: w.poziom,
