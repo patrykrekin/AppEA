@@ -1520,6 +1520,12 @@
       var kiedy = a.at ? new Date(a.at * 1000).toLocaleTimeString("pl-PL",
         { hour:"2-digit", minute:"2-digit" }) : "";
       target.textContent += " · ostatni przebieg padł" + (kiedy ? " o " + kiedy : "") + ": " + a.powod;
+      /* Szczegóły, jeśli scraper je dołączył — bez nich „5 błędów walidacji”
+         mówi tyle co nic, a to właśnie one wskazują palcem na przyczynę. */
+      if (Array.isArray(a.szczegoly) && a.szczegoly.length){
+        target.textContent += " (" + a.szczegoly.slice(0, 2).join(" · ")
+          + (a.szczegoly.length > 2 ? " · i " + (a.szczegoly.length - 2) + " więcej" : "") + ")";
+      }
     }
   }
 
