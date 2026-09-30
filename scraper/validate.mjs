@@ -91,6 +91,10 @@ export function validate(d){
       const gdzie = `rejestr.${p}.wyniki[${i}] ${o.klucz}`;
       if (!o.def) err.push(`${gdzie}: wynik bez podpisu definicji`);
       if (o.werdykt === "cel" && !Number.isFinite(o.doCelu)) err.push(`${gdzie}: werdykt "cel" bez czasu dojścia`);
+      /* Pozycja, która „doszła do celu" w zero minut, nigdy nie była pozycją —
+         cel leżał na dzisiejszej cenie. Łapiemy to jako błąd, bo taki wiersz
+         dopisuje fałszywe trafienie do skuteczności. */
+      if (o.werdykt === "cel" && o.doCelu === 0) err.push(`${gdzie}: trafienie w zero minut — cel leżał na cenie wejścia`);
       if (o.werdykt !== "cel" && Number.isFinite(o.doCelu)) err.push(`${gdzie}: czas dojścia przy werdykcie "${o.werdykt}"`);
       if (o.werdykt === "poziom" && !(o.poziomMin <= o.wejscie)) err.push(`${gdzie}: werdykt "poziom", ale poziom ${o.poziomMin} nie zszedł do wejścia ${o.wejscie}`);
     });
