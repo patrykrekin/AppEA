@@ -36,7 +36,7 @@
    zmianie parametru odbierałoby nam dokładnie ten dowód, dla którego zmianę
    robimy. */
 
-import { PROG_INW, ALFA_D, MIN_ODCZYTOW_D, MIN_TRWALOSC, MIN_TRWALOSC_SEK } from "./okazje.mjs";
+import { PROG_INW, MIN_KROKOW, ALFA_D, MIN_ODCZYTOW_D, MIN_TRWALOSC, MIN_TRWALOSC_SEK } from "./okazje.mjs";
 
 export const HORYZONT = 24 * 3600;   // doba na rozstrzygnięcie pozycji
 export const LUKA = 2 * 3600;        // tyle bez widoku ceny i zamykamy jako "urwane"
@@ -50,6 +50,7 @@ export const MIN_PROB = 15;          // poniżej tego nie ogłaszamy żadnej sku
 export function definicja(){
   return [
     `p${Math.round(PROG_INW * 100)}`,
+    `k${MIN_KROKOW}`,
     `a${Math.round(ALFA_D * 1000)}`,
     `o${MIN_ODCZYTOW_D}`,
     `t${MIN_TRWALOSC}`,
