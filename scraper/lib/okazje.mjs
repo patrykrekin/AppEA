@@ -192,6 +192,21 @@ export function policzInwestycje(bands, poziomyD, trwalosc, at, prog = PROG_INW,
 
       const cel = listBelow(w.p);
       if (!(cel > 0)) continue;
+
+      /* 30.09.2026, godzinę po obniżeniu progu do 5%: cel MUSI być nad dzisiejszą
+         ceną. Brzmi banalnie, a bez tego warunku silnik produkował pozycje-zombi.
+
+         Mechanizm: cel to krok siatki pod poziomem, a przy tanich kartach krok
+         jest gruby względem przeceny. Foden 84 po 650 przy poziomie 700 dawał
+         cel = listBelow(700) = 650 — czyli dokładnie tyle, ile karta kosztuje.
+         Rejestr otwierał wiersz i natychmiast go zamykał, bo warunek trafienia
+         brzmi `cena >= cel`: werdykt „cel", czas do celu 0 minut, trwała 0.
+         Każda taka karta dopisywałaby FAŁSZYWE trafienie do skuteczności —
+         czyli psułaby dokładnie tę liczbę, dla której cały ten tydzień mierzymy.
+
+         Przy progu 8% to się nie zdarzało, bo przecena zawsze przekraczała krok
+         z zapasem. Obniżenie progu odsłoniło dziurę, która siedziała tam od początku. */
+      if (!(cel > c.price)) continue;
       const kupnoDo = snapDown(Math.floor(cel * 0.95 / (1 + INW_MARZA)));
       const netto = net(kupnoDo, cel);
       if (!(kupnoDo > 0) || netto <= 0) continue;
