@@ -1510,6 +1510,17 @@
     target.textContent = "Dane cenowe: " + time + " · " + age;
     badge.classList.toggle("stale", minutes >= 90);
     if (minutes >= 90) target.textContent += " · odczyt może być nieaktualny";
+
+    /* Od 30.09 scraper zapisuje powód nieudanego przebiegu wprost do data.json.
+       Wcześniej przy awarii widziałeś tylko starzejący się znacznik czasu i nie
+       było jak zgadnąć, czy to chwilowa czkawka, czy coś się rozsypało. */
+    var a = data && data.awaria;
+    if (a && a.powod){
+      badge.classList.add("stale");
+      var kiedy = a.at ? new Date(a.at * 1000).toLocaleTimeString("pl-PL",
+        { hour:"2-digit", minute:"2-digit" }) : "";
+      target.textContent += " · ostatni przebieg padł" + (kiedy ? " o " + kiedy : "") + ": " + a.powod;
+    }
   }
 
   /* Ruchy cen chodzą w osobnym, rzadszym cyklu niż ceny u góry strony.
