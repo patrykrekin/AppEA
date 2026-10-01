@@ -120,7 +120,18 @@ export function validate(d){
      jednostki. Uwaga, nie błąd — stary plik ma prawo wyjść na produkcję. */
   if (d.sbc && d.sbc.platforma !== "console") warn.push("sbc bez podpisu platformy — koszty zależą od platformy");
   if (d.obserwacja && d.obserwacja.platforma !== "console") warn.push("obserwacja bez podpisu platformy — ceny zależą od platformy");
+     /* Kontrolki sensu siedzą osobno, bo pilnują czego innego. Ten plik sprawdza
+     KONTRAKT danych: czy pole istnieje, czy cena leży na siatce, czy netto jest
+     dodatnie. Kontrolki sprawdzają ZNACZENIE: czy liczba mówi to, co twierdzi.
 
+     Podział nie jest kosmetyczny. Każdy błąd, który nas w tym projekcie bolał,
+     przechodził przez ten walidator bez zająknięcia — bo żaden nie łamał
+     kontraktu. `trafienie: 100` to poprawny integer. Historia każdej kontrolki
+     i liczby, na których powstała, są w kontrolki.mjs. */
+  const k = kontrolki(d);
+  err.push(...k.err);
+  warn.push(...k.warn);
+   
   return { err, warn };
 }
 
