@@ -37,6 +37,7 @@
    robimy. */
 
 import { PROG_INW, MIN_KROKOW, ALFA_D, MIN_ODCZYTOW_D, MIN_TRWALOSC, MIN_TRWALOSC_SEK } from "./okazje.mjs";
+import { onGrid } from "./grid.mjs";
 
 export const HORYZONT = 24 * 3600;   // doba na rozstrzygnięcie pozycji
 export const LUKA = 2 * 3600;        // tyle bez widoku ceny i zamykamy jako "urwane"
@@ -124,7 +125,26 @@ function zamknij(r, at){
 export function dopiszRejestr(stan, at, inwestycje, ceny, poziomyD, def = definicja()){
   const s = stan && typeof stan === "object" ? stan : {};
   const otwarte = {};
-  for (const k of Object.keys(s.otwarte || {})) otwarte[k] = { ...s.otwarte[k] };
+    /* 01.10.2026: wiersz z celem poza siatką nie przechodzi dalej.
+
+     Do tego dnia `listBelow` potrafiło zwrócić cenę, której w grze nie da się
+     wpisać — poziom 10 010–10 240 dawał cel 9750, a poniżej 10 000 legalne są
+     tylko setki. Samo `grid.mjs` tego nie leczy: cel zamrażamy w chwili wejścia
+     i słusznie, więc raz zapisana zła liczba zostaje w pliku na zawsze. A że
+     walidator taki plik odrzuca, nic się nie zapisuje i wiersz wraca przy
+     każdym przebiegu. Pętla bez wyjścia aż do HORYZONTU — doba bez cen.
+
+     Wiersz WYRZUCAMY, nie naprawiamy. Przeliczenie celu w dół obniżyłoby
+     poprzeczkę pozycji, która już trwa, i mogłoby dopisać trafienie, którego
+     nie było. Lepiej stracić jeden pomiar niż sfabrykować wynik.
+
+     Zostaje na stałe, nie jako jednorazowa migracja: każdy przyszły cel poza
+     siatką wypadnie tak samo, zamiast zatrzymać zapis na dobę. */
+  for (const k of Object.keys(s.otwarte || {})){
+    const r = s.otwarte[k];
+    if (r && Number.isFinite(r.cel0) && !onGrid(r.cel0)) continue;
+    otwarte[k] = { ...r };
+  }
   const wyniki = Array.isArray(s.wyniki) ? [...s.wyniki] : [];
   const c = ceny || {};
   const p = poziomyD || {};
