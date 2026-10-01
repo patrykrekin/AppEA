@@ -30,7 +30,13 @@ export const SZEREG_N = 8;           // 40 minut szybkiego poziomu
 export const OKNO_ZWROTU = 6;        // zwrot liczymy przez 30 minut
 export const MARZA = 0.05;           // ta sama marża co w snajperce i inwestycjach
 export const LIMIT = 12;
-export const WIEK = 3 * 86400;
+/* Okres półtrwania poziomu dobowego: ALFA_D 0,005 przy odczycie co 5 minut to
+   około 11,5 h. Karta pod progiem DŁUŻEJ niż to i nadal bez zwrotu nie jest
+   przeceniona — ona po prostu tyle teraz kosztuje, a to poziom jeszcze jej
+   nie dogonił. 01.10 na liście stali: Messi 89 (13 h, −18%), Russo 88 (26 h,
+   −15,6%), Donnarumma 89 (13 h, −14,4%), wszyscy ze `zwrot: 0`. Kto by to
+   kupił, kupiłby po bieżącej cenie rynkowej w przekonaniu, że ma zniżkę. */
+export const POLTRWANIE_D = 12 * 3600;
 
 /** Krótka historia SZYBKIEGO poziomu każdej karty. Same liczby, bez znaczników
  *  czasu — odczyty idą co pięć minut, więc pozycja w tablicy wystarcza, a każdy
