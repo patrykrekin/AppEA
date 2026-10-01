@@ -52,11 +52,25 @@ import { stepFor } from "./grid.mjs";
 /* ── Progi ───────────────────────────────────────────────────────────────── */
 
 /** Ile kroków siatki musi dzielić cenę wejścia od celu, żeby pozycja w ogóle
- * coś znaczyła. Przy karcie 5 800 krok to 100 monet, czyli 1,7% — ruch
- * w granicach szumu. Trzy kroki to 5,2%, czyli mniej więcej tyle, ile i tak
- * wymaga podatek przy wyjściu. Poniżej tego „trafienie" opisuje wyłącznie to,
- * że ktoś kupił najtańszą sztukę i następna jest o krok wyżej. */
-export const MIN_KROKOW_CELU = 3;
+ * coś znaczyła. Jeden krok to na karcie 5 800 sto monet, czyli 1,7% — ruch
+ * w granicach szumu. Takie „trafienie" opisuje wyłącznie to, że ktoś kupił
+ * najtańszą sztukę i następna jest o krok wyżej.
+ *
+ * Dlaczego JEDEN, a nie trzy jak MIN_KROKOW w okazje.mjs — bo to są dwie różne
+ * liczby i pierwsza wersja tego pliku je pomyliła. MIN_KROKOW mierzy dystans
+ * POZIOM − CENA, a tutaj mierzymy CEL − CENA, a cel leży już krok pod poziomem.
+ * Do tego poziom nie musi leżeć na siatce, więc `snapDown` zjada jeszcze
+ * kawałek. Gwarancja silnika przy MIN_KROKOW = 3 wychodzi tak:
+ *
+ *   cena  ≤ poziom − 3·krok
+ *   cel    = snapDown(poziom) − krok ≥ poziom − δ − krok   (δ < krok)
+ *   cel − cena ≥ 2·krok − δ  >  1·krok
+ *
+ * Czyli silnik gwarantuje WIĘCEJ niż jeden krok, ale NIE gwarantuje trzech.
+ * Gdybym zostawił tu trójkę, walidator wywalałby zdrowe pozycje i zatrzymywał
+ * publikację — ten sam fałszywy alarm, co przy progach wieku cykli. Pytamy
+ * o to, co silnik naprawdę obiecuje, i o to, co faktycznie jest śmieciem. */
+export const MIN_KROKOW_CELU = 1;
 
 /** Trafienie szybsze niż dwa przebiegi scrapera to nie jest ruch ceny, tylko
  * rotacja ofert na liście. Pojedyncze takie się zdarza i nie ma w tym nic
@@ -182,8 +196,10 @@ export function kontrolki(d, teraz = Math.floor(Date.now() / 1000)){
       if (!Number.isFinite(o.wejscie) || !Number.isFinite(o.cel0)) continue;
       const krok = stepFor(o.wejscie);
       const kroki = (o.cel0 - o.wejscie) / krok;
-      if (kroki < MIN_KROKOW_CELU){
-        err.push(`rejestr.${p} ${k}: cel ${o.cel0} leży ${kroki.toFixed(1)} kroku nad wejściem ${o.wejscie} (minimum ${MIN_KROKOW_CELU}) — taka pozycja trafia sama z siebie`);
+      /* Ostro większe, nie „co najmniej": równo jeden krok to właśnie ten
+         przypadek, który chcemy łapać — rotacja najtańszej oferty. */
+      if (kroki <= MIN_KROKOW_CELU){
+        err.push(`rejestr.${p} ${k}: cel ${o.cel0} leży ${kroki.toFixed(1)} kroku nad wejściem ${o.wejscie} — poniżej tego pozycja trafia sama z siebie`);
       }
     }
 
