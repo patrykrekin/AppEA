@@ -28,7 +28,7 @@ export function snapDown(price){
    Równo z rynkiem = kolejka za całą tańszą podażą. Wyżej = nie sprzeda się. */
 export function listBelow(bin){
   const s = stepFor(bin);
-  return snapDown(bin) - s;
+  return snapDown(snapDown(bin) - s);
 }
 
 /** Netto po 5% podatku liczonym od całej ceny sprzedaży. */
