@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { onGrid, net } from "./lib/grid.mjs";
+import { kontrolki } from "./lib/kontrolki.mjs";
 
 /* Bramka przed publikacją. Zły plik jest gorszy niż stary plik,
    więc przy błędzie nic nie wychodzi na produkcję. */
