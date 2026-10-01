@@ -115,20 +115,28 @@ export function policzMonitor(bands, poziomyD, szereg, trwalosc, at, prog = PROG
       const netto = net(sufit, cel);
       if (!(sufit > 0) || netto <= 0) continue;
 
-      const z = zwrot(sz[klucz]);
+            const z = zwrot(sz[klucz]);
       const t = tr[klucz];
+      const odSekund = (t && t.od > 0) ? Math.max(0, at - t.od) : null;
+      const zawraca = !!(z && !z.ponizejKroku && z.procent > 0);
+
+      /* Przecena, która trwa dłużej niż pamięć poziomu, przestaje być przeceną.
+         Wyjątek: karta, która JUŻ zawraca, zostaje — zwrot jest dowodem, że stary
+         poziom nadal jest właściwą kotwicą, a nie że poziom się spóźnia. */
+      if (Number.isFinite(odSekund) && odSekund > POLTRWANIE_D && !zawraca) continue;
+
       out.push({
         klucz, nazwa: c.name, rating: r, pos: c.pos || null,
         cena: c.price, poziom: Math.round(w.p), odczytow: w.n,
         rabat: +((roznica / w.p) * 100).toFixed(1),
         cel, sufit, netto,
         zwrot: z ? z.procent : null,
-        zawraca: !!(z && !z.ponizejKroku && z.procent > 0),
+        zawraca,
         /* "leci" to nie ujemny procent — procent liczony od dna ujemny być nie
            może. Leci ta karta, której szybki poziom właśnie ustanowił nowe dno. */
         leci: !!(z && z.noweDno),
         podProgiem: (t && t.n) || 0,
-        odSekund: (t && t.od > 0) ? Math.max(0, at - t.od) : null
+        odSekund
       });
     }
   }
