@@ -81,7 +81,27 @@ export const ALFA_D = 0.005;
    monitor.mjs miał to od początku dobrze: procent ORAZ minimum jeden krok siatki.
    Zrównujemy — teraz oba moduły stosują to samo kryterium do tego samego pytania. */
 export const PROG_INW = 0.05;      // ile pod poziomem dobowym to już przecena, nie szum
-export const MIN_KROKOW = 1;       // i co najmniej tyle kroków siatki, żeby to nie było zaokrąglenie
+/* 01.10.2026, po dobie pomiaru pod progiem 5%. Było 1 i to był mój błąd przy
+   obniżaniu progu — zmieniłem PROG_INW, a MIN_KROKOW zostawiłem bez zastanowienia.
+
+   Skutek: rejestr ogłosił 100% trafień na 84 próbkach. Nie dlatego, że silnik
+   zaczął trafiać, tylko dlatego, że przestał mierzyć. Przy jednym kroku cel
+   leżał tuż nad ceną — na karcie za 5 800 krok to 100 monet, czyli 1,7%.
+   Rozkład czasu dojścia mówił wszystko: 43 z 84 trafień w dwie minuty,
+   najszybsze w trzy sekundy. To nie był ruch ceny, tylko to, że ktoś kupił
+   najtańszą sztukę i następna stała o stówę wyżej.
+
+   Trzy kroki to na tej samej karcie 5,2% — mniej więcej tyle, ile i tak zabiera
+   podatek przy wyjściu. Poniżej tego „trafienie" nie znaczy nic.
+
+   Koszt: z 84 pozycji przeżyłoby 47. Wycinamy dokładnie tę połowę, która
+   zapadała natychmiast. Dla porównania stara definicja p8 dawała na tych
+   samych danych 57% przy medianie 895 s — i to była liczba prawdziwa.
+
+   `definicja()` w rejestr.mjs czyta tę stałą, więc podpis sam zmienia się
+   z `p5-k1-…` na `p5-k3-…`. Historia się DZIELI, nie kasuje: dotychczasowe
+   wyniki zostają pod starym podpisem jako udokumentowana wtopa. */
+export const MIN_KROKOW = 3; // i co najmniej tyle kroków siatki, żeby to nie było zaokrąglenie
 export const MIN_ODCZYTOW_D = 24;  // dwie godziny obserwacji, zanim uwierzymy w poziom dobowy
 export const INW_MARZA = 0.05;     // marża netto, której wymagamy od pozycji
 export const INW_LIMIT = 12;
