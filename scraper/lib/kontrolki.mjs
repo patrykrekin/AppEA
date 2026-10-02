@@ -212,7 +212,17 @@ export function kontrolki(d, teraz = Math.floor(Date.now() / 1000)){
       const szybkie = cele.filter(o => o.doCelu <= SZYBKIE_TRAFIENIE).length;
       const udzial = szybkie / cele.length;
       if (udzial > MAX_UDZIAL_SZYBKICH){
-        err.push(`rejestr.${p}: ${szybkie} z ${cele.length} trafień (${pct(szybkie, cele.length)}%) zapadło w ≤${SZYBKIE_TRAFIENIE} s — to rotacja ofert, nie ruch ceny`);
+        /* 02.10.2026 — UWAGA, nie błąd, i to poprawka po mojej własnej wtopie.
+           Przez 2,5 h ta reguła blokowała publikację: ceny na stronie stanęły,
+           bo scraper co pięć minut odrzucał cały plik.
+
+           Powód był taki, że wsadziłem to do złego kubełka. Zasada z nagłówka
+           brzmi „fałsz blokuje, brak nie blokuje" i jest dobra — tyle że tu nie
+           ma ani fałszu, ani braku. Ceny, snajperka i pozycje są POPRAWNE.
+           Zepsuta jest nasza własna TABLICA WYNIKÓW, czyli jedna ukryta sekcja.
+           Wstrzymywanie wszystkich cen, bo nie ufamy swojemu samoocenianiu, to
+           cena absurdalnie wysoka za problem, który nikogo nie kosztuje monet. */
+        warn.push(`rejestr.${p}: ${szybkie} z ${cele.length} trafień (${pct(szybkie, cele.length)}%) zapadło w ≤${SZYBKIE_TRAFIENIE} s — to rotacja ofert, nie ruch ceny`);
       }
       const med = mediana(cele.map(o => o.doCelu));
       if (med !== null && med < MIN_MEDIANA && cele.length / Math.max(1, biezace(r.wyniki, def).length) > 0.9){
@@ -228,7 +238,10 @@ export function kontrolki(d, teraz = Math.floor(Date.now() / 1000)){
     if (sk && sk.gotowe && (sk.probek || 0) >= MIN_PROBEK
         && Number.isFinite(sk.trafienie) && sk.trafienie >= MAX_TRAFIENIE
         && Number.isFinite(sk.medianaDoCelu) && sk.medianaDoCelu < MIN_MEDIANA){
-      err.push(`skutecznosc.${p}: ${sk.trafienie}% trafień przy medianie ${sk.medianaDoCelu} s na ${sk.probek} próbkach — miernik mierzy sam siebie, nie rynek`);
+      /* Uwaga, nie błąd — z tego samego powodu co kontrolka 4 wyżej. Ta liczba
+         ma nie trafić do ludzi, ale od tego jest ukrycie sekcji na stronie,
+         a nie zatrzymanie całego pliku z cenami. */
+      warn.push(`skutecznosc.${p}: ${sk.trafienie}% trafień przy medianie ${sk.medianaDoCelu} s na ${sk.probek} próbkach — miernik mierzy sam siebie, nie rynek`);
     }
   }
 
