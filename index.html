@@ -153,6 +153,10 @@
   .sell h3{margin:0 0 3px;font-size:15px}.sell p{color:var(--muted);margin:0;font-size:14px}
   footer{margin-top:18px;color:var(--soft);font-size:12px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
   @media(max-width:620px){.wrap{width:min(100% - 22px,960px);padding-top:22px}header{align-items:flex-start;flex-direction:column;margin-bottom:18px}.controls{grid-template-columns:1fr}.platform{width:max-content}.market{grid-template-columns:1fr auto;gap:3px 12px;padding:14px}.market .label{grid-column:1/-1}.market strong{font-size:16px}.lead{padding:18px}.moves-grid{grid-template-columns:1fr;gap:16px}.plan-grid{grid-template-columns:1fr}.calendar-row,.calendar-trigger{grid-template-columns:78px minmax(0,1fr) auto;gap:5px 8px}.calendar-trigger .calendar-arrow{grid-column:3;grid-row:1}.calendar-trigger .calendar-price{grid-column:3;grid-row:2}.calendar-trigger .calendar-action{grid-column:2;grid-row:1 / span 2}.calendar-row:not(details){align-items:start}.calendar-picks{padding:0 0 8px}.calendar-pick{grid-template-columns:1fr 1fr;gap:7px 12px}.calendar-sell{grid-column:1/-1}.calendar-note{grid-column:1/-1}.trade-head{display:none}.trade{grid-template-columns:1fr 1fr;gap:7px 12px;padding:13px}.trade-player{grid-column:1/-1;padding-bottom:4px}.trade-value{display:flex;flex-direction:column;gap:1px;font-size:13px}.trade-value small{display:block;font:10px "IBM Plex Mono",monospace;text-transform:uppercase;letter-spacing:.05em;color:var(--soft)}}
+/* 02.10.2026 — sekcja wraca, gdy rejestr będzie mierzył wyjście tak samo
+   rygorystycznie jak wejście. Dziś pokazuje 100% trafień przy medianie
+   235 s, co opisuje rotację ofert, a nie to, czy dało się sprzedać. */
+#skutecznosc-box { display: none; }
 </style>
 </head>
 <body>
