@@ -70,7 +70,8 @@ export function definicja(){
     `a${Math.round(ALFA_D * 1000)}`,
     `o${MIN_ODCZYTOW_D}`,
     `t${MIN_TRWALOSC}`,
-    `s${MIN_TRWALOSC_SEK}`
+    `s${MIN_TRWALOSC_SEK}`,
+     `c${MIN_TRWALOSC_CELU}`
   ].join("-");
 }
 
