@@ -196,10 +196,23 @@ export function dopiszRejestr(stan, at, inwestycje, ceny, poziomyD, def = defini
       r.ostatnio = at;
       if (!Number.isFinite(r.min) || widok.cena < r.min){ r.min = widok.cena; r.minAt = at; }
       if (!Number.isFinite(r.max) || widok.cena > r.max) r.max = widok.cena;
-      if (!r.osiagnietyAt && r.cel0 > 0 && widok.cena >= r.cel0){
-        r.osiagnietyAt = at;
-        r.skadCelu = widok.skad;
-      }
+      /* Cel musi się UTRZYMAĆ. Jedno dotknięcie to w 71% przypadków mignięcie
+   przy przestawianiu kolejki ofert — patrz MIN_TRWALOSC_CELU wyżej.
+   Zejście poniżej celu zrywa serię i liczymy od nowa, dokładnie tak samo
+   jak przy trwałości wejścia w okazje.mjs. */
+if (!r.osiagnietyAt && r.cel0 > 0){
+  if (widok.cena >= r.cel0){
+    if (!r.celOd) r.celOd = at;
+    r.celN = (r.celN || 0) + 1;
+    if (r.celN >= MIN_TRWALOSC_CELU){
+      r.osiagnietyAt = r.celOd;
+      r.skadCelu = widok.skad;
+    }
+  } else {
+    r.celOd = null;
+    r.celN = 0;
+  }
+}
       const ost = r.hist[r.hist.length - 1];
       if (!ost || ost[1] !== widok.cena) r.hist = [...r.hist, [at, widok.cena, r.poziom]].slice(-HIST_LIMIT);
     }
