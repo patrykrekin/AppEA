@@ -44,6 +44,21 @@ export const LUKA = 2 * 3600;        // tyle bez widoku ceny i zamykamy jako "ur
 export const WYNIKI_LIMIT = 150;     // pozycje są rzadkie — to raczej miesiące niż dni
 export const HIST_LIMIT = 40;        // próbki zapisujemy tylko przy zmianie
 export const MIN_PROB = 15;          // poniżej tego nie ogłaszamy żadnej skuteczności
+/* 03.10.2026 — ile odczytów Z RZĘDU cena musi stać na celu, żeby to było
+   trafienie. Do dziś wystarczyła JEDNA obserwacja, podczas gdy wejście
+   wymagało sześciu przez 25 minut. Ta asymetria produkowała 96% skuteczności
+   przy medianie 150 s.
+
+   Zmierzone na 761 odczytach z 22 otwartych pozycji: z 331 skoków w górę
+   o co najmniej krok siatki aż 235 cofało się już w następnym odczycie.
+   Siedem na dziesięć ruchów to mignięcie przy przestawianiu kolejki ofert,
+   a nie ruch ceny.
+
+   Dwa, nie sześć: pojedyncze mignięcie odpada, a prawdziwy ruch nie musi
+   czekać pół godziny na potwierdzenie. Czas do celu liczymy od PIERWSZEGO
+   dotknięcia, nie od potwierdzenia — bo wtedy cena faktycznie tam była,
+   a drugi odczyt tylko mówi, że to nie było mrugnięcie. */
+export const MIN_TRWALOSC_CELU = 2;
 
 /** Podpis definicji pozycji. Wchodzą tu WYŁĄCZNIE parametry, które zmieniają
  *  znaczenie wiersza — próg, pamięć poziomu, wymagana obserwacja i trwałość.
