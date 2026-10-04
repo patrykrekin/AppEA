@@ -10,6 +10,7 @@ import { zbuduj as zbudujKalendarz } from "./lib/kalendarz.mjs";
 import { dopiszRejestr, zrodloCen, skutecznoscInw } from "./lib/rejestr.mjs";
 import { toSnipeRows } from "./lib/snajperka.mjs";
 import { dopiszSzereg, policzMonitor } from "./lib/monitor.mjs";
+import { dopiszHistorie } from "./lib/historia.mjs";
 
 /* SBC co godzinę, nie dwa razy na dobę. 28.09: SBC z terminem 24 h potrafi
    wygasnąć i zostać zastąpiona nową, a cykl `slow` pokazywał nieistniejącą
