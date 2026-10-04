@@ -74,7 +74,16 @@ jobs:
       # nie chcemy paść, gdyby jednak coś w nim siedziało.
       - name: Dociągnij świeży main
         run: git pull --rebase --autostash origin main
-
+            # 04.10.2026: dwa razy w tygodniu przy wklejaniu bloku znikała deklaracja
+      # stałej. Moduł wywalał się ReferenceError-em przy imporcie, czyli ZANIM
+      # scrape.mjs wszedł w swój try — więc nie zapisywała się nawet `awaria`
+      # i ceny stawały bez śladu. Walidator tego nie łapie, bo sprawdza gotowy
+      # plik, a plik w ogóle nie powstawał.
+      # Idzie PRZED Chromium: nie ma sensu ściągać 150 MB przeglądarki i mielić
+      # dwóch rynków, żeby paść na literówce w deklaracji.
+      - name: Dymny test modułów
+        working-directory: scraper
+        run: node smoke.mjs
       - name: Chromium
         working-directory: scraper
         run: npx playwright install --with-deps chromium
