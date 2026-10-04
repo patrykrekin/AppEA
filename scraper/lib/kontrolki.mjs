@@ -72,10 +72,20 @@ import { stepFor } from "./grid.mjs";
  * o to, co silnik naprawdę obiecuje, i o to, co faktycznie jest śmieciem. */
 export const MIN_KROKOW_CELU = 1;
 
-/** Trafienie szybsze niż dwa przebiegi scrapera to nie jest ruch ceny, tylko
- * rotacja ofert na liście. Pojedyncze takie się zdarza i nie ma w tym nic
- * złego — ale gdy stanowią jedną trzecią wszystkich, definicja jest zepsuta. */
-export const SZYBKIE_TRAFIENIE = 300;
+/** UWAGA NA JEDNOSTKĘ — `doCelu` i `medianaDoCelu` są w MINUTACH, nie
+ * w sekundach. `zamknij()` w rejestr.mjs przepuszcza je przez `minuty()`.
+ *
+ * 04.10.2026: pierwsza wersja tego pliku brała je za sekundy i progi były
+ * przez to 60× za luźne. „Trafienie w ≤300 s" znaczyło w rzeczywistości
+ * „w ≤5 godzin", a „mediana poniżej 600 s" — „poniżej dziesięciu godzin".
+ * Obie reguły zapalały się więc na zdrowych danych i 02.10 zatrzymały
+ * publikację cen na dwie i pół godziny. Zdiagnozowałem wtedy zły kubełek
+ * (błąd zamiast uwagi), co było prawdą, ale nie całą: pod spodem siedziała
+ * pomyłka jednostkowa i to ona pociągała za spust.
+ *
+ * Teraz jawnie w minutach. Trafienie w kwadrans to trzy odczyty scrapera —
+ * poniżej tego trudno odróżnić dojście do celu od warunków wejścia. */
+export const SZYBKIE_TRAFIENIE_MIN = 15;
 export const MAX_UDZIAL_SZYBKICH = 0.30;
 
 /** Poniżej tylu próbek nie twierdzimy niczego o rozkładzie — przy ośmiu
@@ -86,7 +96,11 @@ export const MIN_PROBEK = 20;
  * jest sukcesem, tylko miernikiem mierzącym własny ogon. Dla porównania:
  * definicja `p8` dawała na tych samych danych 57% przy medianie 895 s. */
 export const MAX_TRAFIENIE = 85;
-export const MIN_MEDIANA = 600;
+/** Również w MINUTACH. Pozycja, która średnio dochodzi do celu w pół godziny,
+ * przy skuteczności ponad 85% opisuje raczej warunki wejścia niż ruch rynku.
+ * Dla skali, zmierzone: definicja p5-k1 dawała medianę 129 min, p5-k3 około
+ * 160 min, a p5-k3-c2 w pierwszej dobie 375 min. */
+export const MIN_MEDIANA_MIN = 30;
 
 /** Ile może mieć znacznik cyklu, zanim uznamy go za martwy.
 
@@ -209,7 +223,7 @@ export function kontrolki(d, teraz = Math.floor(Date.now() / 1000)){
        w pliku, a 4 nie zadziała, dopóki wyników nie uzbiera się dość. */
     const cele = biezace(r.wyniki, def).filter(o => o.werdykt === "cel" && Number.isFinite(o.doCelu));
     if (cele.length >= MIN_PROBEK){
-      const szybkie = cele.filter(o => o.doCelu <= SZYBKIE_TRAFIENIE).length;
+      const szybkie = cele.filter(o => o.doCelu <= SZYBKIE_TRAFIENIE_MIN).length;
       const udzial = szybkie / cele.length;
       if (udzial > MAX_UDZIAL_SZYBKICH){
         /* 02.10.2026 — UWAGA, nie błąd, i to poprawka po mojej własnej wtopie.
@@ -222,11 +236,11 @@ export function kontrolki(d, teraz = Math.floor(Date.now() / 1000)){
            Zepsuta jest nasza własna TABLICA WYNIKÓW, czyli jedna ukryta sekcja.
            Wstrzymywanie wszystkich cen, bo nie ufamy swojemu samoocenianiu, to
            cena absurdalnie wysoka za problem, który nikogo nie kosztuje monet. */
-        warn.push(`rejestr.${p}: ${szybkie} z ${cele.length} trafień (${pct(szybkie, cele.length)}%) zapadło w ≤${SZYBKIE_TRAFIENIE} s — to rotacja ofert, nie ruch ceny`);
+        warn.push(`rejestr.${p}: ${szybkie} z ${cele.length} trafień (${pct(szybkie, cele.length)}%) zapadło w ≤${SZYBKIE_TRAFIENIE_MIN} min — to rotacja ofert, nie ruch ceny`);
       }
       const med = mediana(cele.map(o => o.doCelu));
-      if (med !== null && med < MIN_MEDIANA && cele.length / Math.max(1, biezace(r.wyniki, def).length) > 0.9){
-        warn.push(`rejestr.${p}: mediana dojścia do celu ${med} s przy ${pct(cele.length, biezace(r.wyniki, def).length)}% trafień — sprawdź, czy cel nie leży za blisko`);
+      if (med !== null && med < MIN_MEDIANA_MIN && cele.length / Math.max(1, biezace(r.wyniki, def).length) > 0.9){
+        warn.push(`rejestr.${p}: mediana dojścia do celu ${med} min przy ${pct(cele.length, biezace(r.wyniki, def).length)}% trafień — sprawdź, czy cel nie leży za blisko`);
       }
     }
 
@@ -237,11 +251,11 @@ export function kontrolki(d, teraz = Math.floor(Date.now() / 1000)){
     const sk = d.skutecznosc?.[p];
     if (sk && sk.gotowe && (sk.probek || 0) >= MIN_PROBEK
         && Number.isFinite(sk.trafienie) && sk.trafienie >= MAX_TRAFIENIE
-        && Number.isFinite(sk.medianaDoCelu) && sk.medianaDoCelu < MIN_MEDIANA){
+        && Number.isFinite(sk.medianaDoCelu) && sk.medianaDoCelu < MIN_MEDIANA_MIN){
       /* Uwaga, nie błąd — z tego samego powodu co kontrolka 4 wyżej. Ta liczba
          ma nie trafić do ludzi, ale od tego jest ukrycie sekcji na stronie,
          a nie zatrzymanie całego pliku z cenami. */
-      warn.push(`skutecznosc.${p}: ${sk.trafienie}% trafień przy medianie ${sk.medianaDoCelu} s na ${sk.probek} próbkach — miernik mierzy sam siebie, nie rynek`);
+      warn.push(`skutecznosc.${p}: ${sk.trafienie}% trafień przy medianie ${sk.medianaDoCelu} min na ${sk.probek} próbkach — miernik mierzy sam siebie, nie rynek`);
     }
   }
 
