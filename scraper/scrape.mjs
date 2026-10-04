@@ -324,6 +324,19 @@ try {
     const histPrev = prev.hist || {};
     const floorsPs = floorsZPasm(bands.ps);
     const floorsPc = floorsZPasm(bands.pc);
+     /* 04.10.2026 — długa rzadka historia do osobnego pliku. Jeden punkt na
+   godzinę przez 30 dni; moduł sam odrzuca niepełne i absurdalne odczyty,
+   bo jeden śmieciowy punkt zatruwa każdą statystykę z tego okresu.
+
+   Osobny plik, bo strona pobiera data.json przy każdym wejściu, a tego nie
+   czyta wcale. Własny try: historia jest materiałem na przyszłość, a ceny
+   muszą wyjść dziś — nieudany zapis historii nie może zabrać odczytu. */
+try {
+  const HIST = OUT.replace(/[^/\\]+$/, "historia.json");
+  patch(HIST, dopiszHistorie(read(HIST), at, floorsPs, floorsPc));
+} catch (e) {
+  console.log("historia: " + String(e.message || e).split("\n")[0] + " — pomijam");
+}
     const histPs = dopisz(histPrev.ps, at, floorsPs);
     const histPc = dopisz(histPrev.pc, at, floorsPc);
 
