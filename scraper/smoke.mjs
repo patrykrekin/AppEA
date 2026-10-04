@@ -48,6 +48,7 @@ const WYMAGANE = {
                           "INW_LIMIT", "WERSJA", "LOG_LIMIT", "KART_LIMIT", "KART_WIEK"],
   "./lib/monitor.mjs":   ["PROG", "MIN_ODCZYTOW", "SZEREG_N", "OKNO_ZWROTU", "MARZA",
                           "LIMIT", "WIEK", "POLTRWANIE_D"],
+  "./lib/historia.mjs":  ["WERSJA", "KROK", "LIMIT"],
   "./lib/rejestr.mjs":   ["HORYZONT", "LUKA", "WYNIKI_LIMIT", "HIST_LIMIT", "MIN_PROB",
                           "SWIEZOSC", "MIN_TRWALOSC_CELU"],
   "./lib/snajperka.mjs": ["PASMA", "RABAT", "MIN_ODCZYTOW", "LIMIT", "MARZA"],
