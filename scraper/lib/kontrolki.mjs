@@ -302,5 +302,25 @@ export function kontrolki(d, teraz = Math.floor(Date.now() / 1000)){
     }
   }
 
+  /* 9. Indeks i zmiana dobowa to ta sama liczba ─────────────────────────────
+     04.10.2026: `dopisz` w indeks.mjs trzymał wieczną kotwicę h[0] plus 95
+     ostatnich pomiarów co 5 minut, czyli okno 7,8 h. `policz` szukał punktu
+     starszego niż doba i jedynym takim była kotwica — w tamtej chwili sprzed
+     164 godzin. Przez to „wartość" (liczona od startu) i „zmiana za dobę"
+     (liczona od odniesienia dobowego) brały się z TEGO SAMEGO punktu i były
+     identyczne co do setnej, a strona pokazywała je jako dwie różne rzeczy.
+
+     Tego nie dało się zobaczyć na żadnym pojedynczym polu — obie liczby były
+     poprawne z osobna. Widać dopiero w relacji między nimi i dlatego jest to
+     osobna kontrolka. Uwaga, nie błąd: liczby są prawdziwe, kłamie etykieta. */
+  for (const p of ["ps", "pc"]){
+    const n = d.nasz?.[p];
+    if (!n || !Number.isFinite(n.wartosc) || !Number.isFinite(n.zmiana)) continue;
+    if ((n.pomiarow || 0) < 50) continue;        // na krótkiej historii to normalne
+    if (Math.abs((n.wartosc - 100) - n.zmiana) < 0.01 && n.okno === "24 h"){
+      warn.push(`nasz.${p}: wartość ${n.wartosc} i zmiana ${n.zmiana}% to ta sama liczba, a okno mówi "24 h" — odniesienie dobowe nie istnieje, liczymy od pierwszego pomiaru`);
+    }
+  }
+
   return { err, warn };
 }
