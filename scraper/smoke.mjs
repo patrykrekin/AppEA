@@ -24,6 +24,7 @@ const MODULY = [
   "./lib/indeks.mjs",
   "./lib/okazje.mjs",
   "./lib/monitor.mjs",
+  "./lib/historia.mjs",
   "./lib/rejestr.mjs",
   "./lib/snajperka.mjs",
   "./lib/ruchy.mjs",
