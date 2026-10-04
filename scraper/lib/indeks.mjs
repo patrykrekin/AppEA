@@ -15,7 +15,16 @@
 
 export const KOSZYK = [83, 84, 85, 86, 87, 88, 89];
 const DOBA = 86400;
-KROK_HIST = 1800
+/* 04.10.2026 — minimalny odstęp między zapamiętanymi pomiarami.
+
+   Odczyt leci co 5 minut, a historia ma 96 miejsc. Bez przerzedzania pokrywa
+   7,8 h, czyli NIGDY nie zawiera punktu sprzed doby — a `policz` właśnie
+   takiego szuka. Cofał się więc do wiecznej kotwicy h[0] i liczył „zmianę
+   dobową" od pierwszego pomiaru w historii, w dniu wykrycia sprzed 164 godzin.
+
+   Pół godziny × 95 miejsc to prawie dwie doby. Odniesienie dobowe istnieje
+   naprawdę, a kotwica wraca do swojej jedynej roli: zera dla „100". */
+export const KROK_HIST = 1800;
 
 /* Wersja definicji dna. Zmiana estymatora zrywa porównywalność z wcześniejszą
    historią, więc numer rośnie, a seria startuje od nowa zamiast sklejać dwa
