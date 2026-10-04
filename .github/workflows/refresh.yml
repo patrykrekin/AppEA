@@ -118,7 +118,7 @@ jobs:
         run: |
           git config user.name  "Terminal FUT"
           git config user.email "bot@terminal.fut"
-          git add data.json
+          git add data.json historia.json
           if git diff --cached --quiet; then
             echo "Ceny bez zmian — nic nie wysyłam."
             exit 0
