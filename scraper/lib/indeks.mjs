@@ -15,6 +15,7 @@
 
 export const KOSZYK = [83, 84, 85, 86, 87, 88, 89];
 const DOBA = 86400;
+KROK_HIST = 1800
 
 /* Wersja definicji dna. Zmiana estymatora zrywa porównywalność z wcześniejszą
    historią, więc numer rośnie, a seria startuje od nowa zamiast sklejać dwa
@@ -84,13 +85,18 @@ export function policz(hist){
   const odDoby   = zmiana(doba.floors,  teraz.floors);
   const sz       = szerokosc(doba.floors, teraz.floors);
 
-  const pelnaDoba = teraz.at - doba.at >= DOBA;
-  const godzin = Math.max(1, Math.round((teraz.at - doba.at) / 3600));
+  /* Odniesienie uznajemy za dobowe tylko w rozsądnym paśmie. Samo „>= 24 h"
+     przepuszczało kotwicę sprzed tygodnia i strona nazywała to zmianą dobową. */
+  const wiek = teraz.at - doba.at;
+  const godzin = Math.max(1, Math.round(wiek / 3600));
+  const prawdziwaDoba = wiek >= DOBA && wiek < 36 * 3600;
 
   return {
     wartosc: odStartu === null ? null : +(100 * (1 + odStartu)).toFixed(2),
     zmiana:  odDoby   === null ? null : +(odDoby * 100).toFixed(2),
-    okno:    pelnaDoba ? "24 h" : godzin + " h",
+    okno:    prawdziwaDoba ? "24 h" : (godzin < 48 ? godzin + " h" : Math.round(godzin / 24) + " dni"),
+    /* Żeby dało się potem sprawdzić, skąd ta liczba naprawdę jest. */
+    odniesienie: prawdziwaDoba ? "doba" : "poczatek",
     szerokosc: sz,
     pomiarow: hist.length,
     odKiedy: start.at,
@@ -98,14 +104,24 @@ export function policz(hist){
   };
 }
 
-/** Dopisuje pomiar i przycina historię do dwóch dób (48 pomiarów co 30 min).
+/** Dopisuje pomiar i trzyma 96 punktów co pół godziny — prawie dwie doby.
  *  Pierwszy pomiar zostaje na zawsze: to on jest zerem dla "100". Gdyby wypadał
  *  razem z resztą, po dwóch dobach wartość liczyłaby się od innego dnia i
  *  przestałaby być porównywalna, nie mówiąc o tym nikomu. */
-export function dopisz(hist, at, floors, limit = 96){
+export function dopisz(hist, at, floors, limit = 96, krok = KROK_HIST){
   const stare = Array.isArray(hist) ? hist : [];
   const h = stare.filter(x => x && (x.w || 1) === WERSJA);
-  if (Object.keys(floors).length) h.push({ at, floors, w: WERSJA });
+
+  if (Object.keys(floors).length){
+    /* Odstęp mierzymy od PRZEDOSTATNIEGO punktu, nie od ostatniego. Ostatni jest
+       ruchomy — podmieniamy go co przebieg, żeby indeks na stronie był zawsze
+       świeży — więc mierzenie od niego resetowałoby zegar odstępu i historia
+       nigdy by nie urosła. Przerobiłem tak po teście, który to złapał. */
+    const przedOst = h[h.length - 2];
+    if (przedOst && (at - przedOst.at) < krok) h[h.length - 1] = { at, floors, w: WERSJA };
+    else h.push({ at, floors, w: WERSJA });
+  }
+
   if (h.length <= limit) return h;
   return [h[0], ...h.slice(-(limit - 1))];
 }
