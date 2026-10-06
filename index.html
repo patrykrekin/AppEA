@@ -156,7 +156,6 @@
 /* 02.10.2026 — sekcja wraca, gdy rejestr będzie mierzył wyjście tak samo
    rygorystycznie jak wejście. Dziś pokazuje 100% trafień przy medianie
    235 s, co opisuje rotację ofert, a nie to, czy dało się sprzedać. */
-#skutecznosc-box { display: none; }
 </style>
 </head>
 <body>
@@ -164,8 +163,8 @@
   <header>
     <div>
       <div class="brand">Terminal FUT</div>
-      <h1>Co robić na rynku</h1>
-      <p class="lead-in">Cenniki mówią, ile karta kosztuje. My liczymy, jak często ktoś wystawia ją za tanio — i podajemy cenę wejścia, cenę wyjścia i zysk po podatku.</p>
+      <h1>Gdzie jest rynek</h1>
+      <p class="lead-in">Cenniki mówią, ile karta kosztuje w tej chwili. My mierzymy poziom całego rynku co pięć minut i pilnujemy terminów, które tym poziomem ruszają — pod pozycje trzymane dzień albo dwa, nie pięć minut.</p>
     </div>
     <div class="platform" role="group" aria-label="Wybierz rynek">
       <button id="ps" type="button" aria-pressed="true">Konsola</button>
@@ -173,7 +172,7 @@
     </div>
   </header>
 
-  <section class="controls" aria-label="Dopasuj porady">
+  <section class="controls" aria-label="Dopasuj widok">
     <div>
       <label class="budget-title" for="budget">Twój budżet</label>
       <div class="budget-line"><input id="budget" type="text" inputmode="numeric" value="50000" aria-describedby="budget-note"><span class="coin-label">monet</span></div>
@@ -183,7 +182,7 @@
         <button type="button" data-budget="250000" aria-pressed="false">250 tys.</button>
         <button type="button" data-budget="500000" aria-pressed="false">500 tys.</button>
       </div>
-      <p class="budget-note" id="budget-note">Przykładowy budżet na start — wpisz swój, a lista kart się dopasuje.</p>
+      <p class="budget-note" id="budget-note">Budżet wyznacza limit 10% banku na jedną kartę — przy pozycji trzymanej dwa dni to jedyna rzecz, która ratuje bank, gdy teza nie wypali.</p>
     </div>
   </section>
 
@@ -195,72 +194,32 @@
   <div class="freshness" id="freshness" aria-live="polite"><strong id="updated">Wczytuję czas odświeżenia…</strong></div>
 
   <section class="lead">
-    <div class="eyebrow" id="advice-label">Dopasowane do budżetu</div>
-    <h2 id="advice-title">Sprawdzam, co mieści się w budżecie…</h2>
-    <p id="advice-text">Ceny i limity zakupu pobieram z aktualnych danych projektu.</p>
-  </section>
-
-  <section class="plans section">
-    <div class="section-head"><h3>Plan kupna i sprzedaży</h3><span>Wpisane ręcznie 26–27.09 · ceny NIE są odświeżane</span></div>
-    <div class="plan-grid" id="plan-list"><div class="plan-empty">Wczytuję plan…</div></div>
-  </section>
-
-  <section class="calendar">
-    <div class="section-head"><h3>Najbliższe terminy i eventy</h3><span id="kal-caption">Liczone przy każdym odczycie · okno rusza się samo</span></div>
-    <div class="calendar-list" id="calendar-list"><div class="plan-empty">Wczytuję terminy…</div></div>
-  </section>
-
-  <section class="section">
-    <div class="section-head"><h3>Karty do kupienia</h3><span id="trade-caption">Konsola · aktualny odczyt</span></div>
-    <div class="trade-list">
-      <div class="trade-head"><span>Zawodnik</span><span>Najtańsza oferta</span><span>Licytuj do</span><span>Cel sprzedaży</span><span>Kiedy</span><span>Netto / szt.</span></div>
-      <div id="trade-list"><div class="trade-empty">Wczytuję listę kart…</div></div>
-    </div>
-    <p class="budget-note">Limit 10% banku na jedną kartę trzyma cię przy życiu, gdy pozycja nie wypali. Cena sprzedaży i zysk to szacunek z ostatniego odczytu rynku, nie gwarancja.</p>
+    <div class="eyebrow" id="stan-label">Stan rynku</div>
+    <h2 id="stan-title">Liczę, gdzie stoi rynek…</h2>
+    <p id="stan-text">Poziom pasm i najbliższe terminy czytam z bieżącego odczytu.</p>
   </section>
 
   <section class="moves" id="moje-box">
     <div class="section-head"><h3>Moje pozycje</h3><span id="moje-caption"></span></div>
     <div id="moje-list"></div>
-    <p class="budget-note" style="margin-top:10px">Zapisane w tej przeglądarce, nigdzie nie wysyłane. Przy każdym odświeżeniu przeliczamy, ile zostałoby na rękę po 5% podatku, gdybyś wystawił teraz krok pod aktualnym dnem. Karty przypięte z listy ruchów niosą swój <strong>cel</strong> — poziom sprzed przeceny; gdy rynek go dobije, piszemy „cel osiągnięty”. Cenę wejścia popraw na to, co naprawdę zapłaciłeś: wpisujemy tę z chwili przypięcia.</p>
+    <p class="budget-note" style="margin-top:10px">Zapisane w tej przeglądarce, nigdzie nie wysyłane. Przy każdym odświeżeniu przeliczamy, ile zostałoby na rękę po 5% podatku, gdybyś wystawił teraz krok pod aktualnym dnem. <strong>Podatek to 5%, więc karta musi urosnąć o 5,26%, żebyś wyszedł na zero</strong> — przy pozycji na dwa dni to jest dolna granica sensu, nie cel. Cenę wejścia popraw na to, co naprawdę zapłaciłeś: wpisujemy tę z chwili przypięcia.</p>
   </section>
 
-  <section class="moves" id="monitor-box">
-    <div class="section-head"><h3>Przecenione w twoim przedziale</h3><span id="monitor-caption"></span></div>
-    <div id="monitor-list"><div class="empty-moves">Lista powstaje z kolejnych odczytów pasm.</div></div>
-    <p class="budget-note" style="margin-top:10px">Te karty liczymy z <strong>własnych pasm</strong> (83–89), które i tak czytamy co pięć minut — nie z listy momentum fut.gg, gdzie najtańsza karta kosztuje 15 000 i przy normalnym banku nie da się z niej nic kupić. Kryterium: karta stoi co najmniej 5% <strong>i co najmniej jeden krok siatki</strong> pod swoim własnym poziomem dobowym (~11,5 h pamięci), a poziom ma za sobą minimum 24 odczyty. Sam procent nie wystarczy — przy karcie za 650 pięć procent to 32 monety, czyli mniej niż krok, więc byłby to wyłącznie artefakt zaokrąglenia.<br><strong>Zawraca</strong> znaczy, że krótka średnia (~1 h) podniosła się o ponad krok siatki nad swoje dno z ostatniego pół godziny. <strong>Nowe dno</strong> znaczy, że dalej schodzi — wtedy nie wchodzisz, bo karta przeceniona o 15% potrafi spaść o kolejne 15. To obserwacja, nie prognoza: nie twierdzimy, że wróci. Czy z tego są pieniądze, rozstrzygnie rejestr wyników, a nie ta lista.</p>
-  </section>
-
-  <section class="moves" id="obs-box">
-    <div class="section-head"><h3>Ruch na drogich kartach</h3><span id="obs-caption"></span></div>
-    <div id="obs-list"><div class="empty-moves">Szereg rusza przy najbliższym odczycie.</div></div>
-    <p class="budget-note" style="margin-top:10px"><strong>To jest szereg momentum z fut.gg i on nie zawiera fodderu.</strong> Siedzą tam zwykłe wysokie karty, TOTW, karty eventowe i Bohaterowie — ale najtańsza pozycja w całym szeregu kosztuje kilkanaście tysięcy, a mediana grubo ponad sto. Przy regule 10% banku na kartę większość z nich wymaga banku, którego po prostu nie masz, i dlatego są wygaszone. Traktuj tę sekcję jak wskaźnik nastroju górnej półki: kiedy tu leci na czerwono, zwykle leci wszędzie. Karty do kupienia w twoim przedziale są w sekcji wyżej.<br><strong>Ceny w tej sekcji są zaokrąglone przez fut.gg</strong> — „680K” to 680 000 z krokiem 1000, a nie dokładny BIN. <strong>Wczoraj</strong> to cena sprzed doby odtworzona z dzisiejszej ceny i zmiany dobowej — rachunek, nie prognoza. Od niej liczymy cenę wyjścia (krok siatki niżej, żeby schodziło) i <strong>kupno do</strong> — najwyższą cenę wejścia, przy której po 5% podatku zostaje jeszcze 5% marży. Wszystkie trzy liczby są w siatce FUT, więc da się je wpisać w grze.<br><strong>Kiedy wchodzić:</strong> nie w chwili spadku, tylko gdy karta przestaje robić nowe dno — dlatego przy każdej stoi, ile czasu minęło od ostatniego dna. Ile ten czas ma wynosić, jeszcze nie wiemy; od teraz zapisujemy wynik każdej obserwacji i policzymy to na danych. <strong>„W limicie” nie znaczy „warto”.</strong> Limit to rachunek: tyle możesz zapłacić, żeby po podatku została marża. Czy warto wchodzić, mówi dopiero druga część werdyktu — „zawraca” to jedyne potwierdzenie, jakie dziś mamy, i to z ostatniej półgodziny. Czego to nie mówi: <strong>że karta wróci</strong>. Ta, która spadła 15%, potrafi spadać dalej — dlatego przy karcie, która nadal leci w dół, piszemy „jeszcze leci” zamiast zachęcać do wejścia. Ruch półgodzinny liczymy tylko powyżej kroku zaokrąglenia fut.gg: przy cenie „680K” krok to 1000 monet, a mniejszego ruchu nie da się odróżnić od samego zapisu. Karty poza twoim limitem 10% są wygaszone. Werdykt „za drogo” przy płytkiej przecenie nie jest usterką: przy spadku mniejszym niż jakieś 10–13% powrót do wczorajszego poziomu daje po podatku ledwie parę procent, więc limit wejścia wypada poniżej dzisiejszej ceny.</p>
+  <section class="calendar">
+    <div class="section-head"><h3>Katalizatory na najbliższe dni</h3><span id="kal-caption">Liczone przy każdym odczycie · okno rusza się samo</span></div>
+    <div class="calendar-list" id="calendar-list"><div class="plan-empty">Wczytuję terminy…</div></div>
   </section>
 
   <section class="moves" id="sbc-box">
     <div class="section-head"><h3>Najbliższe SBC</h3><span id="sbc-caption"></span></div>
     <div id="sbc-list"><div class="empty-moves">Wczytuję terminy…</div></div>
-    <p class="budget-note" style="margin-top:10px">Kwota to koszt rozwiązania po dzisiejszych cenach, czytany z fut.gg. To sygnał <strong>wyjścia</strong>, nie wejścia: popyt na fodder rośnie do terminu i znika w chwili wygaśnięcia, więc kto trzyma karty w tym progu, sprzedaje przed datą, nie po niej. Procent obok kwoty to ruch kosztu od poprzedniego odczytu — rośnie, gdy fodder drożeje.</p>
+    <p class="budget-note" style="margin-top:10px">Kwota to koszt rozwiązania po dzisiejszych cenach, czytany z fut.gg. To sygnał <strong>wyjścia</strong>, nie wejścia: popyt na fodder rośnie do terminu i znika w chwili wygaśnięcia, więc kto trzyma karty w tym progu, sprzedaje przed datą, nie po niej. Procent obok kwoty to ruch kosztu od poprzedniego odczytu — rośnie, gdy fodder drożeje.<br><strong>Czego jeszcze nie wiemy:</strong> o ile i ile dni wcześniej fodder drożeje przed wygaśnięciem. Zbieramy na to własną historię cen od 04.10 — do tego czasu ta sekcja podaje terminy, a nie obiecany zysk.</p>
   </section>
 
-  <section class="moves" id="okazje-box">
-    <div class="section-head"><h3>Kiedy pojawiają się okazje</h3><span id="okazje-caption"></span></div>
-    <p class="okazje-teraz" id="okazje-teraz">—</p>
-    <div id="okazje-karty"></div>
-    <div id="okazje-list"></div>
-    <p class="budget-note" style="margin-top:10px">Karta tańsza o co najmniej 10% od <strong>własnego zwykłego poziomu</strong> z ostatniej godziny — nie od reszty pasma. Karta, która zawsze stoi tanio, nie jest okazją, tylko kartą, której nikt nie chce.</p>
-  </section>
-
-  <section class="moves" id="skutecznosc-box">
-    <div class="section-head"><h3>Czy nasze pozycje wychodzą</h3><span id="skutecznosc-caption"></span></div>
-    <div id="skutecznosc-list"></div>
-    <p class="budget-note" style="margin-top:10px">Każda wykryta pozycja dostaje wiersz w rejestrze i zamyka się po dobie albo w chwili dojścia do celu — dopiero z zamkniętych liczymy skuteczność. <strong>Do 15 zamkniętych pozycji ta sekcja nic nie twierdzi</strong>, tylko liczy; procent z trzech obserwacji nie jest procentem. Werdykty znaczą co innego, niż wygląda: <strong>„cel”</strong> to cena, która wróciła do poziomu sprzed przeceny. <strong>„Poziom zszedł”</strong> to nasz błąd, nie rynku — karta stała tanio, bo tyle była warta, a nasz poziom dobowy był po prostu spóźniony; z zewnątrz wygląda identycznie jak pozycja. <strong>„Urwane”</strong> to pozycje, których nie dopilnowaliśmy: widzimy tylko kilkanaście najtańszych kart w paśmie, a karta, która wróciła do poziomu, często właśnie dlatego z tego okna wypada. Dlatego urwane trzymamy osobno i <strong>nie wliczamy ich do mianownika</strong> — w pudłach zaniżałyby wynik tym mocniej, im lepiej by nam wychodziło. Rejestr nie jest kasowany przy wdrożeniu: każdy wiersz nosi podpis definicji, więc zmiana progu dzieli historię, a nie ją wyrzuca.<br><strong>30.09 zmieniliśmy próg pozycji z 8% na 5% plus minimum jeden krok siatki</strong> — stary próg na tanich kartach oznaczał w praktyce wymaganie 15% przeceny, bo procent zderzał się z zaokrągleniem cen, i dlatego rejestr miał wyłącznie karty po 100 tysięcy. Wyniki sprzed tej zmiany liczone są osobno, pod starym podpisem.</p>
-  </section>
-
-  <section class="moves" id="polowanie-box">
-    <div class="section-head"><h3>Na które karty nikt nie poluje</h3><span id="polowanie-caption"></span></div>
-    <div id="polowanie-list"></div>
-    <p class="budget-note" style="margin-top:10px">Karta przeceniona w jednym odczycie i wciąż przeceniona pięć minut później to karta, której nikt nie sprząta. Im wyższy wynik, tym większa szansa, że wejdziesz i ona tam jeszcze będzie.</p>
+  <section class="moves" id="obs-box">
+    <div class="section-head"><h3>Ruch na drogich kartach</h3><span id="obs-caption"></span></div>
+    <div id="obs-list"><div class="empty-moves">Szereg rusza przy najbliższym odczycie.</div></div>
+    <p class="budget-note" style="margin-top:10px"><strong>To jest szereg momentum z fut.gg i on nie zawiera fodderu.</strong> Siedzą tam zwykłe wysokie karty, TOTW, karty eventowe i Bohaterowie — najtańsza pozycja kosztuje kilkanaście tysięcy, a mediana grubo ponad sto, więc przy regule 10% banku większość z nich jest poza twoim zasięgiem i dlatego są wygaszone. Traktuj to jak nastrój górnej półki: kiedy tu leci na czerwono, zwykle leci wszędzie.<br><strong>Ceny są zaokrąglone przez fut.gg</strong> — „680K” to 680 000 z krokiem 1000, a nie dokładny BIN. <strong>Wczoraj</strong> to cena sprzed doby odtworzona z dzisiejszej ceny i zmiany dobowej: rachunek, nie prognoza.<br><strong>Uczciwie o liczbach w wierszach:</strong> „kup do” i cena wyjścia są liczone pod powrót do wczorajszego poziomu, czyli na horyzont doby. To jest stara, krótka definicja i będzie przedefiniowana razem z resztą — pozycja ma mieć katalizator, horyzont 48–72 h i cel z wymiaru zmierzonego efektu, a nie z jednego kroku siatki. Do tego czasu czytaj je jako granicę opłacalności, nie jako zalecenie.</p>
   </section>
 
   <section class="moves">
@@ -272,11 +231,11 @@
   </section>
 
   <section class="sell">
-    <h3>Jak użyć cen z listy</h3>
-    <p><strong>Wchodzisz licytacją, nie kup-teraz.</strong> „Licytuj do” to sufit: najwyższa oferta, przy której po 5% podatku zostaje jeszcze 5% marży. Wpisz w wyszukiwarce nazwę karty, ustaw filtr ceny kup-teraz odrobinę nad jej poziomem, posortuj po czasie do końca i licytuj aukcje kończące się za kilka minut. Wygrana niżej niż sufit to po prostu większy zysk — sufit nie jest ceną docelową, tylko granicą, powyżej której nie opłaca się przebijać.</p>
-    <p>Kolumna „kup teraz do” jest dla sytuacji, gdy akurat trafisz tanie wystawienie. Nie poluj na nie: z naszego rejestru 22 z 26 takich ofert znika przed następnym odczytem, czyli w ciągu pięciu minut. Cena wyjścia to krok siatki pod zwykłym poziomem karty, żeby schodziła jako pierwsza. Jeśli nic nie mieści się w budżecie, poczekaj na kolejny odczyt — nie podnoś limitu na siłę.</p>
+    <h3>Co ta strona robi, a czego nie</h3>
+    <p><strong>Nie podaje już kart do licytowania.</strong> Sekcje snajperskie zniknęły 06.10 i to nie jest usterka. Nasz własny rejestr pokazał, że tanie wystawienie przeżywa średnio 6% odczytów na konsoli i 9% na PC — czyli w dziewiętnastu przypadkach na dwadzieścia karty już nie ma, kiedy wejdziesz. Na tym torze wygrywa refleks maszyny, nie lepsza tabelka.</p>
+    <p><strong>Czego jeszcze tu nie ma.</strong> Pozycji z katalizatorem, horyzontem 48–72 h i celem policzonym z wymiaru zmierzonego efektu. Żeby je podać uczciwie, trzeba najpierw sprawdzić na własnych danych, czy dni nagród dają mierzalny dołek i czy fodder drożeje przed wygaśnięciem SBC. Długą historię cen zbieramy od 04.10, jeden punkt na godzinę. Dopóki nie ma z czego liczyć, strona mówi, gdzie stoi rynek i co się zbliża — i nie udaje, że wie więcej.</p>
   </section>
-  <footer><span>Plan i kalendarz pochodzą z analizy zapisanej w projekcie.</span><span>Ceny kart i ruchy rynku są pobierane osobno.</span></footer>
+  <footer><span>Kalendarz i terminy SBC liczy scraper przy każdym odczycie.</span><span>Ceny kart i ruchy rynku są pobierane osobno.</span></footer>
 </main>
 <script>
 (function(){
@@ -336,17 +295,6 @@
   }
   function budget(){ return Math.min(budgetRaw(), MAX_BUDGET); }
 
-  /* Przy dużym banku nagłówek pokazywał tę samą kartę za 3 100 co przy 50 tysiącach
-     i nic nie mówił, co właściwie daje większy bank. Limit 10% na kartę oznacza, że
-     skaluje się liczba sztuk, nie cena wejścia. */
-  function copiesNote(bank, entry){
-    var cap = bank * 0.10, price = Number(entry);
-    if (!(cap > 0) || !(price > 0)) return "";
-    var sztuk = Math.floor(cap / price);
-    if (sztuk < 3) return "";
-    return " Przy twoim banku limit 10% na kartę mieści " + coins(sztuk) + " szt. — większy bank skaluje liczbę sztuk, nie cenę wejścia.";
-  }
-
   function setEmpty(target, text, className){
     var node = document.createElement("div");
     node.className = className || "trade-empty";
@@ -375,255 +323,6 @@
     state.textContent = move > 0.15 ? "Rynek rośnie" : move < -0.15 ? "Rynek spada" : "Rynek stoi w miejscu";
     change.textContent = (move > 0 ? "+" : "") + move.toFixed(1).replace(".", ",") + "%";
     change.className = "change " + (move > 0.15 ? "up" : move < -0.15 ? "down" : "flat");
-  }
-
-  /* Nagłówek z naszego szeregu cen: karta, która spadła w dobę, a w ostatniej
-     półgodzinie zawraca w górę. To jest OBSERWACJA, nie prognoza — mówimy, co się
-     dzieje, i nie obiecujemy, że będzie się działo dalej. Skuteczność policzymy,
-     jak nazbiera się typów; do tego czasu nagłówek ma tak brzmieć.
-
-     Czemu to nie jest snajpienie: nie ścigamy się o cudze tanie wystawienie, tylko
-     pokazujemy kartę, której cena już zawróciła. Wejście jest w cenie rynkowej. */
-  var ODB_MIN_SPADEK = -4;     // płytszy ruch dobowy to szum, nie przecena
-  var ODB_MIN_POMIAROW = 4;    // 20 minut szeregu, zanim cokolwiek powiemy
-  var ODB_MAX_WIEK = 25 * 60;  // starszy odczyt przestaje być ceną "teraz"
-
-  function odbiciePick(bank){
-    var o = data && data.obserwacja;
-    var karty = (o && o.karty && typeof o.karty === "object") ? o.karty : null;
-    if (!karty || !o.at) return null;
-
-    var best = null;
-    Object.keys(karty).forEach(function(k){
-      var w = karty[k];
-      if (!(w.cena > 0) || !(w.najnizsza > 0)) return;
-      if (typeof w.zmiana24 !== "number" || w.zmiana24 > ODB_MIN_SPADEK) return;
-      if (!w.hist || w.hist.length < ODB_MIN_POMIAROW) return;
-      if (!(w.ostatnio > 0) || (o.at - w.ostatnio) > ODB_MAX_WIEK) return;
-      if (w.cena > bank * 0.10) return;
-      var t = obsTrend(w, o.at);
-      if (t.trend === null || t.trend <= 0) return;
-      var kand = {
-        klucz: w.klucz, cena: w.cena, dno: w.najnizsza, zmiana24: w.zmiana24,
-        trend: t.trend, sekund: Math.max(60, o.at - w.hist[0][0]),
-        odDna: +(((w.cena / w.najnizsza) - 1) * 100).toFixed(1),
-        /* Minimalna cena wyjścia, żeby po 5% podatku nie stracić na tym wejściu. */
-        naZero: Math.ceil(w.cena / 0.95)
-      };
-      if (!best || kand.trend > best.trend) best = kand;
-    });
-    return best;
-  }
-
-  /* Pozycja inwestycyjna: karta stojąca wyraźnie pod swoim POZIOMEM DOBOWYM.
-     To jest inne pytanie niż snajp. Snajp łapie cudze tanie wystawienie — żyje
-     minuty, wygrywa je bot i trzeba siedzieć przy wyszukiwarce. Poziom dobowy
-     ma kilkanaście godzin pamięci, więc łapie kartę, która NAPRAWDĘ zeszła
-     niżej i stoi tam od godzin. Taką da się kupić spokojnie.
-
-     Liczby przychodzą policzone ze scrapera (lib/okazje.mjs), bo tam są dokładne
-     ceny pasm i poziomy. Strona tylko filtruje po budżecie i wypisuje. */
-  function inwestycjaPick(bank){
-    var lista = (data && data.inwestycje && data.inwestycje[platform]) || [];
-    var limit = bank * 0.10;
-    for (var i = 0; i < lista.length; i++){
-      var x = lista[i];
-      if (!(x.kupnoDo > 0) || x.kupnoDo > limit) continue;
-      if (!x.wzasiegu) continue;
-      return x;
-    }
-    return null;
-  }
-
-  function showAdvice(rows, allRows){
-    var label = document.getElementById("advice-label");
-    var title = document.getElementById("advice-title");
-    var text = document.getElementById("advice-text");
-    if (loadError){
-      label.textContent = "Dane niedostępne";
-      title.textContent = "Nie mogę przygotować listy kart";
-      text.textContent = "Nie udało się pobrać data.json. Spróbuj ponownie później.";
-      return;
-    }
-    if (!data){ title.textContent = "Wczytuję dane…"; return; }
-    var bank = budget();
-    if (!bank){
-      label.textContent = "Ustaw budżet";
-      title.textContent = "Wpisz liczbę monet";
-      text.textContent = "Pokażę tylko karty mieszczące się w twoim limicie.";
-      return;
-    }
-    label.textContent = labels[platform] + " · " + coins(bank) + " monet";
-
-    /* Najpierw pozycja, której nie trzeba snajpić. Dopiero jak jej nie ma —
-       stary pick pod flip, ale podpisany uczciwie: on wymaga siedzenia przy
-       wyszukiwarce i przegrywania z botami. */
-    /* Kolejność jest celowa: najpierw pozycja, którą można kupić spokojnie,
-       potem odbicie z listy ruchów, a snajp dopiero na końcu — bo on wymaga
-       siedzenia przy wyszukiwarce i nie jest inwestycją. */
-    var inw = inwestycjaPick(bank);
-    if (inw){
-      label.textContent = labels[platform] + " · " + coins(bank) + " monet · pozycja inwestycyjna";
-      title.textContent = inw.klucz + (inw.pos ? " " + inw.pos : "") + ": bierz do " + coins(inw.kupnoDo);
-      text.textContent = "Ta karta chodzi zwykle po " + coins(inw.poziom)
-        + " — to jej własny poziom z kilkunastu godzin, policzony z " + inw.odczytow + " naszych odczytów, nie z jednego wystawienia. "
-        + "Teraz stoi po " + coins(inw.cena) + ", czyli " + inw.rabat.toFixed(1).replace(".", ",") + "% niżej. "
-        + "Wystawiasz po " + coins(inw.cel) + " — krok siatki pod jej poziomem, więc schodzi. "
-        + "Zostaje około +" + coins(inw.netto) + " monet netto na sztuce po podatku, to " + inw.zwrot.toFixed(1).replace(".", ",") + "% zwrotu. "
-        + (inw.odSekund ? "Ta cena stoi już " + obsGodziny(inw.odSekund) + " — sprawdzamy ją co pięć minut i przez cały ten czas nie wróciła w górę. " : "")
-        + "To odróżnia pozycję od snajpa: tanie wystawienie znika w minuty, przecena stoi."
-        + copiesNote(bank, inw.kupnoDo) + stalenessNote();
-      return;
-    }
-
-    var sp = odbiciePick(bank);
-    if (sp){
-      label.textContent = labels[platform] + " · " + coins(bank) + " monet · z naszego szeregu cen";
-      title.textContent = sp.klucz + ": spadła o " + Math.abs(sp.zmiana24).toFixed(1).replace(".", ",") + "% w dobę, zawraca";
-      text.textContent = "Dno w naszym szeregu to " + coins(sp.dno) + ", teraz stoi po " + coins(sp.cena)
-        + " — w ostatniej półgodzinie " + procTekst(sp.trend) + ", licząc tylko ruch większy niż krok zaokrąglenia. "
-        + "Mierzymy ją od " + obsGodziny(sp.sekund) + ". Żeby po 5% podatku nie stracić, musisz wyjść powyżej "
-        + coins(sp.naZero) + ". "
-        + "To jest obserwacja, nie prognoza: cena już zawróciła, ale nie obiecujemy, że będzie zawracać dalej — "
-        + "skuteczność policzymy, jak nazbiera się typów."
-        + copiesNote(bank, sp.cena);
-      return;
-    }
-
-    if (rows.length){
-      var first = rows[0];
-      var cap = buyLimit(first), cel = sellTarget(first), net = Math.floor(cel*0.95-cap);
-      label.textContent = labels[platform] + " · " + coins(bank) + " monet · wymaga wyszukiwarki";
-      var sufitN = bidLimit(first);
-      title.textContent = first[0] + (sufitN !== null ? ": licytuj do " + coins(sufitN) : ": kupuj do " + coins(cap));
-      var skadCel = Number(first[5]) > 0
-        ? " Cel nie jest liczony z tej jednej oferty, tylko z poziomu tej karty z " + first[5] + " pomiarów — pojedyncze tanie wystawienie nie ma zaniżać ceny wyjścia."
-        : " Tej karty mamy za mało pomiarów, więc cel liczymy z tej jednej oferty. Traktuj go ostrożnie.";
-      var sufit = sufitN !== null ? sufitN : cap, nettoSufit = Math.floor(cel * 0.95 - sufit);
-      text.textContent = sufitN === null
-        ? first[0] + " stoi po " + coins(first[1]) + ". Kupujesz do " + coins(cap) + ", wystawiasz po " + coins(cel)
-          + " — około " + (net>0?"+":"") + coins(net) + " monet netto na sztuce po podatku. Sufit licytacji dojdzie przy kolejnym odczycie scrapera."
-          + copiesNote(bank, cap) + stalenessNote() + skadCel
-        : first[0] + " stoi po " + coins(first[1]) + ". Wchodzisz LICYTACJĄ do " + coins(sufit)
-        + ", wystawiasz po " + coins(cel) + " — przy maksymalnej ofercie zostaje około "
-        + (nettoSufit>0?"+":"") + coins(nettoSufit) + " monet netto na sztuce po podatku, wygrana taniej daje więcej. "
-        + "Szukaj tej karty z filtrem ceny kup-teraz odrobinę nad jej poziomem, sortuj po czasie do końca i licytuj to, "
-        + "co kończy się za kilka minut — nigdy powyżej sufitu. Kup-teraz po " + coins(cap) + " też jest okej, jeśli akurat trafisz, "
-        + "ale takie wystawienia znikają w sekundy i nie ma sensu na nie polować."
-        + skadCel
-        + copiesNote(bank, sufit) + stalenessNote();
-    /* Tu stała gałąź wołająca planOptions() — funkcję usuniętą razem z ręczną
-       drabiną pozycji. Wywołania zostały i rzucały ReferenceError, który zabijał
-       CAŁY render: wszystko po showTrades (ruchy, obserwacja, SBC, okazje,
-       kalendarz) przestawało się odświeżać. Uruchamiało się dokładnie wtedy, gdy
-       żadna nazwana karta nie mieszczyła się w budżecie — czyli przy małym banku.
-       Nie przywracam funkcji, bo to była ręczna drabina, którą zastąpił liczony
-       kalendarz; gałąź niżej mówi to samo z żywych liczb. */
-    } else if (allRows.length){
-      /* Bez bramki planFor — patrz komentarz w showTrades. */
-      var cheapest = allRows.reduce(function(best,row){ return buyLimit(row) < buyLimit(best) ? row : best; });
-      var progSnipe = buyLimit(cheapest);
-      var wszystkie = data && data.pos ? (data.pos.short || []).concat(data.pos.long || []) : [];
-      var progPlan = wszystkie.reduce(function(min, item){
-        var e = Number(item.entry);
-        return (planIsActive(item) && Number.isFinite(e) && e > 0 && e < min) ? e : min;
-      }, Infinity);
-      var prog = Math.min(progSnipe, progPlan);
-      title.textContent = "Na ten budżet nie ma teraz pasującej pozycji";
-      text.textContent = "Najniższe wejście, jakie mamy, to " + coins(prog) + " — przy limicie 10% na kartę potrzebujesz około "
-        + coins(prog * 10) + " banku. Nie podnoś swojego limitu tylko po to, żeby wejść w pozycję.";
-    } else {
-      title.textContent = "Brak aktualnych kart na tej platformie";
-      text.textContent = "Lista pojawi się po kolejnym udanym odczycie rynku.";
-    }
-  }
-
-  function showTrades(){
-    var target = document.getElementById("trade-list");
-    var bank=budget(), standardCap=Math.floor(bank*0.10);
-    document.getElementById("trade-caption").textContent = "Fut.gg · " + labels[platform] + " · ceny " + priceTimestamp() + (priceAgeMin() === null ? "" : " (" + priceAgeMin() + " min temu)") + " · standardowo do " + coins(standardCap) + " / karta";
-    target.replaceChildren();
-    if (loadError){ setEmpty(target, "Nie udało się pobrać data.json."); showAdvice([],[],[]); return; }
-    if (!data){ setEmpty(target, "Wczytuję listę kart…"); showAdvice([],[],[]); return; }
-    var allRows = data.snipe && data.snipe[platform] && Array.isArray(data.snipe[platform].rows) ? data.snipe[platform].rows : [];
-    /* Do 28.09 wiersz pokazywał się tylko wtedy, gdy planFor(row) znalazł w
-       data.pos.short RĘCZNIE WPISANĄ pozycję "Pasmo 86"/"Pasmo 87" z datą jeszcze
-       nieprzeszłą. Te wpisy stoją zamrożone od 27.09 i mają w sobie "01.10", więc
-       2 października planIsActive przestałby je uznawać i CAŁA tabela zniknęłaby
-       z dnia na dzień — nie z powodu rynku, tylko dlatego, że minęła data wklepana
-       ręcznie trzy dni wcześniej. Cel sprzedaży i tak liczy dziś scraper z poziomu
-       karty, więc plan nie wnosił tu nic poza wygasaniem. */
-    var rows = allRows.filter(function(row){ var wejscie = bidLimit(row); if (wejscie === null) wejscie = buyLimit(row); return bank > 0 && wejscie <= bank * 0.10; });
-    rows.sort(function(a,b){ return buyLimit(a) - buyLimit(b); });
-    showAdvice(rows, allRows);
-    if (!bank){ setEmpty(target, "Wpisz budżet, żeby zobaczyć pasujące karty."); return; }
-    if (!rows.length){
-      if (!allRows.length) { setEmpty(target, "Brak kart z aktualnego odczytu dla tego rynku."); return; }
-      var cheapest = allRows.reduce(function(best,row){ return buyLimit(row) < buyLimit(best) ? row : best; });
-      /* Drugie martwe wywołanie planOptions() — patrz komentarz w showAdvice.
-         Zamiast odsyłać do ręcznej drabiny, która już nie istnieje, podajemy
-         najniższe wejście z TEGO odczytu. */
-      setEmpty(target, "Brak nazwanych kart w tym limicie — nazwy zbieramy dopiero od pasma 86. "
-        + "Najniższe wejście z ostatniego odczytu: " + coins(buyLimit(cheapest)) + ".");
-      return;
-    }
-    rows.forEach(function(row){
-      var line = document.createElement("div");
-      line.className = "trade";
-      var sufitR=bidLimit(row), binCap=buyLimit(row), targetPrice=sellTarget(row);
-      var cap = sufitR !== null ? sufitR : binCap;
-      /* Netto liczymy przy MAKSYMALNEJ ofercie, czyli w najgorszym wariancie.
-         Aukcja wygrana taniej daje więcej — obiecywać w drugą stronę nie wolno. */
-      var net=Math.floor(targetPrice*0.95-cap);
-      /* Skąd są te liczby — widoczne na stałe, nie tylko na telefonie.
-         "Najniższy BIN 3 800" czytało się jak cena karty, a to była najtańsza
-         oferta z jednego odczytu, która zwykle nie dożywa następnego. */
-      var pomiarow = Number(row[5]) || 0;
-      var wiek = priceAgeMin();
-      /* Limit kupna bierze się z NIŻSZEJ z dwóch liczb, więc piszemy, która wygrała —
-         "pod niższą z dwóch" nic nie mówi komuś, kto patrzy na wiersz przez sekundę. */
-      var zKtorej = sufitR !== null
-        ? "kup teraz do " + coins(binCap)
-        : "sufit licytacji dojdzie przy kolejnym odczycie";
-      var zrodla = [
-        null,
-        wiek === null ? (priceTimestamp() ? "widziana " + priceTimestamp() : null)
-                      : "widziana " + wiek + " min temu",
-        zKtorej,
-        /* Cel liczymy z poziomu, więc bywa RÓWNY albo WYŻSZY od dzisiejszej
-           najtańszej oferty. To jest zamierzone — tamta oferta zniknie w kilka
-           minut — ale nie wolno tego przemilczeć: twoje wystawienie zejdzie
-           dopiero po niej. */
-        (Number(targetPrice) >= Number(row[1])
-          ? "nad obecną ofertą — zejdzie po niej · "
-          : "")
-        + (pomiarow ? "krok pod poziomem · " + pomiarow + " " + odm(pomiarow, "pomiar", "pomiary", "pomiarów")
-                    : "krok pod ofertą · 1 odczyt"),
-        null, null
-      ];
-      var komorki = [];
-      [[nazwaZPrzyciskiem(row[0], cap),"", "trade-player"],[coins(row[1]),"Najtańsza oferta","trade-value"],[coins(cap), sufitR !== null ? "Licytuj do" : "Kup maks.","trade-value trade-buy"],[coins(targetPrice),"Cel sprzedaży","trade-value trade-sell"],[sufitR !== null ? "licytacja kończąca się za kilka minut" : "od razu po kupnie","Kiedy","trade-value trade-time"],[(net>0?"+":"")+coins(net),"Netto / szt. (przy maks. ofercie)","trade-value trade-net"]].forEach(function(item){
-        var cell = document.createElement("span");
-        cell.className = item[2];
-        /* Pierwsza kolumna dostaje gotowy węzeł z przyciskiem, reszta zwykły tekst. */
-        if (item[0] instanceof Node) cell.appendChild(item[0]); else cell.textContent = item[0];
-        if (item[1]){
-          var small = document.createElement("small");
-          small.textContent = item[1];
-          cell.appendChild(small);
-        }
-        komorki.push(cell);
-        line.appendChild(cell);
-      });
-      zrodla.forEach(function(tekst, i){
-        if (!tekst || !komorki[i]) return;
-        var z = document.createElement("span");
-        z.className = "trade-zrodlo";
-        z.textContent = tekst;
-        komorki[i].appendChild(z);
-      });
-      target.appendChild(line);
-    });
   }
 
   function numericChange(value){
@@ -685,7 +384,7 @@
     });
   }
 
-  function render(){ showMarket(); showTrades(); showMoves(); showMoje(); showMonitor(); showObs(); showSbc(); showOkazje(); showSkutecznosc(); showPolowanie(); showPlans(); updateBudgetControls(); }
+  function render(){ showMarket(); showStan(); showMoje(); showKalendarz(); showSbc(); showObs(); showMoves(); updateBudgetControls(); }
 
   /* ── Moje pozycje ─────────────────────────────────────────────────────────
      Do tej pory strona mówiła, po ile kupić i po ile wystawić, a potem gracz
@@ -737,7 +436,11 @@
     var lista = pozycje().filter(function(p){ return p.platforma === platform; });
     cap.textContent = lista.length ? labels[platform] + " · " + lista.length + " " + plPozycje(lista.length) : "";
     if (!lista.length){
-      setEmpty(box, "Nic nie śledzisz. Kliknij \u201Eśledzę\u201D przy karcie z listy wyżej, gdy ją kupisz.", "empty-moves");
+      /* 06.10: "z listy wyżej" było prawdą, dopóki nad tą sekcją stały karty
+         do kupienia. Po przebudowie jedyny przycisk "śledzę" siedzi w "Ruchu na
+         drogich kartach", czyli NIŻEJ — odesłanie w złą stronę każe szukać czegoś,
+         czego tam nie ma. */
+      setEmpty(box, "Nic nie śledzisz. Kliknij \u201Eśledzę\u201D przy karcie w sekcji \u201ERuch na drogich kartach\u201D, gdy ją kupisz.", "empty-moves");
       return;
     }
     box.replaceChildren();
@@ -810,125 +513,6 @@
     return (d1 >= 2 && d1 <= 4) ? "pozycje" : "pozycji";
   }
 
-  /* Przeżywalność: ile razy karta oznaczona jako tania była tania ZNOWU przy
-     następnym odczycie. To nasza miara konkurencji — czego nie ma w żadnym
-     cenniku, bo wymaga własnego szeregu pomiarów co pięć minut. */
-  var POLOWANIE_MIN_WIDZEN = 3;
-  /* Skuteczność pozycji. Ta sekcja istnieje po to, żeby móc powiedzieć "nie wychodzi",
-     więc nie ma tu żadnego wygładzania: kubełki pokazujemy wszystkie, także te,
-     które nam nie pasują, a przy zbyt małej próbce nie podajemy procentu wcale. */
-  var WERDYKTY = [
-    ["cel",     "Cena wróciła do poziomu",        "ok"],
-    ["poziom",  "To poziom zszedł do ceny",       "zle"],
-    ["glebiej", "Poleciała jeszcze niżej",        "zle"],
-    ["plasko",  "Nic się nie ruszyło",            ""],
-    ["urwane",  "Straciliśmy kartę z oczu",       ""]
-  ];
-
-  function showSkutecznosc(){
-    var box = document.getElementById("skutecznosc-list");
-    var cap = document.getElementById("skutecznosc-caption");
-    var sk = data && data.skutecznosc && data.skutecznosc[platform];
-    if (!sk){
-      cap.textContent = "";
-      setEmpty(box, loadError ? "Nie udało się pobrać danych." : "Rejestr startuje przy pierwszej wykrytej pozycji.", "empty-moves");
-      return;
-    }
-    cap.textContent = labels[platform] + " · definicja " + (sk.def || "—");
-    box.replaceChildren();
-
-    var naglowek = document.createElement("p");
-    naglowek.className = "okazje-teraz";
-    if (sk.gotowe && sk.trafienie !== null){
-      naglowek.textContent = "Trafionych " + sk.trafienie + "% z " + sk.znane
-        + odm(sk.znane, " rozstrzygniętej pozycji", " rozstrzygniętych pozycji", " rozstrzygniętych pozycji")
-        + (sk.medianaDoCelu !== null ? " · mediana dojścia do celu " + obsGodziny(sk.medianaDoCelu * 60) : "");
-    } else {
-      naglowek.textContent = "Zamkniętych pozycji: " + sk.probek + " z " + (sk.minProb || 15)
-        + " potrzebnych. Na tym etapie tylko zbieramy wyniki — procentu jeszcze nie podajemy.";
-    }
-    box.appendChild(naglowek);
-
-    var otw = document.createElement("p");
-    otw.className = "budget-note";
-    otw.style.margin = "0 0 10px";
-    otw.textContent = "Otwartych teraz: " + sk.otwartych
-      + odm(sk.otwartych, " pozycja", " pozycje", " pozycji") + ".";
-    box.appendChild(otw);
-
-    if (sk.probek){
-      var head = document.createElement("div"); head.className = "pol-row head";
-      ["Jak się skończyło", "Ile", "Udział"].forEach(function(t){
-        var x = document.createElement("span"); x.textContent = t; head.appendChild(x);
-      });
-      box.appendChild(head);
-      WERDYKTY.forEach(function(w){
-        var ile = sk[w[0]] || 0;
-        var row = document.createElement("div"); row.className = "pol-row";
-        var n = document.createElement("span"); n.className = "pol-nazwa"; n.textContent = w[1];
-        var a = document.createElement("span"); a.className = "pol-val" + (w[2] ? " " + w[2] : "");
-        a.textContent = String(ile);
-        var b = document.createElement("span"); b.className = "pol-val";
-        /* Udział liczymy z WSZYSTKICH próbek, nie ze "znanych" — inaczej kubełek
-           urwanych miałby udział większy od stu procent całości, do której należy. */
-        b.textContent = sk.probek ? Math.round(ile / sk.probek * 100) + "%" : "—";
-        row.append(n, a, b); box.appendChild(row);
-      });
-    }
-
-    if (sk.starsze && sk.starsze.probek){
-      var st = document.createElement("p");
-      st.className = "budget-note";
-      st.style.marginTop = "10px";
-      st.textContent = "Pod starszą definicją zamknęliśmy jeszcze " + sk.starsze.probek
-        + odm(sk.starsze.probek, " pozycję", " pozycje", " pozycji")
-        + (sk.starsze.trafienie !== null ? " (trafionych " + sk.starsze.trafienie + "%)" : "")
-        + ". Trzymamy je osobno, bo mierzyły inny próg — jedna liczba z dwóch definicji byłaby zlepkiem dwóch pomiarów.";
-      box.appendChild(st);
-    }
-  }
-
-  function showPolowanie(){
-    var box = document.getElementById("polowanie-list");
-    var cap = document.getElementById("polowanie-caption");
-    var rej = data && data.okazje && data.okazje.karty && data.okazje.karty[platform];
-    if (!rej || !Object.keys(rej).length){
-      cap.textContent = "";
-      setEmpty(box, loadError ? "Nie udało się pobrać danych." : "Rejestr buduje się z kolejnych odczytów.", "empty-moves");
-      return;
-    }
-    var lista = Object.keys(rej).map(function(k){
-      var w = rej[k], widziano = w.widziano || 0;
-      return { klucz:k, widziano: widziano, cena: w.cena, rabat: w.najlepszyRabat || w.rabat || 0,
-               przezywalnosc: widziano > 1 ? Math.round((w.utrzymal || 0) / (widziano - 1) * 100) : 0 };
-    }).filter(function(x){ return x.widziano >= POLOWANIE_MIN_WIDZEN; });
-
-    var ileKart = Object.keys(rej).length;
-    cap.textContent = labels[platform] + " · rejestr " + ileKart + (ileKart === 1 ? " karty" : " kart");
-    if (!lista.length){
-      setEmpty(box, "Żadna karta nie pokazała się jeszcze " + POLOWANIE_MIN_WIDZEN + " razy. Rejestr napełnia się w trakcie dnia.", "empty-moves");
-      return;
-    }
-    lista.sort(function(a,b){ return b.przezywalnosc - a.przezywalnosc || b.rabat - a.rabat; });
-    box.replaceChildren();
-    var head = document.createElement("div"); head.className = "pol-row head";
-    ["Karta","Utrzymuje się","Najgłębsza przecena","Ostatnia cena"].forEach(function(t){
-      var x = document.createElement("span"); x.textContent = t; head.appendChild(x);
-    });
-    box.appendChild(head);
-    lista.slice(0,6).forEach(function(w){
-      var row = document.createElement("div"); row.className = "pol-row";
-      var n = document.createElement("span"); n.className = "pol-nazwa"; n.textContent = w.klucz;
-      var p = document.createElement("span"); p.className = "pol-val" + (w.przezywalnosc >= 50 ? " mocny" : "");
-      p.textContent = w.przezywalnosc + "% (" + w.widziano + "×)";
-      var r = document.createElement("span"); r.className = "pol-val";
-      r.textContent = "-" + String(w.rabat).replace(".", ",") + "%";
-      var c = document.createElement("span"); c.className = "pol-val";
-      c.textContent = w.cena ? coins(w.cena) : "—";
-      row.append(n, p, r, c); box.appendChild(row);
-    });
-  }
-
   /* Terminy SBC pobiera wolny cykl scrapera. Do tej pory ta część planu była
      wpisana ręcznie i rozjeżdżała się z każdym dniem — stąd brało się "dziś 26.09"
      pokazywane 27.09. Teraz liczby są z fut.gg. */
@@ -944,9 +528,6 @@
     if (d === 1) return "jutro";
     return "za " + d + " dni";
   }
-  /* Watchlista. Scraper czyta strony pojedynczych kart, więc widzi cenę także wtedy,
-     gdy karta przestała być jedną z najtańszych w paśmie — czyli dokładnie wtedy,
-     gdy odbija. Tu tylko wypisujemy, co z tego wyszło. */
   /* Polska odmiana po liczbie: 1 karta, 2–4 karty, 5+ kart (z wyjątkiem 12–14). */
   function odm(n, jedna, kilka, wiele){
     var a = Math.abs(n) % 100, b = a % 10;
@@ -996,86 +577,9 @@
   }
   function wGoreSiatki(c){ var k = krokSiatki(c); return Math.ceil(c / k) * k; }
 
-  /* Przecenione karty z naszych pasm. Bliźniak showObs, ale na danych, które
-     liczymy sami — i dlatego jako jedyna z tych dwóch sekcji zawiera karty,
-     które da się kupić przy normalnym banku. */
-  function showMonitor(){
-    var box = document.getElementById("monitor-list");
-    var cap = document.getElementById("monitor-caption");
-    var lista = data && data.monitor && data.monitor[platform];
-    if (!lista || !lista.length){
-      cap.textContent = "";
-      setEmpty(box, loadError ? "Nie udało się pobrać danych."
-        : "Żadna karta nie stoi teraz wyraźnie pod swoim poziomem. To dobra wiadomość o rynku, nie usterka.", "empty-moves");
-      return;
-    }
-    var bank = budget();
-    var limitNaKarte = bank ? bank * 0.10 : 0;
-    var wStac = lista.filter(function(w){ return limitNaKarte > 0 && w.sufit <= limitNaKarte; }).length;
-    var zawraca = lista.filter(function(w){ return w.zawraca; }).length;
-    cap.textContent = labels[platform] + " · " + lista.length + " " + odm(lista.length, "karta", "karty", "kart")
-      + (bank ? " · " + wStac + " w twoim limicie" : "")
-      + (zawraca ? " · " + zawraca + " zawraca" : "");
-
-    box.replaceChildren();
-    var head = document.createElement("div"); head.className = "obs-row head";
-    var hn = document.createElement("span"); hn.className = "obs-nazwa"; hn.textContent = "Karta";
-    var hl = document.createElement("span"); hl.className = "obs-liczby";
-    ["Teraz", "Licytuj do", "Sprzedaj po"].forEach(function(t){
-      var x = document.createElement("span"); x.className = "obs-val"; x.textContent = t; hl.appendChild(x);
-    });
-    head.append(hn, hl); box.appendChild(head);
-
-    lista.forEach(function(w){
-      var stac = limitNaKarte > 0 && w.sufit <= limitNaKarte;
-      var row = document.createElement("div");
-      row.className = "obs-row" + (bank && !stac ? " poza" : "");
-
-      var n = document.createElement("span"); n.className = "obs-nazwa";
-      n.append(document.createTextNode(w.klucz));
-      var pin = document.createElement("button");
-      pin.type = "button"; pin.className = "pin"; pin.textContent = "śledzę";
-      pin.addEventListener("click", function(){ dodajPozycje(w.klucz, w.cena); });
-      n.appendChild(pin);
-      var pod = document.createElement("small");
-      /* Głębokość przeceny mówi, ile zostało do odrobienia; staż mówi, czy to
-         mignięcie, czy stan. Jedno bez drugiego nie znaczy nic. */
-      pod.textContent = "−" + String(w.rabat).replace(".", ",") + "% pod poziomem " + coins(w.poziom)
-        + " · " + w.odczytow + " " + odm(w.odczytow, "pomiar", "pomiary", "pomiarów")
-        + (w.odSekund ? " · pod progiem od " + obsGodziny(w.odSekund) : "");
-      n.appendChild(pod);
-
-      var c = document.createElement("span"); c.className = "obs-val";
-      c.append(document.createTextNode(coins(w.cena)));
-      var stan = document.createElement("small");
-      if (w.zawraca){ stan.textContent = "zawraca +" + String(w.zwrot).replace(".", ",") + "%"; stan.className = "ok"; }
-      else if (w.leci){ stan.textContent = "nowe dno"; stan.className = "zle"; }
-      else stan.textContent = "stoi w miejscu";
-      c.appendChild(stan);
-
-      var kup = document.createElement("span"); kup.className = "obs-val";
-      kup.append(document.createTextNode(coins(w.sufit)));
-      var kupS = document.createElement("small");
-      /* Sufit bywa równy albo wyższy od dzisiejszej ceny — wtedy licytacja nie
-         ma sensu, bo karta stoi taniej, niż jesteś gotów zapłacić. Mówimy to
-         wprost zamiast wysyłać kogoś na aukcję po coś, co leży na półce. */
-      kupS.textContent = (w.sufit >= w.cena)
-        ? "stoi taniej — bierz kup-teraz"
-        : (stac ? "w limicie" : (bank ? "poza limitem" : "wpisz bank"));
-      kup.appendChild(kupS);
-
-      var sprz = document.createElement("span"); sprz.className = "obs-val";
-      sprz.append(document.createTextNode(coins(w.cel)));
-      var zysk = document.createElement("small"); zysk.className = "ok";
-      zysk.textContent = "+" + coins(w.netto) + " netto";
-      sprz.appendChild(zysk);
-
-      var liczby = document.createElement("span"); liczby.className = "obs-liczby";
-      liczby.append(c, kup, sprz);
-      row.append(n, liczby); box.appendChild(row);
-    });
-  }
-
+  /* Watchlista. Scraper czyta strony pojedynczych kart, więc widzi cenę także wtedy,
+     gdy karta przestała być jedną z najtańszych w paśmie — czyli dokładnie wtedy,
+     gdy odbija. Tu tylko wypisujemy, co z tego wyszło. */
   function showObs(){
     var box = document.getElementById("obs-list");
     var cap = document.getElementById("obs-caption");
@@ -1237,13 +741,6 @@
     if (Math.abs(doC - od) < (w.krok || 1)) return { trend: 0, powod: "" };
     return { trend: +(((doC / od) - 1) * 100).toFixed(1), powod: "" };
   }
-  function obsWiersz(w, at){
-    var t = obsTrend(w, at);
-    return {
-      w: w, trend: t.trend, powod: t.powod,
-      odDna: (w.najnizsza > 0 && w.cena > 0) ? +(((w.cena / w.najnizsza) - 1) * 100).toFixed(1) : null
-    };
-  }
 
   function showSbc(){
     var box = document.getElementById("sbc-list");
@@ -1288,165 +785,6 @@
       }
       row.append(n, t, k); box.appendChild(row);
     });
-  }
-
-  /* Dopisek przy pozycji z planu: prawdziwy termin SBC, gdy uda się ją dopasować
-     po nazwie. Gdy nie uda — milczymy. Fałszywe "SBC wygasła" byłoby gorsze niż brak. */
-  function terminDlaPowodu(powod){
-    var lista = data && data.sbc && data.sbc.lista;
-    if (!lista || !powod) return "";
-    var kandydaci = String(powod).split(/\s*·\s*/).map(function(x){ return x.trim().toLowerCase(); }).filter(Boolean);
-    for (var i = 0; i < kandydaci.length; i++){
-      var k = kandydaci[i];
-      var trafiony = lista.find(function(w){
-        var n = String(w.nazwa || "").toLowerCase();
-        return n && (n === k || n.indexOf(k) >= 0 || k.indexOf(n) >= 0);
-      });
-      if (trafiony) return " · " + terminSlowami(trafiony);
-    }
-    return "";
-  }
-
-  /* Rozkład tanich wystawień po godzinach. Liczby przychodzą z cyklu fast, który
-     i tak pobiera pasma, więc nie kosztują ani jednego dodatkowego wejścia na fut.gg.
-     Godzina jest już policzona w czasie polskim po stronie scrapera. */
-  var OKAZJE_MIN_PRZEBIEGOW = 6;
-  /* Licznik bez nazw jest bezużyteczny — tu wypisujemy, o które karty chodzi
-     w tej chwili, z ceną, jej zwykłym poziomem i tym, co zostaje po podatku,
-     gdybyś kupił teraz i wystawił krok pod poziomem. */
-  function pokazOkazjeTeraz(log){
-    var box = document.getElementById("okazje-karty");
-    var stan = data && data.okazje;
-    var lista = (stan && stan.teraz && stan.teraz[platform]) || [];
-    box.replaceChildren();
-    if (!lista.length) return;
-    box.className = "okazje-karty-box";
-    var head = document.createElement("div"); head.className = "ok-karta head";
-    ["Karta","Cena teraz","Zwykle","Na rękę"].forEach(function(t){
-      var x = document.createElement("span"); x.textContent = t; head.appendChild(x);
-    });
-    box.appendChild(head);
-    lista.forEach(function(k){
-      var row = document.createElement("div"); row.className = "ok-karta";
-      var n = document.createElement("span"); n.className = "ok-nazwa";
-      n.append(document.createTextNode(k.klucz || k.nazwa || "—"));
-      var c = document.createElement("span"); c.className = "ok-val"; c.textContent = coins(k.cena);
-      var p = document.createElement("span"); p.className = "ok-val";
-      p.textContent = k.poziom ? coins(wDol(k.poziom)) + "  −" + String(k.rabat).replace(".", ",") + "%" : "—";
-      var z = document.createElement("span"); z.className = "ok-val";
-      if (k.poziom > 0 && k.cena > 0){
-        var netto = Math.floor(wystawPod(k.poziom) * 0.95 - k.cena);
-        if (netto > 0) z.classList.add("zysk");
-        z.textContent = (netto > 0 ? "+" : "") + coins(netto);
-        z.title = "Wystaw po " + coins(wystawPod(k.poziom));
-      } else { z.textContent = "—"; }
-      row.append(n, c, p, z); box.appendChild(row);
-    });
-  }
-
-  function plOkazje(n){
-    if (n === 1) return "okazja";
-    var d2 = n % 100, d1 = n % 10;
-    if (d2 >= 12 && d2 <= 14) return "okazji";
-    return (d1 >= 2 && d1 <= 4) ? "okazje" : "okazji";
-  }
-  function showOkazje(){
-    var box = document.getElementById("okazje-list");
-    var cap = document.getElementById("okazje-caption");
-    var teraz = document.getElementById("okazje-teraz");
-    var stan = data && data.okazje;
-    var godziny = stan && stan.godziny;
-    var log = (stan && stan.log) || [];
-
-    /* Najpierw to, co jest na rynku w tej chwili — liczba użyteczna od pierwszego
-       odczytu. Rozkład godzin dokłada się dopiero, gdy ma z czego liczyć. */
-    var ost = log[log.length - 1];
-    if (ost){
-      var ile = (ost[1] || 0) + (ost[2] || 0);
-      teraz.innerHTML = ile
-        ? "Na rynku teraz: <strong>" + ile + " " + plOkazje(ile) + "</strong> "
-          + "<small>konsola " + (ost[1] || 0) + " · PC " + (ost[2] || 0) + " · odczyt " + czasHM(ost[0]) + "</small>"
-        : "Na rynku teraz: <strong>0</strong> <small>rynek szczelny · odczyt " + czasHM(ost[0]) + "</small>";
-    } else {
-      teraz.textContent = loadError ? "Nie udało się pobrać danych." : "Pierwszy odczyt w drodze.";
-    }
-
-    pokazOkazjeTeraz(log);
-
-    if (!godziny){ cap.textContent = ""; box.replaceChildren(); return; }
-
-    var wiersze = Object.keys(godziny).map(function(h){
-      var g = godziny[h];
-      return { godzina:+h, przebiegow:g.przebiegow||0, okazji:g.okazji||0,
-               naPrzebieg: g.przebiegow ? g.okazji/g.przebiegow : 0 };
-    }).filter(function(x){ return x.przebiegow >= OKAZJE_MIN_PRZEBIEGOW; });
-
-    var przebiegow = Object.keys(godziny).reduce(function(a,h){ return a + (godziny[h].przebiegow||0); }, 0);
-    cap.textContent = "Czas polski · z " + przebiegow + " " + plPrzebieg(przebiegow);
-
-    if (!wiersze.length){
-      setEmpty(box, "Rozkład godzin układa się przez dobę.", "empty-moves");
-      return;
-    }
-    wiersze.sort(function(a,b){ return b.naPrzebieg - a.naPrzebieg; });
-    var max = wiersze[0].naPrzebieg || 1;
-    box.replaceChildren();
-    wiersze.slice(0,8).forEach(function(w){
-      var row = document.createElement("div"); row.className = "okazja-row";
-      var g = document.createElement("span"); g.className = "okazja-godz";
-      g.textContent = String(w.godzina).padStart(2,"0") + ":00";
-      var bar = document.createElement("div"); bar.className = "okazja-bar";
-      var fill = document.createElement("span");
-      fill.style.width = Math.max(3, Math.round(w.naPrzebieg / max * 100)) + "%";
-      bar.appendChild(fill);
-      var v = document.createElement("span"); v.className = "okazja-val";
-      v.textContent = w.naPrzebieg.toFixed(2).replace(".", ",") + " / odczyt";
-      row.append(g, bar, v); box.appendChild(row);
-    });
-  }
-  function plPrzebieg(n){ return n === 1 ? "przebiegu" : "przebiegów"; }
-  /* Przy snajpowaniu przepisuje się nazwisko do wyszukiwarki dziesiątki razy.
-     Kopiujemy samo nazwisko, bez ratingu i pozycji — wyszukiwarka w grze szuka po nim. */
-  function samoNazwisko(pelna){
-    return String(pelna || "").replace(/\s+\d{2}(\s+[A-Z]{2,3})?\s*$/, "").trim() || String(pelna || "");
-  }
-  function nazwaZPrzyciskiem(pelna, cenaWejscia){
-    var wrap = document.createElement("span");
-    wrap.append(document.createTextNode(pelna));
-    if (Number(cenaWejscia) > 0){
-      var s = document.createElement("button");
-      s.type = "button"; s.className = "kopiuj sledze"; s.textContent = "śledzę";
-      s.title = "Dodaj do moich pozycji z ceną " + coins(cenaWejscia);
-      s.addEventListener("click", function(){
-        dodajPozycje(pelna, cenaWejscia);
-        s.textContent = "dodane"; s.dataset.ok = "1";
-        setTimeout(function(){ s.textContent = "śledzę"; delete s.dataset.ok; }, 1400);
-      });
-      wrap.appendChild(s);
-    }
-    var b = document.createElement("button");
-    b.type = "button"; b.className = "kopiuj"; b.textContent = "kopiuj";
-    b.title = "Skopiuj nazwisko do wyszukiwarki";
-    b.addEventListener("click", function(){
-      var tekst = samoNazwisko(pelna);
-      var potwierdz = function(){ b.textContent = "skopiowane"; b.dataset.ok = "1";
-        setTimeout(function(){ b.textContent = "kopiuj"; delete b.dataset.ok; }, 1400); };
-      if (navigator.clipboard && navigator.clipboard.writeText){
-        navigator.clipboard.writeText(tekst).then(potwierdz, function(){ zapasoweKopiuj(tekst, potwierdz); });
-      } else { zapasoweKopiuj(tekst, potwierdz); }
-    });
-    wrap.appendChild(b);
-    return wrap;
-  }
-  /* Bez HTTPS albo przy zablokowanym schowku clipboard API nie istnieje. */
-  function zapasoweKopiuj(tekst, potwierdz){
-    try {
-      var ta = document.createElement("textarea");
-      ta.value = tekst; ta.setAttribute("readonly", "");
-      ta.style.cssText = "position:fixed;left:-9999px;opacity:0";
-      document.body.appendChild(ta); ta.select();
-      document.execCommand("copy"); ta.remove(); potwierdz();
-    } catch (e) {}
   }
 
   function czasHM(ts){
@@ -1546,42 +884,119 @@
     return "odczyt " + stamp + " · " + wiek;
   }
 
-  function priceTimestamp(){
-    var priceAt=data && Number(data.atFast || data.at);
-    return priceAt ? new Date(priceAt*1000).toLocaleString("pl-PL",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}) : "brak czasu odczytu";
+  /* ── Stan rynku ───────────────────────────────────────────────────────────
+     06.10.2026: nagłówek strony przestał być poradą do licytacji. Pozycja,
+     którą trzyma się dzień albo dwa, zaczyna się od pytania "gdzie stoi rynek
+     i co się zbliża", a nie "co kupić w tej minucie".
+
+     Wszystkie liczby biorą się z data.json, który i tak mamy: poziom i ruch
+     z `nasz`, szerokość ruchu z `nasz.szerokosc`, najbliższy termin
+     z `kalendarz`. Nie liczę tu niczego nowego i niczego nie obiecuję —
+     kalendarz podaje TERMIN, nie prognozę ceny. */
+  var ZBIERAMY_OD = Date.UTC(2026, 9, 4);   // 04.10.2026 — start długiej historii
+  var POTRZEBA_DNI = 21;                    // tyle, żeby w ogóle zobaczyć rytm tygodnia
+  var KAT_TYPY = { sprzedaj: "wygaśnięcie SBC", podaz: "dzień nagród" };
+
+  function dzienZIso(s){
+    var m = String(s || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null;
+  }
+  function zaIleDni(n){ return n === 0 ? "dziś" : n === 1 ? "jutro" : "za " + n + " dni"; }
+
+  function najblizszyKatalizator(){
+    var dni = (data && Array.isArray(data.kalendarz)) ? data.kalendarz : [];
+    var dzis = new Date(); dzis.setHours(0, 0, 0, 0);
+    for (var i = 0; i < dni.length; i++){
+      var d = dni[i];
+      var wpisy = (d && Array.isArray(d.wpisy)) ? d.wpisy : [];
+      var wpis = null;
+      for (var j = 0; j < wpisy.length; j++){ if (KAT_TYPY[wpisy[j] && wpisy[j].typ]) { wpis = wpisy[j]; break; } }
+      if (!wpis) continue;
+      var data_ = dzienZIso(d.dzien);
+      if (!data_) continue;
+      var ile = Math.round((data_.getTime() - dzis.getTime()) / 86400000);
+      if (ile < 0) continue;
+      return { ile: ile, typ: KAT_TYPY[wpis.typ], tytul: String(wpis.tytul || "").trim() };
+    }
+    return null;
   }
 
-  function showPlans(){
-    var target = document.getElementById("plan-list"), calendar = document.getElementById("calendar-list");
-    target.replaceChildren(); calendar.replaceChildren();
-    if (!data || !data.pos){ setEmpty(target,"Brak zapisanych pozycji w danych projektu.","plan-empty"); setEmpty(calendar,"Brak terminów w planie.","plan-empty"); return; }
-    var bank = budget(), all = (data.pos.short || []).concat(data.pos.long || []);
-    var matching = all.filter(function(item){ return Number(item.entry) <= bank * 0.10 && planIsActive(item); });
-    if (!matching.length){ setEmpty(target,"Brak pozycji z planu mieszczących się w limicie 10% budżetu na jedną kartę.","plan-empty"); }
-    matching.forEach(function(item){
-      var card = document.createElement("article"); card.className="plan";
-      var top = document.createElement("div"); top.className="plan-top";
-      var title = document.createElement("h4"); title.textContent=item.name;
-      var conf = document.createElement("span"); conf.className="conf"; conf.textContent=item.conf === "spec" ? "do obserwacji" : "plan";
-      top.append(title,conf); card.appendChild(top);
-      var prices = document.createElement("p"); prices.className="plan-prices";
-      prices.textContent="Kup do " + coins(item.entry) + (item.sellPrice ? " · sprzedaj w okolicy " + coins(item.sellPrice) : ""); card.appendChild(prices);
-      var kiedy = freshenWhen(item.when);
-      var dzisDate = new Date(new Date().setHours(0, 0, 0, 0));
-      /* Okno godzinowe mogło minąć, choć data jest dzisiejsza. */
-      if (freshenWhen.dzisiaj && !isBuyDateActive(item, dzisDate)) kiedy += " · okno na dziś minęło";
-      var timing = document.createElement("p"); timing.textContent="Kupno: " + kiedy + "\nSprzedaż: " + (item.sell || "brak terminu"); timing.style.whiteSpace="pre-line"; card.appendChild(timing);
-      var powod = eventForPlan(item);
-      var reason = document.createElement("p"); reason.textContent="Powód: " + powod + terminDlaPowodu(powod); card.appendChild(reason);
-      if (item.exit){ var exit=document.createElement("p"); exit.textContent="Wyjdź, gdy: " + plainText(item.exit); card.appendChild(exit); }
-      if (item.note){ var note=document.createElement("p"); note.textContent=plainText(item.note); note.style.color="var(--gold)"; card.appendChild(note); }
-      target.appendChild(card);
-    });
-    /* Kalendarz NIE pochodzi już z ręcznych pozycji. Liczy go scraper przy każdym
-       przebiegu z terminów SBC, stałego rytmu tygodnia EA i naszego rozkładu
-       godzinowego — okno startuje od dnia odczytu, więc przesuwa się samo.
-       Wcześniej stały tu daty wpisane 26–27.09 i po trzech dniach kłóciły się
-       z naszą własną tabelą SBC. */
+  function showStan(){
+    var label = document.getElementById("stan-label");
+    var title = document.getElementById("stan-title");
+    var text = document.getElementById("stan-text");
+    if (!label || !title || !text) return;
+
+    label.textContent = "Stan rynku · " + labels[platform].toLowerCase();
+
+    if (loadError){
+      title.textContent = "Nie mogę odczytać stanu rynku";
+      text.textContent = "Nie udało się pobrać data.json. Liczby poniżej są z ostatniego udanego odczytu albo puste.";
+      return;
+    }
+    var s = data && data.nasz && data.nasz[platform];
+    if (!s || !Number.isFinite(Number(s.wartosc))){
+      title.textContent = "Czekam na pierwszy pełny odczyt";
+      text.textContent = "Poziom rynku liczymy z dna siedmiu pasm (83–89). Pojawi się przy najbliższym udanym przebiegu.";
+      return;
+    }
+
+    var ruch = Number(s.zmiana);
+    var maRuch = Number.isFinite(ruch);
+    var sz = s.szerokosc || {};
+    var gora = Number(sz.gora) || 0, dol = Number(sz.dol) || 0, razem = Number(sz.razem) || 0;
+
+    /* Nagłówek mówi o SZEROKOŚCI, nie o samym procencie. Jeden procent na
+       indeksie może pochodzić z jednego pasma, które odjechało — i wtedy to nie
+       jest ruch rynku, tylko ruch jednej półki. */
+    if (razem && gora === razem)      title.textContent = "Rynek rośnie szerokim frontem";
+    else if (razem && dol === razem)  title.textContent = "Rynek schodzi szerokim frontem";
+    else if (maRuch && ruch > 0.15)   title.textContent = "Rynek rośnie, ale nierówno";
+    else if (maRuch && ruch < -0.15)  title.textContent = "Rynek schodzi, ale nierówno";
+    else                              title.textContent = "Rynek stoi w miejscu";
+
+    var czesci = [];
+    czesci.push("Poziom " + String(Number(s.wartosc).toFixed(1)).replace(".", ",")
+      + " (100 = start pomiarów " + (s.odKiedy ? czasHM(s.odKiedy) : "") + ")");
+    if (maRuch){
+      var okno = s.okno ? String(s.okno) : "";
+      czesci.push((ruch > 0 ? "+" : "") + ruch.toFixed(1).replace(".", ",") + "%"
+        + (s.odniesienie === "doba" ? " za dobę" : okno ? " od startu, " + okno : ""));
+    }
+    if (razem) czesci.push(gora + " z " + razem + " pasm w górę");
+    if (Number(s.pomiarow) > 0) czesci.push(s.pomiarow + " " + plPomiarow(Number(s.pomiarow)));
+
+    var kat = najblizszyKatalizator();
+    var zdania = [czesci.join(" · ") + "."];
+    if (kat){
+      zdania.push("Najbliższy katalizator " + zaIleDni(kat.ile) + " — " + kat.typ
+        + (kat.tytul ? ": " + kat.tytul : "") + ".");
+    } else {
+      zdania.push("W kalendarzu nie ma na razie żadnego terminu, który ruszałby podażą albo popytem.");
+    }
+
+    /* Licznik zbierania. Stoi tu celowo: dopóki historia jest krótka, strona ma
+       mówić wprost, czego jeszcze nie wie, zamiast wypełniać to miejsce pozycją
+       wymyśloną na dwóch dobach danych. */
+    var dni = Math.max(0, Math.floor((Date.now() - ZBIERAMY_OD) / 86400000));
+    zdania.push("Długą historię cen zbieramy od 04.10 — " + dni + " " + plDni(dni)
+      + " z " + POTRZEBA_DNI + " potrzebnych, żeby policzyć rytm tygodnia z własnych pomiarów.");
+
+    text.textContent = zdania.join(" ");
+  }
+
+  function plPomiarow(n){
+    if (n === 1) return "pomiar";
+    var d2 = n % 100, d1 = n % 10;
+    if (d2 >= 12 && d2 <= 14) return "pomiarów";
+    return (d1 >= 2 && d1 <= 4) ? "pomiary" : "pomiarów";
+  }
+  function plDni(n){ return n === 1 ? "dzień" : "dni"; }
+
+  function showKalendarz(){
+    var calendar = document.getElementById("calendar-list");
+    if (!calendar) return;
+    calendar.replaceChildren();
     pokazKalendarz(calendar);
   }
 
@@ -1630,107 +1045,6 @@
   }
 
 
-
-  function eventForPlan(item){
-    var name=String(item.name || "");
-    if (name==="Fodder 83") return "83+ Upgrade";
-    if (name==="Fodder 84") return "Marquee Matchups · TOTW Upgrade";
-    if (name==="Fodder 85") return "TOTW Upgrade";
-    if (name==="Pasmo 86" || name==="Pasmo 87") return "SBC wymagające wysokiego składu";
-    if (name==="Meta 88" || name==="Meta 89") return "SBC na Nusę";
-    if (name==="Bohaterowie") return "Przerwa reprezentacyjna";
-    if (name.indexOf("Destined for Glory")>=0) return "Terminarz meczów Destined for Glory";
-    if (name.indexOf("Ikony")>=0) return "Rynek ikon";
-    return name;
-  }
-
-  /* planFor() usunięte 28.09 razem z bramką, która trzymała tabelę snajperską
-     przy życiu tylko dopóki ręcznie wpisana data w data.pos nie minęła. Zostawianie
-     nieużywanej funkcji to zapraszanie jej z powrotem.
-
-     Próg wejścia i cel sprzedaży liczy scraper (lib/snajperka.mjs): cel z poziomu
-     karty, próg z niższej z dwóch liczb — poziomu i ostatniej oferty. Wcześniej
-     cel brał się wprost z ręcznego planu i nagłówek obiecywał cenę snajperską
-     z datą wyjścia za cztery dni. To nie jest jeden trade, tylko dwa sklejone. */
-  function buyLimit(row){ return Number(row && row[2]); }
-  function sellTarget(row){ return Number(row && row[3]); }
-  /* Sufit licytacji — od 29.09 to JEST cena wejścia, którą podajemy.
-     buyLimit został jako druga liczba: ile zapłacić, jeśli akurat trafisz BIN.
-
-     Zwracamy null, a NIE limit BIN, gdy pola [6] nie ma. Przez kilka minut po
-     wgraniu samej strony data.json jest jeszcze ze starego scrapera i wiersze
-     mają sześć pól. Podstawienie tam limitu BIN pod etykietę "licytuj do"
-     byłoby po prostu kłamstwem o 300 monet — wiersz ma wtedy pokazać starą
-     nazwę i starą liczbę, aż scraper dośle sufit. */
-  function bidLimit(row){ var b = Number(row && row[6]); return b > 0 ? b : null; }
-
-  /* Dno sprzed pół godziny to na rozgrzanej karcie inna cena. 27.09 Dimarco
-     poszedł 3 700 → 4 300 w 42 minuty, a strona dalej podawała cel 3 600. */
-  function priceAgeMin(){
-    var t = data && Number(data.atFast || data.at);
-    return t ? Math.round((Date.now() / 1000 - t) / 60) : null;
-  }
-  function stalenessNote(){
-    var m = priceAgeMin();
-    if (m === null) return " Brak znacznika czasu odczytu — sprawdź dno w grze.";
-    if (m <= 20) return " Odczyt sprzed " + m + " min.";
-    return " UWAGA: odczyt sprzed " + m + " min. Sprawdź dno w grze przed wystawieniem — na rozgrzanej karcie tyle wystarczy, żeby cel był poniżej rynku.";
-  }
-  var DNI_PL = ["niedziela","poniedziałek","wtorek","środa","czwartek","piątek","sobota"];
-  function dateFromDM(day, month){
-    var now = new Date(), d = new Date(now.getFullYear(), month - 1, day);
-    /* Grudzień w danych oglądany w styczniu to rok wstecz, a nie za rok. */
-    if (d - now < -182 * 86400000) d = new Date(now.getFullYear() + 1, month - 1, day);
-    return d;
-  }
-  /* Terminy zakupu są wpisane w danych na sztywno i po dobie robią się nieprawdą:
-     "dziś 26.09 wieczorem" wyświetlało się 27.09. Wycinamy minione człony i
-     naprawiamy słowo "dziś", żeby nie obiecywało wczoraj. */
-  function freshenWhen(text){
-    var raw = String(text || "");
-    if (!raw.trim()) return "brak terminu";
-    var dzis = new Date(new Date().setHours(0, 0, 0, 0));
-    var parts = raw.split(/\s+i\s+/);
-    var kept = parts.filter(function(part){
-      var m = part.match(/(\d{1,2})\.(\d{2})/);
-      return !m || dateFromDM(Number(m[1]), Number(m[2])) >= dzis;
-    });
-    if (!kept.length) return "termin minął";
-    freshenWhen.dzisiaj = kept.some(function(part){
-      var m = part.match(/(\d{1,2})\.(\d{2})/);
-      return m && dateFromDM(Number(m[1]), Number(m[2])).getTime() === dzis.getTime();
-    });
-    return kept.map(function(part){
-      var m = part.match(/(\d{1,2})\.(\d{2})/);
-      if (!m) return part;
-      var d = dateFromDM(Number(m[1]), Number(m[2]));
-      var dzisiaj = d.getTime() === dzis.getTime();
-      return part.replace(/\b(dziś|dzisiaj)\b/gi, dzisiaj ? "dziś" : DNI_PL[d.getDay()]);
-    }).join(" i ");
-  }
-
-  function planIsActive(item){var dates=planDates(item.sell);return !dates.length || dates.some(function(date){return date>=new Date(new Date().setHours(0,0,0,0));});}
-  function isBuyDateActive(item,date){
-    if (date.toDateString()!==new Date().toDateString()) return true;
-    var now=new Date(), text=String(item.when || "");
-    if (/do południa/i.test(text) && now.getHours()>=12) return false;
-    var range=text.match(/(\d{1,2}):(\d{2})\s*[–-]\s*(\d{1,2}):(\d{2})/);
-    if (range){var end=Number(range[3])*60+Number(range[4]);if(now.getHours()*60+now.getMinutes()>end)return false;}
-    return true;
-  }
-
-  function plainText(value){ var node=document.createElement("div"); node.innerHTML=String(value); return (node.textContent || "").trim(); }
-  function brief(value){ var text=plainText(value); return text.length>190 ? text.slice(0,187).replace(/\s+\S*$/,"…") : text; }
-  function planDates(value){
-    var matches=String(value || "").matchAll(/(?:^|\D)(\d{1,2})\.(\d{2})(?:\.(\d{4}))?/g), now=new Date(), dates=[];
-    for (var match of matches){
-      var year=match[3] ? Number(match[3]) : now.getFullYear();
-      var date=new Date(year,Number(match[2])-1,Number(match[1]));
-      if (!match[3] && date.getTime() < new Date(now.getFullYear(),now.getMonth()-1,1).getTime()) date.setFullYear(year+1);
-      if (!dates.some(function(existing){return existing.getTime()===date.getTime()})) dates.push(date);
-    }
-    return dates;
-  }
 })();
 </script>
 </body>
