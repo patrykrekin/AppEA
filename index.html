@@ -156,6 +156,31 @@
 /* 02.10.2026 — sekcja wraca, gdy rejestr będzie mierzył wyjście tak samo
    rygorystycznie jak wejście. Dziś pokazuje 100% trafień przy medianie
    235 s, co opisuje rotację ofert, a nie to, czy dało się sprzedać. */
+  /* Pozycje na pasmach — 06.10. Siatka, nie <table>: na telefonie te same dane
+     muszą się złożyć w dwie kolumny, a tabeli nie da się tak przełamać bez bólu. */
+  .pasmo-row{display:grid;grid-template-columns:54px 110px minmax(130px,1fr) 110px minmax(230px,1.5fr);align-items:baseline;gap:6px 14px;padding:11px 0;border-bottom:1px solid var(--line)}
+  .pasmo-row:last-child{border-bottom:0}
+  .pasmo-row.head{padding:0 0 5px}
+  .pasmo-row.head span{font:10px "IBM Plex Mono",monospace;text-transform:uppercase;letter-spacing:.06em;color:var(--soft)}
+  .pasmo-nazwa{font:600 15px "IBM Plex Mono",monospace;color:var(--ink)}
+  .pasmo-cena{font:13px "IBM Plex Mono",monospace;color:var(--ink)}
+  .pasmo-cena small,.pasmo-zakres small{display:block;font:10px "IBM Plex Mono",monospace;color:var(--soft);letter-spacing:.02em}
+  .pasmo-zakres{font:13px "IBM Plex Mono",monospace;color:var(--muted)}
+  .pasmo-prog{font:13px "IBM Plex Mono",monospace;color:var(--green)}
+  .pasmo-prog small{display:none;font:10px "IBM Plex Mono",monospace;color:var(--soft)}
+  .pasmo-werdykt strong{display:block;font-size:13px;font-weight:600;color:var(--muted)}
+  .pasmo-werdykt small{display:block;margin-top:2px;font-size:11px;line-height:1.45;color:var(--soft)}
+  .pasmo-werdykt.sprzedaj strong{color:var(--gold)}
+  .pasmo-werdykt.czekaj strong{color:var(--blue)}
+  .znacznik{display:inline-block;margin-left:6px;padding:1px 6px;border:1px solid var(--line);border-radius:999px;font:9px "IBM Plex Mono",monospace;text-transform:uppercase;letter-spacing:.06em;color:var(--soft);vertical-align:1px}
+  @media(max-width:640px){
+    .pasmo-row{grid-template-columns:52px 1fr 1fr;gap:4px 10px}
+    .pasmo-row.head{display:none}
+    .pasmo-nazwa{grid-row:1}
+    .pasmo-zakres,.pasmo-prog{grid-column:span 1}
+    .pasmo-werdykt{grid-column:1/-1;margin-top:4px}
+    .pasmo-prog small{display:block}
+  }
 </style>
 </head>
 <body>
@@ -197,6 +222,12 @@
     <div class="eyebrow" id="stan-label">Stan rynku</div>
     <h2 id="stan-title">Liczę, gdzie stoi rynek…</h2>
     <p id="stan-text">Poziom pasm i najbliższe terminy czytam z bieżącego odczytu.</p>
+  </section>
+
+  <section class="moves" id="pasma-box">
+    <div class="section-head"><h3>Co robić z pasmami</h3><span id="pasma-caption"></span></div>
+    <div id="pasma-list"><div class="empty-moves">Zakresy policzą się przy najbliższym odczycie.</div></div>
+    <p class="budget-note" style="margin-top:10px"><strong>Komenda bierze się wyłącznie z terminu w kalendarzu</strong>, nie z ceny. Dwa mechanizmy, dwie strony rynku: <strong>wygasające SBC mówi, do kiedy sprzedać</strong> — popyt na fodder znika w chwili wygaśnięcia, nie po niej. <strong>Dzień nagród mówi, kiedy kupować</strong> — rano wchodzi podaż z nagród, więc wchodzisz po zalewie, nie przed. Strona nie wie, czy akurat kupujesz, czy trzymasz, więc podaje ten termin, który jest bliżej, a drugi dopisuje obok. Pozycja w zakresie 48 h jest opisem stanu, a nie sygnałem — nie twierdzimy, że tanie wróci, bo tego jeszcze nie zmierzyliśmy i to właśnie kupowanie dołka wywaliło nas z poprzedniej wersji tej strony.<br><strong>„Sprzedaj powyżej"</strong> to cena, od której wychodzisz na zero po 5% podatku: karta musi urosnąć o 5,26%, nie o 5%. Liczba jest zaokrąglona w górę do siatki FUT, więc da się ją wpisać w grze.<br><strong>Wymóg „85+" przypisujemy do pasma 85</strong>, nie do wszystkich wyższych: do SBC wstawia się najtańszą kartę, która spełnia próg, więc popyt rusza tym jednym pasmem.<br><strong>Znacznik „rozumowanie" znaczy dokładnie to, co pisze.</strong> Że popyt na fodder rośnie przed wygaśnięciem SBC i że dni nagród dają poranny dołek — to mechanizm, nie nasz pomiar. Zbieramy na to historię od 04.10 i wtedy albo podamy liczby, albo napiszemy, że to nieprawda.</p>
   </section>
 
   <section class="moves" id="moje-box">
@@ -288,6 +319,25 @@
      i użytkownik dostawał pusty ekran bez powodu. Ogranicznik u góry, żeby
      wklejona przypadkiem długa liczba nie robiła limitu w miliardach. */
   var MAX_BUDGET = 100000000;
+
+  /* Stałe sekcji „Co robić z pasmami". Stoją tu, a nie przy swojej funkcji na dole
+     pliku, i to jest poprawka po błędzie z 06.10.
+
+     Co się stało: strona woła render() RAZ przed pobraniem danych, żeby narysować
+     stany puste. Deklaracje `var` są hoistowane, ale PRZYPISANIA wykonują się
+     dopiero w swojej linii — a ta leżała kilkaset linii niżej. W chwili pierwszego
+     render() MIN_PUNKTOW_PASMA było więc `undefined`, warunek `okno.length < undefined`
+     dawał `false`, bramka ochronna przepuszczała pustą tablicę i leciał TypeError.
+     Jeden wyjątek zabijał CAŁY render, więc nie rysowała się ani jedna sekcja —
+     strona stała na „Wczytuję…" i wyglądała jak awaria scrapera.
+
+     Inne sekcje tego nie łapały przypadkiem: ich bramki opierają się na danych
+     (`if (!data.obserwacja) return`), a nie na własnej stałej. Moja opierała się
+     na stałej i dlatego sama się wyłączyła. */
+  var OKNO_PASM = 48 * 3600;      // sekundy; zakres liczymy po CZASIE, nie po liczbie punktów
+  var MIN_PUNKTOW_PASMA = 6;      // mniej to nie zakres, tylko dwa odczyty obok siebie
+  var TERMIN_SPRZEDAZY_DNI = 5;   // dalej niż to i nie jest to już "co robić dziś"
+  var TERMIN_NAGROD_DNI = 3;
   function budgetRaw(){
     var text = String(budgetInput.value || "").replace(/[\s\u00A0]/g, "");
     var value = Number(text);
@@ -384,7 +434,7 @@
     });
   }
 
-  function render(){ showMarket(); showStan(); showMoje(); showKalendarz(); showSbc(); showObs(); showMoves(); updateBudgetControls(); }
+  function render(){ showMarket(); showStan(); showPasma(); showMoje(); showKalendarz(); showSbc(); showObs(); showMoves(); updateBudgetControls(); }
 
   /* ── Moje pozycje ─────────────────────────────────────────────────────────
      Do tej pory strona mówiła, po ile kupić i po ile wystawić, a potem gracz
@@ -992,6 +1042,257 @@
     return (d1 >= 2 && d1 <= 4) ? "pomiary" : "pomiarów";
   }
   function plDni(n){ return n === 1 ? "dzień" : "dni"; }
+
+  /* ── Co robić z pasmami ───────────────────────────────────────────────────
+     06.10.2026. Pierwsza warstwa, która mówi "zrób X", a nie tylko pokazuje liczby.
+
+     Z czego to liczymy: data.hist[platforma] niesie dna wszystkich siedmiu pasm
+     co 10–30 minut. UWAGA NA KOTWICĘ: hist[0] bywa punktem sprzed tygodnia —
+     przerzedzanie zostawia pierwszy odczyt, żeby indeks miał od czego liczyć.
+     Wzięcie go do zakresu "48 h" dałoby zakres z dziesięciu dni podpisany jako
+     dwa dni. Dokładnie taki błąd mieliśmy już przy indeksie 04.10, więc tu okno
+     filtrujemy po CZASIE, nie po liczbie punktów.
+
+     Czego ta sekcja NIE robi: nie twierdzi, że tanie wróci. Pozycja w zakresie
+     48 h to opis stanu, nie sygnał — gdybyśmy zrobili z niej komendę "kupuj",
+     wróciłoby dokładnie to kupowanie dołka, dla którego ta przebudowa powstała.
+     Komenda bierze się WYŁĄCZNIE z terminu w kalendarzu, bo tylko tam jest powód,
+     dla którego popyt albo podaż naprawdę się ruszy.
+
+     Trzy stopnie pewności, wypisane na stronie przy kolumnach:
+       pomiar      — nasze odczyty co pięć minut
+       arytmetyka  — rachunek z podatku 5%, zawsze prawdziwy
+       rozumowanie — mechanizm, którego jeszcze nie zmierzyliśmy na własnych danych */
+  /* Stałe tej sekcji siedzą NA GÓRZE SKRYPTU, nie tutaj — czemu, patrz komentarz
+     przy ich deklaracji. */
+
+  function oknoHist(){
+    var h = (data && data.hist && data.hist[platform]) || [];
+    if (!h.length) return [];
+    var koniec = h[h.length - 1].at;
+    return h.filter(function(p){ return p && p.floors && (koniec - p.at) <= OKNO_PASM; });
+  }
+
+  /* Kalendarz koduje wymóg SBC w tytule: "Sprzedaj fodder 85+ — wygasa ...".
+     Mapujemy na pasmo DOKŁADNIE 85, nie na 85–89: do wymogu 85+ wstawia się
+     najtańszą kartę, która go spełnia, więc popyt rusza tym jednym pasmem. */
+  function ratingZWpisu(w){
+    var m = String((w && w.tytul) || "").match(/fodder\s+(\d{2})\s*\+/i);
+    return m ? +m[1] : null;
+  }
+
+  function terminyKalendarza(){
+    var dni = (data && Array.isArray(data.kalendarz)) ? data.kalendarz : [];
+    var dzis = new Date(); dzis.setHours(0, 0, 0, 0);
+    var out = [];
+    dni.forEach(function(d){
+      var dzien = dzienZIso(d && d.dzien);
+      if (!dzien) return;
+      var ile = Math.round((dzien.getTime() - dzis.getTime()) / 86400000);
+      if (ile < 0) return;
+      (Array.isArray(d.wpisy) ? d.wpisy : []).forEach(function(w){
+        if (!w) return;
+        out.push({ ile: ile, typ: w.typ, rating: ratingZWpisu(w), tytul: String(w.tytul || "").trim() });
+      });
+    });
+    return out;
+  }
+
+  /* Dwa różne pytania, więc dwie różne odpowiedzi.
+
+     Pierwsza wersja dawała jedną komendę na pasmo i wychodziło z tego sześć
+     identycznych "czekaj" — bo dzień nagród wypada trzy razy w tygodniu, więc
+     prawie zawsze jakiś jest w oknie. Komenda, która świeci się zawsze, nie niesie
+     żadnej informacji.
+
+     Rozdzielone: termin SBC mówi, do kiedy SPRZEDAĆ (popyt znika w chwili
+     wygaśnięcia), a dzień nagród mówi, kiedy KUPOWAĆ (rano wchodzi podaż).
+     To są instrukcje dla dwóch różnych ludzi przy tym samym paśmie, a strona
+     nie wie, którym z nich jesteś — więc podaje obie i nie udaje, że wie. */
+  function doKiedySprzedac(n){
+    return n === 0 ? "Sprzedaj dziś" : n === 1 ? "Sprzedaj do jutra" : "Sprzedaj w ciągu " + n + " dni";
+  }
+  /* Sam termin, bez czasownika — "kupno kupuj za 2 dni" to był efekt sklejenia
+     pełnej komendy z przedrostkiem. */
+  function kiedyKrotko(n){
+    return n === 0 ? "dziś rano" : n === 1 ? "jutro rano" : "za " + n + " dni";
+  }
+  function doKiedyKupic(n){
+    return n === 0 ? "Kupuj dziś rano" : n === 1 ? "Kupuj jutro rano" : "Kupuj za " + n + " dni";
+  }
+
+  function werdyktPasma(rating, terminy){
+    var sprzedaz = null, nagrody = null;
+    for (var i = 0; i < terminy.length; i++){
+      var t = terminy[i];
+      if (!sprzedaz && t.typ === "sprzedaj" && t.rating === rating && t.ile <= TERMIN_SPRZEDAZY_DNI) sprzedaz = t;
+      if (!nagrody && t.typ === "podaz" && t.ile <= TERMIN_NAGROD_DNI) nagrody = t;
+    }
+    if (sprzedaz) return {
+      klasa: "sprzedaj",
+      komenda: doKiedySprzedac(sprzedaz.ile),
+      /* Powód jest KRÓTKI celowo. Pierwsza wersja powtarzała pełne zdanie
+         o mechanizmie w każdym z siedmiu wierszy — sześć razy to samo, przez co
+         tabela zamieniała się w ścianę tekstu i nie dało się porównać wierszy.
+         Mechanizm tłumaczymy raz, pod tabelą. */
+      powod: "Wygasa SBC na fodder " + rating + "+"
+           + (nagrody ? " · kupno " + kiedyKrotko(nagrody.ile) : ""),
+      pewnosc: "rozumowanie"
+    };
+    if (nagrody) return {
+      klasa: "czekaj",
+      komenda: doKiedyKupic(nagrody.ile),
+      powod: nagrody.tytul + " · brak terminu sprzedaży",
+      pewnosc: "rozumowanie"
+    };
+    return {
+      klasa: "",
+      komenda: "Nic nie wymaga ruchu",
+      powod: "Brak terminu w kalendarzu",
+      pewnosc: ""
+    };
+  }
+
+  function znacznik(tekst){
+    var s = document.createElement("span");
+    s.className = "znacznik"; s.textContent = tekst;
+    return s;
+  }
+
+  function showPasma(){
+    var box = document.getElementById("pasma-list");
+    var cap = document.getElementById("pasma-caption");
+    if (!box) return;
+    box.replaceChildren();
+
+    if (loadError){ if (cap) cap.textContent = ""; setEmpty(box, "Nie udało się pobrać danych.", "empty-moves"); return; }
+
+    var okno = oknoHist();
+    if (okno.length < MIN_PUNKTOW_PASMA){
+      if (cap) cap.textContent = "";
+      setEmpty(box, "Za mało odczytów w ostatnich 48 h (" + okno.length + " z " + MIN_PUNKTOW_PASMA
+        + "). Zakres policzy się, gdy przebiegi nadrobią.", "empty-moves");
+      return;
+    }
+
+    /* Drugi pas: sprawdzamy ISTNIENIE elementu, a nie tylko długość tablicy.
+       Bramka wyżej opiera się na stałej, a ta — jak się okazało — potrafi być
+       jeszcze nieprzypisana. Ten warunek działa niezależnie od niej. */
+    var ostatni = okno[okno.length - 1];
+    if (!ostatni || !ostatni.floors){ if (cap) cap.textContent = ""; setEmpty(box, "Brak kompletnego odczytu pasm.", "empty-moves"); return; }
+    var pasma = Object.keys(ostatni.floors).map(Number).filter(function(n){ return n > 0; }).sort(function(a,b){ return a-b; });
+    var godzin = Math.round((ostatni.at - okno[0].at) / 3600);
+    var bank = budget(), limit = Math.floor(bank * 0.10);
+    if (cap) cap.textContent = labels[platform] + " · zakres z " + godzin + " h · " + okno.length
+      + " " + plOdczytow(okno.length) + " · limit 10% banku " + coins(limit);
+
+    var terminy = terminyKalendarza();
+
+    var head = document.createElement("div");
+    head.className = "pasmo-row head";
+    [["Pasmo", null], ["Teraz", "pomiar"], ["Zakres " + godzin + " h", "pomiar"],
+     ["Sprzedaj powyżej", "arytmetyka"], ["Co robić", "rozumowanie"]].forEach(function(para){
+      var s = document.createElement("span");
+      s.textContent = para[0];
+      if (para[1]) s.appendChild(znacznik(para[1]));
+      head.appendChild(s);
+    });
+    box.appendChild(head);
+
+    pasma.forEach(function(r){
+      var seria = [];
+      okno.forEach(function(p){ var v = Number(p.floors[r]); if (Number.isFinite(v) && v > 0) seria.push({ at: p.at, v: v }); });
+      if (seria.length < MIN_PUNKTOW_PASMA) return;
+
+      var teraz = seria[seria.length - 1].v;
+      var wartosci = seria.map(function(x){ return x.v; });
+      var min = Math.min.apply(null, wartosci), max = Math.max.apply(null, wartosci);
+
+      var row = document.createElement("div");
+      row.className = "pasmo-row";
+
+      var nazwa = document.createElement("span");
+      nazwa.className = "pasmo-nazwa"; nazwa.textContent = String(r);
+      row.appendChild(nazwa);
+
+      var cena = document.createElement("span");
+      cena.className = "pasmo-cena"; cena.textContent = coins(teraz);
+      /* Dobowa zmiana liczona z PUNKTU NAJBLIŻSZEGO dobie wstecz, a nie z początku
+         okna — i tylko gdy taki punkt naprawdę jest. Inaczej po przerwie w
+         przebiegach "doba" oznaczałaby cokolwiek. */
+      var cel = ostatni.at - 86400, dobowy = null, najlepszy = Infinity;
+      seria.forEach(function(x){
+        var d = Math.abs(x.at - cel);
+        if (d < najlepszy && d <= 3 * 3600){ najlepszy = d; dobowy = x.v; }
+      });
+      if (dobowy > 0){
+        var proc = ((teraz / dobowy) - 1) * 100;
+        var zm = document.createElement("small");
+        zm.className = Math.abs(proc) < 0.5 ? "flat" : (proc > 0 ? "up" : "down");
+        zm.textContent = (proc > 0 ? "+" : "") + proc.toFixed(1).replace(".", ",") + "% doba";
+        cena.appendChild(zm);
+      }
+      if (teraz > limit){
+        var poza = document.createElement("small");
+        poza.textContent = "poza limitem 10%";
+        cena.appendChild(poza);
+      }
+      row.appendChild(cena);
+
+      var zakres = document.createElement("span");
+      zakres.className = "pasmo-zakres";
+      zakres.textContent = coins(min) + " – " + coins(max);
+      var gdzie = document.createElement("small");
+      if (max > min){
+        /* "górne 0% zakresu" przy cenie równej maksimum nie znaczyło nic — a tak
+           właśnie wychodziło z (100 - p). Mówimy wprost, gdzie stoi cena. */
+        var p = Math.round(((teraz - min) / (max - min)) * 100);
+        gdzie.textContent = p >= 95 ? "przy szczycie okna"
+          : p <= 5 ? "przy dnie okna"
+          : "w " + p + "% zakresu";
+      } else {
+        gdzie.textContent = "cena nie drgnęła";
+      }
+      zakres.appendChild(gdzie);
+      row.appendChild(zakres);
+
+      /* Podatek 5% od ceny sprzedaży: żeby wyjść na zero, trzeba sprzedać powyżej
+         cena/0,95 — czyli o 5,26% drożej, nie o 5%. Zaokrąglamy W GÓRĘ do siatki,
+         bo ceny pomiędzy krokami nie da się w grze wpisać. */
+      var prog = document.createElement("span");
+      prog.className = "pasmo-prog";
+      prog.textContent = coins(wGoreSiatki(Math.ceil(teraz / 0.95)));
+      /* Na telefonie nagłówek tabeli znika, więc sama zielona liczba wisiała bez
+         opisu i wyglądała jak kolejna cena. Podpis pokazujemy tylko tam. */
+      var progOpis = document.createElement("small");
+      progOpis.textContent = "sprzedaj powyżej";
+      prog.appendChild(progOpis);
+      row.appendChild(prog);
+
+      var w = werdyktPasma(r, terminy);
+      var werdykt = document.createElement("span");
+      werdykt.className = "pasmo-werdykt " + w.klasa;
+      var k = document.createElement("strong");
+      k.textContent = w.komenda;
+      if (w.pewnosc) k.appendChild(znacznik(w.pewnosc));
+      var powod = document.createElement("small");
+      powod.textContent = w.powod;
+      werdykt.append(k, powod);
+      row.appendChild(werdykt);
+
+      box.appendChild(row);
+    });
+
+    if (!box.querySelector(".pasmo-row:not(.head)"))
+      setEmpty(box, "Żadne pasmo nie ma kompletu odczytów w tym oknie.", "empty-moves");
+  }
+
+  function plOdczytow(n){
+    if (n === 1) return "odczyt";
+    var d2 = n % 100, d1 = n % 10;
+    if (d2 >= 12 && d2 <= 14) return "odczytów";
+    return (d1 >= 2 && d1 <= 4) ? "odczyty" : "odczytów";
+  }
 
   function showKalendarz(){
     var calendar = document.getElementById("calendar-list");
