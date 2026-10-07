@@ -32,6 +32,11 @@
   .market{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:16px;padding:16px 20px;border:1px solid var(--line);border-radius:var(--r);background:var(--panel);margin-bottom:16px}
   .market .label{font:500 11px "IBM Plex Mono",monospace;letter-spacing:.11em;text-transform:uppercase;color:var(--soft)}
   .market strong{font-size:18px}.market .change{font:600 16px "IBM Plex Mono",monospace;white-space:nowrap}
+  .dzis-linia{display:block;margin-top:7px;font-size:15px;line-height:1.5;color:var(--muted)}
+  .dzis-linia:first-child{margin-top:0}
+  .dzis-linia.sprzedaj,.dzis-linia.kupuj{color:var(--ink)}
+  .dzis-linia.tlo{font-size:13px;color:var(--soft)}
+  .lead-zrodlo{margin:10px 0 0;font-size:11px;line-height:1.5;color:var(--soft)}
   .freshness{margin:-7px 0 17px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;color:var(--muted);font-size:12px}
   .freshness strong{color:var(--ink);font-weight:600}.freshness.stale{border-color:#71543a;color:var(--gold)}
   .up{color:var(--green)}.down{color:var(--red)}.flat{color:var(--gold)}
@@ -188,14 +193,28 @@
   <header>
     <div>
       <div class="brand">Terminal FUT</div>
-      <h1>Gdzie jest rynek</h1>
-      <p class="lead-in">Cenniki mówią, ile karta kosztuje w tej chwili. My mierzymy poziom całego rynku co pięć minut i pilnujemy terminów, które tym poziomem ruszają — pod pozycje trzymane dzień albo dwa, nie pięć minut.</p>
+      <h1>Kiedy kupić, kiedy sprzedać</h1>
+      <p class="lead-in">Cenniki mówią, ile karta kosztuje w tej chwili. My pilnujemy terminów, które ruszają ceną — wygasających SBC i dni nagród — i mówimy, co z tym zrobić dziś.</p>
     </div>
     <div class="platform" role="group" aria-label="Wybierz rynek">
       <button id="ps" type="button" aria-pressed="true">Konsola</button>
       <button id="pc" type="button" aria-pressed="false">PC</button>
     </div>
   </header>
+
+  <section class="lead">
+    <div class="eyebrow" id="dzis-label">Co robić dziś</div>
+    <h2 id="dzis-title">Sprawdzam, co dziś wymaga ruchu…</h2>
+    <p id="dzis-text">Terminy i ceny czytam z bieżącego odczytu.</p>
+    <p class="lead-zrodlo" id="dzis-zrodlo"></p>
+  </section>
+
+  <div class="freshness" id="freshness" aria-live="polite"><strong id="updated">Wczytuję czas odświeżenia…</strong></div>
+  <section class="market" aria-live="polite">
+    <span class="label" id="market-label">Rynek · konsola</span>
+    <strong id="market-state">Wczytuję dane…</strong>
+    <span id="market-change" class="change"></span>
+  </section>
 
   <section class="controls" aria-label="Dopasuj widok">
     <div>
@@ -209,19 +228,6 @@
       </div>
       <p class="budget-note" id="budget-note">Budżet wyznacza limit 10% banku na jedną kartę — przy pozycji trzymanej dwa dni to jedyna rzecz, która ratuje bank, gdy teza nie wypali.</p>
     </div>
-  </section>
-
-  <section class="market" aria-live="polite">
-    <span class="label" id="market-label">Rynek · konsola</span>
-    <strong id="market-state">Wczytuję dane…</strong>
-    <span id="market-change" class="change"></span>
-  </section>
-  <div class="freshness" id="freshness" aria-live="polite"><strong id="updated">Wczytuję czas odświeżenia…</strong></div>
-
-  <section class="lead">
-    <div class="eyebrow" id="stan-label">Stan rynku</div>
-    <h2 id="stan-title">Liczę, gdzie stoi rynek…</h2>
-    <p id="stan-text">Poziom pasm i najbliższe terminy czytam z bieżącego odczytu.</p>
   </section>
 
   <section class="moves" id="pasma-box">
@@ -434,7 +440,7 @@
     });
   }
 
-  function render(){ showMarket(); showStan(); showPasma(); showMoje(); showKalendarz(); showSbc(); showObs(); showMoves(); updateBudgetControls(); }
+  function render(){ showMarket(); showDzis(); showPasma(); showMoje(); showKalendarz(); showSbc(); showObs(); showMoves(); updateBudgetControls(); }
 
   /* ── Moje pozycje ─────────────────────────────────────────────────────────
      Do tej pory strona mówiła, po ile kupić i po ile wystawić, a potem gracz
@@ -945,102 +951,170 @@
      kalendarz podaje TERMIN, nie prognozę ceny. */
   var ZBIERAMY_OD = Date.UTC(2026, 9, 4);   // 04.10.2026 — start długiej historii
   var POTRZEBA_DNI = 21;                    // tyle, żeby w ogóle zobaczyć rytm tygodnia
-  var KAT_TYPY = { sprzedaj: "wygaśnięcie SBC", podaz: "dzień nagród" };
 
   function dzienZIso(s){
     var m = String(s || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
     return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null;
   }
-  function zaIleDni(n){ return n === 0 ? "dziś" : n === 1 ? "jutro" : "za " + n + " dni"; }
 
-  function najblizszyKatalizator(){
-    var dni = (data && Array.isArray(data.kalendarz)) ? data.kalendarz : [];
-    var dzis = new Date(); dzis.setHours(0, 0, 0, 0);
-    for (var i = 0; i < dni.length; i++){
-      var d = dni[i];
-      var wpisy = (d && Array.isArray(d.wpisy)) ? d.wpisy : [];
-      var wpis = null;
-      for (var j = 0; j < wpisy.length; j++){ if (KAT_TYPY[wpisy[j] && wpisy[j].typ]) { wpis = wpisy[j]; break; } }
-      if (!wpis) continue;
-      var data_ = dzienZIso(d.dzien);
-      if (!data_) continue;
-      var ile = Math.round((data_.getTime() - dzis.getTime()) / 86400000);
-      if (ile < 0) continue;
-      return { ile: ile, typ: KAT_TYPY[wpis.typ], tytul: String(wpis.tytul || "").trim() };
+  /* ── Co robić dziś ────────────────────────────────────────────────────────
+     06.10.2026. Zastępuje opis stanu rynku, który stał w tym miejscu przez pół dnia.
+
+     Dlaczego zniknął: opis stanu odpowiadał na pytanie "jak jest", a nikt nie wchodzi
+     na taką stronę po stan. Wchodzi po to, żeby wiedzieć, CO ZROBIĆ: kupić teraz,
+     poczekać, czy sprzedać i do kiedy. Poziom indeksu, szerokość ruchu i liczba
+     pomiarów to było tłumaczenie się z rachunku przed kimś, kto o rachunek nie pytał.
+
+     Zasada tej sekcji: najpierw komenda, potem jedno zdanie dlaczego, i koniec.
+     Stan rynku wchodzi tu TYLKO wtedy, gdy zmienia decyzję — "wszystko stoi przy
+     szczycie" jest powodem, żeby nie gonić cen, a nie ciekawostką.
+
+     Źródłem komendy jest kalendarz, tak samo jak w sekcji pasm. Ta sekcja niczego
+     nie liczy od nowa — streszcza to, co niżej stoi wiersz po wierszu, do jednej
+     decyzji na dziś. */
+  var SZCZYT_PROG = 80;   // % zakresu, powyżej którego mówimy "przy szczycie"
+  var DNO_PROG = 20;
+
+  function pasmaZeSprzedaza(terminy, pasma){
+    var out = [];
+    pasma.forEach(function(r){
+      for (var i = 0; i < terminy.length; i++){
+        var t = terminy[i];
+        if (t.typ === "sprzedaj" && t.rating === r && t.ile <= TERMIN_SPRZEDAZY_DNI){ out.push({ r: r, ile: t.ile }); return; }
+      }
+    });
+    return out.sort(function(a, b){ return a.ile - b.ile; });
+  }
+
+  function najblizszeNagrody(terminy){
+    for (var i = 0; i < terminy.length; i++){
+      if (terminy[i].typ === "podaz" && terminy[i].ile <= TERMIN_NAGROD_DNI) return terminy[i];
     }
     return null;
   }
 
-  function showStan(){
-    var label = document.getElementById("stan-label");
-    var title = document.getElementById("stan-title");
-    var text = document.getElementById("stan-text");
+  /* Ile pasm stoi wysoko, a ile nisko w swoim oknie. Jedna liczba, która naprawdę
+     zmienia decyzję: przy wszystkich na górze nie ma po co gonić ceny. */
+  function rozkladPasm(okno, pasma){
+    var gora = 0, dol = 0, razem = 0;
+    pasma.forEach(function(r){
+      var v = [];
+      okno.forEach(function(p){ var x = Number(p.floors[r]); if (Number.isFinite(x) && x > 0) v.push(x); });
+      if (v.length < MIN_PUNKTOW_PASMA) return;
+      var min = Math.min.apply(null, v), max = Math.max.apply(null, v), teraz = v[v.length - 1];
+      if (max <= min) return;
+      var p = ((teraz - min) / (max - min)) * 100;
+      razem++;
+      if (p >= SZCZYT_PROG) gora++;
+      else if (p <= DNO_PROG) dol++;
+    });
+    return { gora: gora, dol: dol, razem: razem };
+  }
+
+  function wymienPasma(lista){
+    if (lista.length === 1) return "pasmo " + lista[0].r;
+    var n = lista.map(function(x){ return x.r; });
+    return "pasma " + n.slice(0, -1).join(", ") + " i " + n[n.length - 1];
+  }
+
+  function showDzis(){
+    var label = document.getElementById("dzis-label");
+    var title = document.getElementById("dzis-title");
+    var text = document.getElementById("dzis-text");
+    var zrodlo = document.getElementById("dzis-zrodlo");
     if (!label || !title || !text) return;
 
-    label.textContent = "Stan rynku · " + labels[platform].toLowerCase();
+    label.textContent = "Co robić dziś · " + labels[platform].toLowerCase();
+    if (zrodlo) zrodlo.textContent = "";
 
     if (loadError){
-      title.textContent = "Nie mogę odczytać stanu rynku";
-      text.textContent = "Nie udało się pobrać data.json. Liczby poniżej są z ostatniego udanego odczytu albo puste.";
+      title.textContent = "Nie wiem, co jest na rynku";
+      text.textContent = "Nie udało się pobrać danych. Nie podaję komendy na ślepo — odśwież za chwilę.";
       return;
     }
-    var s = data && data.nasz && data.nasz[platform];
-    if (!s || !Number.isFinite(Number(s.wartosc))){
+
+    var okno = oknoHist();
+    var ostatni = okno[okno.length - 1];
+    if (!ostatni || !ostatni.floors){
       title.textContent = "Czekam na pierwszy pełny odczyt";
-      text.textContent = "Poziom rynku liczymy z dna siedmiu pasm (83–89). Pojawi się przy najbliższym udanym przebiegu.";
+      text.textContent = "Komendę podam, gdy przebiegi zbiorą komplet cen pasm. To kwestia kilku minut.";
       return;
     }
 
-    var ruch = Number(s.zmiana);
-    var maRuch = Number.isFinite(ruch);
-    var sz = s.szerokosc || {};
-    var gora = Number(sz.gora) || 0, dol = Number(sz.dol) || 0, razem = Number(sz.razem) || 0;
+    var pasma = Object.keys(ostatni.floors).map(Number).filter(function(n){ return n > 0; }).sort(function(a,b){ return a-b; });
+    var terminy = terminyKalendarza();
+    var sprzedaz = pasmaZeSprzedaza(terminy, pasma);
+    var nagrody = najblizszeNagrody(terminy);
+    var rozklad = rozkladPasm(okno, pasma);
 
-    /* Nagłówek mówi o SZEROKOŚCI, nie o samym procencie. Jeden procent na
-       indeksie może pochodzić z jednego pasma, które odjechało — i wtedy to nie
-       jest ruch rynku, tylko ruch jednej półki. */
-    if (razem && gora === razem)      title.textContent = "Rynek rośnie szerokim frontem";
-    else if (razem && dol === razem)  title.textContent = "Rynek schodzi szerokim frontem";
-    else if (maRuch && ruch > 0.15)   title.textContent = "Rynek rośnie, ale nierówno";
-    else if (maRuch && ruch < -0.15)  title.textContent = "Rynek schodzi, ale nierówno";
-    else                              title.textContent = "Rynek stoi w miejscu";
-
-    var czesci = [];
-    czesci.push("Poziom " + String(Number(s.wartosc).toFixed(1)).replace(".", ",")
-      + " (100 = start pomiarów " + (s.odKiedy ? czasHM(s.odKiedy) : "") + ")");
-    if (maRuch){
-      var okno = s.okno ? String(s.okno) : "";
-      czesci.push((ruch > 0 ? "+" : "") + ruch.toFixed(1).replace(".", ",") + "%"
-        + (s.odniesienie === "doba" ? " za dobę" : okno ? " od startu, " + okno : ""));
-    }
-    if (razem) czesci.push(gora + " z " + razem + " pasm w górę");
-    if (Number(s.pomiarow) > 0) czesci.push(s.pomiarow + " " + plPomiarow(Number(s.pomiarow)));
-
-    var kat = najblizszyKatalizator();
-    var zdania = [czesci.join(" · ") + "."];
-    if (kat){
-      zdania.push("Najbliższy katalizator " + zaIleDni(kat.ile) + " — " + kat.typ
-        + (kat.tytul ? ": " + kat.tytul : "") + ".");
+    /* NAGŁÓWEK: jedna komenda, ta najpilniejsza. Termin sprzedaży bije okno zakupu,
+       bo ma twardą datę — po wygaśnięciu SBC nie da się już nic naprawić, a dzień
+       nagród wróci za kilka dni. */
+    if (sprzedaz.length){
+      var pierwszy = sprzedaz[0];
+      title.textContent = pierwszy.ile === 0 ? "Sprzedaj fodder " + pierwszy.r + " dziś"
+        : pierwszy.ile === 1 ? "Sprzedaj fodder " + pierwszy.r + " do jutra"
+        : "Sprzedaj fodder " + pierwszy.r + " w ciągu " + pierwszy.ile + " dni";
+    } else if (nagrody && nagrody.ile === 0){
+      title.textContent = "Kupuj dziś rano, póki trwa zalew z nagród";
+    } else if (nagrody){
+      title.textContent = nagrody.ile === 1 ? "Nic nie kupuj — czekaj do jutra rana" : "Nic nie kupuj — czekaj " + nagrody.ile + " dni";
     } else {
-      zdania.push("W kalendarzu nie ma na razie żadnego terminu, który ruszałby podażą albo popytem.");
+      title.textContent = "Dziś nic nie wymaga ruchu";
     }
 
-    /* Licznik zbierania. Stoi tu celowo: dopóki historia jest krótka, strona ma
-       mówić wprost, czego jeszcze nie wie, zamiast wypełniać to miejsce pozycją
-       wymyśloną na dwóch dobach danych. */
-    var dni = Math.max(0, Math.floor((Date.now() - ZBIERAMY_OD) / 86400000));
-    zdania.push("Długą historię cen zbieramy od 04.10 — " + dni + " " + plDni(dni)
-      + " z " + POTRZEBA_DNI + " potrzebnych, żeby policzyć rytm tygodnia z własnych pomiarów.");
+    /* Osobne linie, nie jeden akapit. Cztery zdania pod rząd czyta się jak
+       wypracowanie — a to ma być lista rzeczy do zrobienia. */
+    var zdania = [];
 
-    text.textContent = zdania.join(" ");
+    if (sprzedaz.length){
+      zdania.push("sprzedaj|Sprzedaj: " + wymienPasma(sprzedaz) + " — wygasają SBC, które je konsumują ("
+        + sprzedaz.map(function(x){ return x.r + " " + (x.ile === 0 ? "dziś" : x.ile === 1 ? "jutro" : "za " + x.ile + " dni"); }).join(", ")
+        + "). Po terminie popyt na fodder znika z dnia na dzień.");
+    }
+
+    if (nagrody){
+      zdania.push(nagrody.ile === 0
+        ? "kupuj|Kupuj: dziś rano, po tym jak weszły nagrody — wtedy podaż jest największa, a cena najniższa."
+        : "kupuj|Kupuj: dopiero " + (nagrody.ile === 1 ? "jutro" : "za " + nagrody.ile + " dni") + " rano, gdy wejdą nagrody i zaleją rynek podażą.");
+    } else if (!sprzedaz.length){
+      zdania.push("|Nie ma dziś ani terminu sprzedaży, ani dnia nagród. Trzymaj, co masz, i nie dokładaj na siłę.");
+    }
+
+    /* Stan rynku tylko jako powód decyzji, nie jako raport. */
+    if (rozklad.razem && rozklad.gora === rozklad.razem)
+      zdania.push("tlo|Wszystkie pasma stoją przy szczycie ostatnich dwóch dni — goniąc ceny dziś, kupujesz najdrożej.");
+    else if (rozklad.razem && rozklad.dol === rozklad.razem)
+      zdania.push("tlo|Wszystkie pasma siedzą przy dnie ostatnich dwóch dni — jeśli masz kupować, to jest tańszy moment niż zwykle.");
+    else if (rozklad.gora >= 1 || rozklad.dol >= 1)
+      zdania.push("tlo|Z " + rozklad.razem + " pasm " + rozklad.gora + " stoi przy szczycie dwóch dni, " + rozklad.dol + " przy dnie.");
+
+    /* Budżet wchodzi jako ZASIĘG, a nie jako rachunek: które półki w ogóle możesz
+       ruszyć przy limicie 10% banku na kartę. */
+    var limit = Math.floor(budget() * 0.10);
+    var wzasiegu = pasma.filter(function(r){ return Number(ostatni.floors[r]) <= limit; });
+    if (wzasiegu.length === pasma.length) zdania.push("tlo|Przy twoim banku stać cię na każde pasmo.");
+    else if (!wzasiegu.length) zdania.push("tlo|Przy twoim banku żadne pasmo nie mieści się w limicie 10% na kartę — podnieś budżet albo wejdź niżej.");
+    else zdania.push("tlo|Przy twoim banku w limicie 10% na kartę mieszczą się pasma "
+      + wzasiegu[0] + "–" + wzasiegu[wzasiegu.length - 1] + ".");
+
+    text.replaceChildren();
+    zdania.forEach(function(z){
+      var i = z.indexOf("|");
+      var linia = document.createElement("span");
+      linia.className = "dzis-linia " + z.slice(0, i);
+      linia.textContent = z.slice(i + 1);
+      text.appendChild(linia);
+    });
+
+    if (zrodlo){
+      var dni = Math.max(0, Math.floor((Date.now() - ZBIERAMY_OD) / 86400000));
+      zrodlo.textContent = "Terminy pochodzą z kalendarza SBC. Że popyt na fodder rośnie przed wygaśnięciem,"
+        + " a dni nagród dają poranny dołek — to mechanizm, nie nasz pomiar; zbieramy na to własne ceny od 04.10 ("
+        + dni + " " + plDni(dni) + " z " + POTRZEBA_DNI + ").";
+    }
   }
 
-  function plPomiarow(n){
-    if (n === 1) return "pomiar";
-    var d2 = n % 100, d1 = n % 10;
-    if (d2 >= 12 && d2 <= 14) return "pomiarów";
-    return (d1 >= 2 && d1 <= 4) ? "pomiary" : "pomiarów";
-  }
   function plDni(n){ return n === 1 ? "dzień" : "dni"; }
 
   /* ── Co robić z pasmami ───────────────────────────────────────────────────
@@ -1344,7 +1418,6 @@
     if (kluczD(d) === kluczD(jutro)) return "jutro";
     return d.toLocaleDateString("pl-PL", { weekday: "short", day: "2-digit", month: "2-digit" });
   }
-
 
 })();
 </script>
