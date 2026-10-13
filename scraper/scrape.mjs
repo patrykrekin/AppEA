@@ -220,9 +220,8 @@ function cardsForCalendar(bands){
 }
 
 /* Diagnostyka tożsamości źródeł. ID fut.gg zostaje tylko w pamięci przebiegu:
-   nie zmieniamy kluczy ani kształtu danych, dopóki nie zobaczymy kolizji.
-   Momentum nie niesie ID, więc łączymy je z pasmem tylko po identycznej
-   etykiecie: nazwa + rating + pozycja. */
+   nie zmieniamy kluczy danych. Etykieta (nazwa + rating + pozycja) wskazuje
+   kandydatów do porównania, a zgodność tożsamości potwierdza dopiero ID. */
 function audytIndeksu(bands, momentum){
   const norm = s => String(s || "").normalize("NFKC").replace(/\s+/g, " ").trim().toLocaleLowerCase("pl-PL");
   const platformy = {};
@@ -252,6 +251,7 @@ function audytIndeksu(bands, momentum){
   }
 
   let etykiety = 0, idZgodne = 0, idRozne = 0, niejednoznaczne = 0, roznicaPonadKrok = 0;
+  const szczegolyRoznic = [];
   for (const m of momentum || []){
     const pasma = etykietyPs.get(norm(m.klucz));
     if (!pasma) continue;
@@ -261,12 +261,18 @@ function audytIndeksu(bands, momentum){
     if (String(m.id) !== String(pasma[0].id)) { idRozne++; continue; }
     idZgodne++;
     const roznica = Math.abs(m.cena - pasma[0].price);
-    if (roznica > (m.krok || 0)) roznicaPonadKrok++;
+    if (roznica > (m.krok || 0)){
+      roznicaPonadKrok++;
+      if (szczegolyRoznic.length < 3){
+        szczegolyRoznic.push(`${m.klucz} ID ${m.id}: momentum ${m.cena}, pasmo ${pasma[0].price}, krok ${m.krok || 0}`);
+      }
+    }
   }
 
   const ps = platformy.ps, pc = platformy.pc;
   const bezIdMomentum = (momentum || []).filter(m => !m.id).length;
-  return `audyt indeksu: pasma PS ${ps.kart} kart/${ps.kolizje} kolizji/${ps.bezId} bez ID; PC ${pc.kart}/${pc.kolizje}/${pc.bezId}; momentum ${bezIdMomentum} bez ID; wspólne etykiety ${etykiety}, zgodne ID ${idZgodne}, różne ID ${idRozne}, niejednoznaczne ${niejednoznaczne}, różnice cen > krok ${roznicaPonadKrok}`;
+  return `audyt indeksu: pasma PS ${ps.kart} kart/${ps.kolizje} kolizji/${ps.bezId} bez ID; PC ${pc.kart}/${pc.kolizje}/${pc.bezId}; momentum ${bezIdMomentum} bez ID; wspólne etykiety ${etykiety}, zgodne ID ${idZgodne}, różne ID ${idRozne}, niejednoznaczne ${niejednoznaczne}, różnice cen > krok ${roznicaPonadKrok}`
+    + (szczegolyRoznic.length ? `; szczegóły: ${szczegolyRoznic.join(" | ")}` : "");
 }
 
 /* ---------- platforma na fut.gg ----------
