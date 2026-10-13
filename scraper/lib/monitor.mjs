@@ -22,6 +22,7 @@
    podnosić. Czy z tego są pieniądze, rozstrzygnie rejestr wyników, nie ten plik. */
 
 import { KOSZYK } from "./indeks.mjs";
+import { kluczKarty } from "./klucz-karty.mjs";
 import { listBelow, snapDown, net, stepFor } from "./grid.mjs";
 
 export const PROG = 0.05;            // ile pod poziomem dobowym, żeby w ogóle patrzeć
@@ -99,7 +100,7 @@ export function policzMonitor(bands, poziomyD, szereg, trwalosc, at, prog = PROG
   for (const r of KOSZYK){
     for (const c of (bands[r] || [])){
       if (!c || !Number.isFinite(c.price) || c.price <= 0) continue;
-      const klucz = `${c.name} ${r}`;
+      const klucz = kluczKarty(c.name, r);
       const w = pd[klucz];
       if (!w || !(w.p > 0) || (w.n || 0) < minOdczytow) continue;
 

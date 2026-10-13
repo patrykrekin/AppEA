@@ -38,6 +38,7 @@
 
 import { PROG_INW, MIN_KROKOW, ALFA_D, MIN_ODCZYTOW_D, MIN_TRWALOSC, MIN_TRWALOSC_SEK } from "./okazje.mjs";
 import { onGrid } from "./grid.mjs";
+import { kluczKarty } from "./klucz-karty.mjs";
 
 export const HORYZONT = 24 * 3600;   // doba na rozstrzygnięcie pozycji
 export const LUKA = 2 * 3600;        // tyle bez widoku ceny i zamykamy jako "urwane"
@@ -99,7 +100,7 @@ export function zrodloCen(bands, ruchy, at = null, swiezosc = SWIEZOSC){
   }
   for (const r of Object.keys(bands || {})){
     for (const c of (bands[r] || [])){
-      if (c && Number.isFinite(c.price) && c.price > 0) out[`${c.name} ${r}`] = { cena: c.price, skad: "pasmo" };
+      if (c && Number.isFinite(c.price) && c.price > 0) out[kluczKarty(c.name, r)] = { cena: c.price, skad: "pasmo" };
     }
   }
   return out;

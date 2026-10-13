@@ -18,6 +18,7 @@
    zgadywać przesunięcia i żeby zmiana czasu nie rozjechała kubełków. */
 
 import { KOSZYK } from "./indeks.mjs";
+import { kluczKarty } from "./klucz-karty.mjs";
 import { listBelow, snapDown, net, stepFor } from "./grid.mjs";
 
 export const PROG = 0.10;          // ile pod WŁASNYM poziomem karty liczy się za okazję
@@ -141,7 +142,7 @@ export function aktualizujTrwalosc(stare, bands, poziomyD, at, prog = PROG_INW){
   for (const r of KOSZYK){
     for (const c of (bands[r] || [])){
       if (!c || !Number.isFinite(c.price) || c.price <= 0) continue;
-      const k = `${c.name} ${r}`;
+      const k = kluczKarty(c.name, r);
       const w = p[k];
       if (!w || !(w.p > 0)) continue;
       widziane.add(k);
@@ -171,7 +172,7 @@ export function aktualizujPoziomyD(stareD, szybkie, bands, at, alfa = ALFA_D, ma
   for (const r of KOSZYK){
     for (const c of (bands[r] || [])){
       if (!c || !Number.isFinite(c.price) || c.price <= 0) continue;
-      const k = `${c.name} ${r}`;
+      const k = kluczKarty(c.name, r);
       const w = p[k];
       if (w && w.p > 0){
         out[k] = { p: Math.round(w.p * (1 - alfa) + c.price * alfa), n: (w.n || 0) + 1, t: at };
@@ -197,7 +198,7 @@ export function policzInwestycje(bands, poziomyD, trwalosc, at, prog = PROG_INW,
   for (const r of KOSZYK){
     for (const c of (bands[r] || [])){
       if (!c || !Number.isFinite(c.price) || c.price <= 0) continue;
-      const klucz = `${c.name} ${r}`;
+      const klucz = kluczKarty(c.name, r);
       const w = p[klucz];
       if (!w || !(w.p > 0) || (w.n || 0) < minOdczytow) continue;
       if (!podProgiem(c.price, w.p, prog)) continue;
@@ -274,7 +275,7 @@ export function aktualizujPoziomy(stare, bands, at, alfa = ALFA, maxWiek = KART_
   for (const r of KOSZYK){
     for (const c of (bands[r] || [])){
       if (!c || !Number.isFinite(c.price) || c.price <= 0) continue;
-      const k = `${c.name} ${r}`;
+      const k = kluczKarty(c.name, r);
       const w = p[k];
       out[k] = w && w.p > 0
         ? { p: Math.round(w.p * (1 - alfa) + c.price * alfa), n: (w.n || 0) + 1, t: at }
@@ -300,7 +301,7 @@ export function policzOkazje(bands, poziomy, prog = PROG, minOdczytow = MIN_ODCZ
     const tanie = [];
     for (const c of (bands[r] || [])){
       if (!c || !Number.isFinite(c.price) || c.price <= 0) continue;
-      const k = `${c.name} ${r}`;
+      const k = kluczKarty(c.name, r);
       const w = poz[k];
       if (!w || !(w.p > 0) || (w.n || 0) < minOdczytow) continue;   // za mało obserwacji
       if (!podProgiem(c.price, w.p, prog)) continue;

@@ -8,6 +8,7 @@
    moduł jest czystą funkcją i test może podać własne progi. */
 
 import { listBelow, onGrid, snapDown, net } from "./grid.mjs";
+import { kluczKarty } from "./klucz-karty.mjs";
 
 export const PASMA = [86, 87];   // domyślne tylko na wypadek wywołania bez argumentu
 export const RABAT = 0.15;
@@ -78,7 +79,7 @@ export function toSnipeRows(bands, poziomy, pasma = PASMA, rabat = RABAT, minOdc
       if (!onGrid(c.price)) continue;
       const market = c.price;
 
-      const w = poz[`${c.name} ${band}`];
+      const w = poz[kluczKarty(c.name, band)];
       const dojrzaly = !!(w && w.p > 0 && (w.n || 0) >= minOdczytow);
       /* Poziom zaciskamy do siatki, bo średnia wykładnicza daje 4005, a takiej
          ceny nie da się wpisać w grze. */
