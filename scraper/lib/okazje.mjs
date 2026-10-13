@@ -233,7 +233,7 @@ export function policzInwestycje(bands, poziomyD, trwalosc, at, prog = PROG_INW,
       if (!(kupnoDo > 0) || netto <= 0) continue;
 
       out.push({
-        klucz, nazwa: c.name, rating: r, pos: c.pos || null,
+        klucz, ...(c.id ? { id: String(c.id) } : {}), nazwa: c.name, rating: r, pos: c.pos || null,
         cena: c.price, poziom: w.p, odczytow: w.n,
         rabat: +((1 - c.price / w.p) * 100).toFixed(1),
         cel, kupnoDo, netto,

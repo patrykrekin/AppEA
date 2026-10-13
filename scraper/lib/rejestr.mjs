@@ -105,11 +105,17 @@ export function zrodloCen(bands, ruchy, at = null, swiezosc = SWIEZOSC){
     if (!c || !Number.isFinite(c.cena) || c.cena <= 0) continue;
     if (at !== null && !(Number.isFinite(c.ostatnio) && (at - c.ostatnio) <= swiezosc)) continue;
     if (c.id && idPasem.has(String(c.id))) continue;
-    out[k] = { cena: c.cena, skad: "momentum" };
+    const wpis = { cena: c.cena, skad: "momentum", ...(c.id ? { id: String(c.id) } : {}) };
+    out[k] = wpis;
+    if (c.id) out[`@id:${c.id}`] = wpis;
   }
   for (const r of Object.keys(bands || {})){
     for (const c of (bands[r] || [])){
-      if (c && Number.isFinite(c.price) && c.price > 0) out[kluczKarty(c.name, r)] = { cena: c.price, skad: "pasmo" };
+      if (c && Number.isFinite(c.price) && c.price > 0){
+        const wpis = { cena: c.price, skad: "pasmo", ...(c.id ? { id: String(c.id) } : {}) };
+        out[kluczKarty(c.name, r)] = wpis;
+        if (c.id) out[`@id:${c.id}`] = wpis;
+      }
     }
   }
   return out;
@@ -130,7 +136,7 @@ export function werdykt(r, at){
 
 function zamknij(r, at){
   return {
-    klucz: r.klucz, rating: r.rating ?? null, def: r.def,
+    klucz: r.klucz, ...(r.id ? { id: String(r.id) } : {}), rating: r.rating ?? null, def: r.def,
     wejscie: r.wejscie, sufit: r.sufit ?? null, cel: r.cel0, poziom: r.poziom0, rabat: r.rabat0,
     dno: Number.isFinite(r.min) ? r.min : null,
     doDna: r.minAt ? minuty(r.minAt - r.od) : null,
@@ -180,7 +186,7 @@ export function dopiszRejestr(stan, at, inwestycje, ceny, poziomyD, def = defini
   for (const w of (inwestycje || [])){
     if (!w || !w.klucz || otwarte[w.klucz]) continue;
     otwarte[w.klucz] = {
-      klucz: w.klucz, rating: w.rating ?? null, def,
+      klucz: w.klucz, ...(w.id ? { id: String(w.id) } : {}), rating: w.rating ?? null, def,
       wejscie: w.cena, poziom0: w.poziom, cel0: w.cel, rabat0: w.rabat,
       /* 30.09: sufit licytacji, czyli cena, po której NAPRAWDĘ się wchodzi.
          `wejscie` to cena rynkowa w chwili wykrycia — dobra do opisu sytuacji,
@@ -201,7 +207,9 @@ export function dopiszRejestr(stan, at, inwestycje, ceny, poziomyD, def = defini
         liczymy — zamknie się z własnym podpisem i trafi do "starszych". */
   for (const k of Object.keys(otwarte)){
     const r = otwarte[k];
-    const widok = c[k];
+    /* Nowe pozycje aktualizujemy po ID, bo różne warianty karty mogą dzielić
+       etykietę. Wiersze historyczne bez ID zachowują dotychczasowy klucz. */
+    const widok = r.id ? c[`@id:${r.id}`] : c[k];
     if (widok){
       r.cena = widok.cena;
       r.ostatnio = at;
