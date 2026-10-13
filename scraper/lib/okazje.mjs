@@ -145,6 +145,8 @@ export function aktualizujTrwalosc(stare, bands, poziomyD, at, prog = PROG_INW){
       const k = kluczKarty(c.name, r);
       const w = p[k];
       if (!w || !(w.p > 0)) continue;
+      /* Nie licz stażu na poziomie należącym do innego ID pod tą samą etykietą. */
+      if (w.id && c.id && String(w.id) !== String(c.id)) continue;
       widziane.add(k);
       const pod = podProgiem(c.price, w.p, prog);
       /* Zer NIE zapisujemy. Brak wpisu znaczy dokładnie to samo co licznik zero,
@@ -152,7 +154,13 @@ export function aktualizujTrwalosc(stare, bands, poziomyD, at, prog = PROG_INW){
          który strona i tak pobiera co minutę. */
       if (pod){
         const było = s[k];
-        out[k] = { n: ((było && było.n) || 0) + 1, od: (było && było.n && było.od) || at, t: at };
+        const taSamaKarta = !(było && było.id && c.id && String(było.id) !== String(c.id));
+        out[k] = {
+          n: ((taSamaKarta && było && było.n) || 0) + 1,
+          od: (taSamaKarta && było && było.n && było.od) || at,
+          t: at,
+          ...(c.id ? { id: String(c.id) } : {})
+        };
       }
     }
   }
@@ -174,11 +182,20 @@ export function aktualizujPoziomyD(stareD, szybkie, bands, at, alfa = ALFA_D, ma
       if (!c || !Number.isFinite(c.price) || c.price <= 0) continue;
       const k = kluczKarty(c.name, r);
       const w = p[k];
-      if (w && w.p > 0){
-        out[k] = { p: Math.round(w.p * (1 - alfa) + c.price * alfa), n: (w.n || 0) + 1, t: at };
+      const innyId = w && w.id && c.id && String(w.id) !== String(c.id);
+      if (w && w.p > 0 && !innyId){
+        out[k] = {
+          p: Math.round(w.p * (1 - alfa) + c.price * alfa), n: (w.n || 0) + 1, t: at,
+          ...(c.id ? { id: String(c.id) } : {})
+        };
       } else {
-        const zasiew = (s[k] && s[k].p > 0) ? s[k].p : c.price;
-        out[k] = { p: zasiew, n: (s[k] && s[k].n) || 1, t: at };
+        /* Po zmianie ID nie dziedzicz poziomu szybkiego, bo on też jest pod kluczem etykiety. */
+        const szybki = !innyId && s[k] && s[k].p > 0 ? s[k] : null;
+        const zasiew = szybki ? szybki.p : c.price;
+        out[k] = {
+          p: zasiew, n: (szybki && szybki.n) || 1, t: at,
+          ...(c.id ? { id: String(c.id) } : {})
+        };
       }
     }
   }
