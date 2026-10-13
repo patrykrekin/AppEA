@@ -11,6 +11,7 @@ import { dopiszRejestr, zrodloCen, skutecznoscInw } from "./lib/rejestr.mjs";
 import { toSnipeRows } from "./lib/snajperka.mjs";
 import { dopiszSzereg, policzMonitor } from "./lib/monitor.mjs";
 import { dopiszHistorie } from "./lib/historia.mjs";
+import { kluczKarty } from "./lib/klucz-karty.mjs";
 
 /* SBC co godzinę, nie dwa razy na dobę. 28.09: SBC z terminem 24 h potrafi
    wygasnąć i zostać zastąpiona nową, a cykl `slow` pokazywał nieistniejącą
@@ -216,6 +217,52 @@ function cardsForCalendar(bands){
   return cards;
 }
 
+/* Diagnostyka tożsamości źródeł. ID fut.gg zostaje tylko w pamięci przebiegu:
+   nie zmieniamy kluczy ani kształtu danych, dopóki nie zobaczymy kolizji.
+   Momentum nie niesie ID, więc łączymy je z pasmem tylko po identycznej
+   etykiecie: nazwa + rating + pozycja. */
+function audytIndeksu(bands, momentum){
+  const norm = s => String(s || "").normalize("NFKC").replace(/\s+/g, " ").trim().toLocaleLowerCase("pl-PL");
+  const platformy = {};
+  const etykietyPs = new Map();
+
+  for (const platform of ["ps", "pc"]){
+    const idyNaKlucz = new Map();
+    let kart = 0, bezId = 0;
+    for (const [rating, lista] of Object.entries(bands[platform] || {})){
+      for (const c of lista || []){
+        kart++;
+        if (!c.id) bezId++;
+        const key = kluczKarty(c.name, rating);
+        if (!idyNaKlucz.has(key)) idyNaKlucz.set(key, new Set());
+        if (c.id) idyNaKlucz.get(key).add(c.id);
+
+        if (platform === "ps"){
+          const etykieta = norm(`${c.name} ${rating}${c.pos ? ` ${c.pos}` : ""}`);
+          const wpisy = etykietyPs.get(etykieta) || [];
+          wpisy.push(c);
+          etykietyPs.set(etykieta, wpisy);
+        }
+      }
+    }
+    const kolizje = [...idyNaKlucz.values()].filter(ids => ids.size > 1).length;
+    platformy[platform] = { kart, bezId, kolizje };
+  }
+
+  let dopasowane = 0, niejednoznaczne = 0, roznicaPonadKrok = 0;
+  for (const m of momentum || []){
+    const pasma = etykietyPs.get(norm(m.klucz));
+    if (!pasma) continue;
+    dopasowane++;
+    if (pasma.length !== 1){ niejednoznaczne++; continue; }
+    const roznica = Math.abs(m.cena - pasma[0].price);
+    if (roznica > (m.krok || 0)) roznicaPonadKrok++;
+  }
+
+  const ps = platformy.ps, pc = platformy.pc;
+  return `audyt indeksu: pasma PS ${ps.kart} kart/${ps.kolizje} kolizji/${ps.bezId} bez ID; PC ${pc.kart}/${pc.kolizje}/${pc.bezId}; momentum↔pasma PS ${dopasowane} dopasowań, ${niejednoznaczne} niejednoznacznych, ${roznicaPonadKrok} różnic cen > krok`;
+}
+
 /* ---------- platforma na fut.gg ----------
    Wybór platformy siedzi w ciasteczku `futgg_platform` (konsola = "ps5", PC = "pc")
    i obowiązuje CAŁĄ sesję przeglądarki, nie tylko stronę, na której się kliknęło.
@@ -285,7 +332,8 @@ async function readBandsGG(page){
       if (!l[0] || !Number.isFinite(rating) || !Number.isFinite(price)) continue;
       (out[rating] = out[rating] || []).push({
         name: l[0], price, pos: l[2],
-        url: new URL(a.getAttribute("href"), location.origin).href
+        url: new URL(a.getAttribute("href"), location.origin).href,
+        id: (a.getAttribute("href").match(/\/players\/(\d+)/) || [])[1] || null
       });
     }
     return out;
@@ -426,6 +474,7 @@ try {
       }
       const wpisy = zWierszy(wiersze);
       diag.push(`wierszy=${wiersze.length} sparsowanych=${wpisy.length} spadków=${wpisy.filter(x => x.zmiana24 < 0).length}`);
+      diag.push(audytIndeksu(bands, wpisy));
       if (wpisy.length){
         obserwacja = dopiszRuchy(prev.obserwacja, at, wpisy);
         const wraca = odbicia(obserwacja, at).length;
