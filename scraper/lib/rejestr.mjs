@@ -137,6 +137,7 @@ export function werdykt(r, at){
 function zamknij(r, at){
   return {
     klucz: r.klucz, ...(r.id ? { id: String(r.id) } : {}), rating: r.rating ?? null, def: r.def,
+    zrodlaCen: { ...(r.zrodlaCen || {}) },
     wejscie: r.wejscie, sufit: r.sufit ?? null, cel: r.cel0, poziom: r.poziom0, rabat: r.rabat0,
     dno: Number.isFinite(r.min) ? r.min : null,
     doDna: r.minAt ? minuty(r.minAt - r.od) : null,
@@ -199,6 +200,7 @@ export function dopiszRejestr(stan, at, inwestycje, ceny, poziomyD, def = defini
       cena: w.cena, min: w.cena, minAt: at, max: w.cena,
       poziom: w.poziom, poziomMin: w.poziom,
       osiagnietyAt: null, skadCelu: null,
+      zrodlaCen: {},
       hist: [[at, w.cena, w.poziom]]
     };
   }
@@ -213,6 +215,8 @@ export function dopiszRejestr(stan, at, inwestycje, ceny, poziomyD, def = defini
     if (widok){
       r.cena = widok.cena;
       r.ostatnio = at;
+      const skad = widok.skad || "nieznane";
+      r.zrodlaCen = { ...(r.zrodlaCen || {}), [skad]: ((r.zrodlaCen || {})[skad] || 0) + 1 };
       if (!Number.isFinite(r.min) || widok.cena < r.min){ r.min = widok.cena; r.minAt = at; }
       if (!Number.isFinite(r.max) || widok.cena > r.max) r.max = widok.cena;
       /* Cel musi się UTRZYMAĆ. Jedno dotknięcie to w 71% przypadków mignięcie
