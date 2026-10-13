@@ -39,6 +39,16 @@
   .lead-zrodlo{margin:10px 0 0;font-size:11px;line-height:1.5;color:var(--soft)}
   .freshness{margin:-7px 0 17px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;color:var(--muted);font-size:12px}
   .freshness strong{color:var(--ink);font-weight:600}.freshness.stale{border-color:#71543a;color:var(--gold)}
+  .freshness-sources{display:flex;gap:8px 16px;flex-wrap:wrap;margin-top:7px}
+  .freshness-source{color:var(--soft);font:11px "IBM Plex Mono",monospace}
+  .freshness-source.stale{color:var(--gold)}
+  .freshness-source .freshness-state{color:var(--green)}
+  .freshness-source.stale .freshness-state{color:var(--gold)}
+  details.method{margin-top:10px;border-top:1px solid var(--line);padding-top:9px;color:var(--soft);font-size:12px}
+  details.method summary{cursor:pointer;color:var(--muted);font-weight:600}
+  details.method p{margin:8px 0 0;line-height:1.6}
+  .obs-filter{display:flex;align-items:center;gap:8px;margin:0 0 10px;color:var(--muted);font-size:12px;cursor:pointer}
+  .obs-filter input{accent-color:var(--blue)}
   .up{color:var(--green)}.down{color:var(--red)}.flat{color:var(--gold)}
   .lead{padding:21px 24px;background:linear-gradient(120deg,#1b2a31,#18212a);border:1px solid #30433f;border-radius:var(--r);margin-bottom:26px}
   .eyebrow{font:500 11px "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--green)}
@@ -209,7 +219,14 @@
     <p class="lead-zrodlo" id="dzis-zrodlo"></p>
   </section>
 
-  <div class="freshness" id="freshness" aria-live="polite"><strong id="updated">Wczytuję czas odświeżenia…</strong></div>
+  <div class="freshness" id="freshness" aria-live="polite">
+    <strong id="updated">Wczytuję czas odświeżenia…</strong>
+    <div class="freshness-sources" aria-label="Aktualność źródeł">
+      <span class="freshness-source" id="fresh-fast">Ceny: wczytuję…</span>
+      <span class="freshness-source" id="fresh-sbc">SBC: wczytuję…</span>
+      <span class="freshness-source" id="fresh-slow">Ruch rynku: wczytuję…</span>
+    </div>
+  </div>
   <section class="market" aria-live="polite">
     <span class="label" id="market-label">Rynek · konsola</span>
     <strong id="market-state">Wczytuję dane…</strong>
@@ -233,7 +250,7 @@
   <section class="moves" id="pasma-box">
     <div class="section-head"><h3>Co robić z pasmami</h3><span id="pasma-caption"></span></div>
     <div id="pasma-list"><div class="empty-moves">Zakresy policzą się przy najbliższym odczycie.</div></div>
-    <p class="budget-note" style="margin-top:10px"><strong>Komenda bierze się wyłącznie z terminu w kalendarzu</strong>, nie z ceny. Dwa mechanizmy, dwie strony rynku: <strong>wygasające SBC mówi, do kiedy sprzedać</strong> — popyt na fodder znika w chwili wygaśnięcia, nie po niej. <strong>Dzień nagród mówi, kiedy kupować</strong> — rano wchodzi podaż z nagród, więc wchodzisz po zalewie, nie przed. Strona nie wie, czy akurat kupujesz, czy trzymasz, więc podaje ten termin, który jest bliżej, a drugi dopisuje obok. Pozycja w zakresie 48 h jest opisem stanu, a nie sygnałem — nie twierdzimy, że tanie wróci, bo tego jeszcze nie zmierzyliśmy i to właśnie kupowanie dołka wywaliło nas z poprzedniej wersji tej strony.<br><strong>„Sprzedaj powyżej"</strong> to cena, od której wychodzisz na zero po 5% podatku: karta musi urosnąć o 5,26%, nie o 5%. Liczba jest zaokrąglona w górę do siatki FUT, więc da się ją wpisać w grze.<br><strong>Wymóg „85+" przypisujemy do pasma 85</strong>, nie do wszystkich wyższych: do SBC wstawia się najtańszą kartę, która spełnia próg, więc popyt rusza tym jednym pasmem.<br><strong>Znacznik „rozumowanie" znaczy dokładnie to, co pisze.</strong> Że popyt na fodder rośnie przed wygaśnięciem SBC i że dni nagród dają poranny dołek — to mechanizm, nie nasz pomiar. Zbieramy na to historię od 04.10 i wtedy albo podamy liczby, albo napiszemy, że to nieprawda.</p>
+    <details class="method"><summary>Jak czytać sygnały i ceny?</summary><p><strong>Komenda bierze się wyłącznie z terminu w kalendarzu</strong>, nie z ceny. Wygasające SBC wskazuje, do kiedy sprzedać, a dzień nagród — kiedy może wzrosnąć podaż. Pozycja w zakresie 48 h opisuje stan, nie jest sygnałem kupna.<br><strong>„Sprzedaj powyżej"</strong> to cena wyjścia na zero po 5% podatku: karta musi urosnąć o 5,26%. Cena jest zaokrąglona w górę do siatki FUT.<br><strong>Wymóg „85+" przypisujemy do pasma 85</strong>, bo SBC szuka najtańszej karty spełniającej próg.<br><strong>Znacznik „rozumowanie"</strong> oznacza mechanizm, którego wpływu jeszcze nie potwierdziliśmy własnym pomiarem.</p></details>
   </section>
 
   <section class="moves" id="moje-box">
@@ -250,13 +267,14 @@
   <section class="moves" id="sbc-box">
     <div class="section-head"><h3>Najbliższe SBC</h3><span id="sbc-caption"></span></div>
     <div id="sbc-list"><div class="empty-moves">Wczytuję terminy…</div></div>
-    <p class="budget-note" style="margin-top:10px">Kwota to koszt rozwiązania po dzisiejszych cenach, czytany z fut.gg. To sygnał <strong>wyjścia</strong>, nie wejścia: popyt na fodder rośnie do terminu i znika w chwili wygaśnięcia, więc kto trzyma karty w tym progu, sprzedaje przed datą, nie po niej. Procent obok kwoty to ruch kosztu od poprzedniego odczytu — rośnie, gdy fodder drożeje.<br><strong>Czego jeszcze nie wiemy:</strong> o ile i ile dni wcześniej fodder drożeje przed wygaśnięciem. Zbieramy na to własną historię cen od 04.10 — do tego czasu ta sekcja podaje terminy, a nie obiecany zysk.</p>
+    <details class="method"><summary>Jak interpretować koszty SBC?</summary><p>Kwota to koszt rozwiązania po dzisiejszych cenach, czytany z fut.gg. To sygnał <strong>wyjścia</strong>, nie wejścia: popyt na fodder może rosnąć do terminu i znika w chwili wygaśnięcia. Procent obok kwoty pokazuje zmianę kosztu od poprzedniego odczytu. Wpływ terminu na ceny nadal mierzymy — sekcja pokazuje terminy, nie obiecany zysk.</p></details>
   </section>
 
   <section class="moves" id="obs-box">
     <div class="section-head"><h3>Ruch na drogich kartach</h3><span id="obs-caption"></span></div>
+    <label class="obs-filter"><input id="obs-affordable" type="checkbox" checked aria-controls="obs-list"> Tylko karty w limicie 10% mojego budżetu</label>
     <div id="obs-list"><div class="empty-moves">Szereg rusza przy najbliższym odczycie.</div></div>
-    <p class="budget-note" style="margin-top:10px"><strong>To jest szereg momentum z fut.gg i on nie zawiera fodderu.</strong> Siedzą tam zwykłe wysokie karty, TOTW, karty eventowe i Bohaterowie — najtańsza pozycja kosztuje kilkanaście tysięcy, a mediana grubo ponad sto, więc przy regule 10% banku większość z nich jest poza twoim zasięgiem i dlatego są wygaszone. Traktuj to jak nastrój górnej półki: kiedy tu leci na czerwono, zwykle leci wszędzie.<br><strong>Ceny są zaokrąglone przez fut.gg</strong> — „680K” to 680 000 z krokiem 1000, a nie dokładny BIN. <strong>Wczoraj</strong> to cena sprzed doby odtworzona z dzisiejszej ceny i zmiany dobowej: rachunek, nie prognoza.<br><strong>Uczciwie o liczbach w wierszach:</strong> „kup do” i cena wyjścia są liczone pod powrót do wczorajszego poziomu, czyli na horyzont doby. To jest stara, krótka definicja i będzie przedefiniowana razem z resztą — pozycja ma mieć katalizator, horyzont 48–72 h i cel z wymiaru zmierzonego efektu, a nie z jednego kroku siatki. Do tego czasu czytaj je jako granicę opłacalności, nie jako zalecenie.</p>
+    <details class="method"><summary>Źródło i ograniczenia szeregu</summary><p><strong>To jest szereg momentum z fut.gg i nie zawiera fodderu.</strong> Pokazuje nastrój droższych kart; ceny są zaokrąglane, a „wczoraj" jest odtworzone z dzisiejszej ceny i zmiany dobowej. „Kupno do" i cena wyjścia odnoszą się do powrotu do wczorajszego poziomu, więc traktuj je jako granicę opłacalności, nie prognozę ani pełną rekomendację.</p></details>
   </section>
 
   <section class="moves">
@@ -285,6 +303,8 @@
   var savedBudget = parseInt(storage.get("fut.budget"), 10);
   var budgetInput = document.getElementById("budget");
   if (savedBudget > 0) budgetInput.value = savedBudget;
+  var affordableToggle = document.getElementById("obs-affordable");
+  affordableToggle.checked = storage.get("fut.obs.affordable") !== "0";
   var data = null;
   var loadError = false;
   /* Intl dla pl-PL nie grupuje czterocyfrowych liczb, więc limit wychodził raz
@@ -671,12 +691,19 @@
 
     var ileStac = wiersze.filter(function(x){ return x.stac; }).length;
     var wraca = wiersze.filter(function(x){ return x.trend !== null && x.trend > 0; }).length;
+    var widoczne = wiersze.filter(function(x){ return !affordableToggle.checked || x.stac; });
     cap.textContent = (o.at ? "Odczyt " + czasHM(o.at) + " · " : "")
       + klucze.length + " " + odm(klucze.length, "karta", "karty", "kart")
-      + (bank ? " · " + ileStac + " w twoim limicie" : "")
+      + (bank ? (affordableToggle.checked ? " · pokazuję " + widoczne.length + " w limicie" : " · " + ileStac + " w twoim limicie") : "")
       + (wraca ? " · " + wraca + " zawraca" : "");
 
     box.replaceChildren();
+    if (!widoczne.length){
+      setEmpty(box, bank
+        ? "Żadna z " + klucze.length + " obserwowanych kart nie mieści się w twoim limicie 10%. Odznacz filtr, aby zobaczyć cały rynek."
+        : "Wpisz budżet większy od zera albo odznacz filtr, aby zobaczyć cały rynek.", "empty-moves");
+      return;
+    }
     var head = document.createElement("div"); head.className = "obs-row head";
     var hNaz = document.createElement("span"); hNaz.className = "obs-nazwa"; hNaz.textContent = "Karta";
     var hLicz = document.createElement("span"); hLicz.className = "obs-liczby";
@@ -686,7 +713,7 @@
     head.append(hNaz, hLicz);
     box.appendChild(head);
 
-    wiersze.forEach(function(r){
+    widoczne.forEach(function(r){
       var w = r.w, plan = r.plan;
       var row = document.createElement("div");
       row.className = "obs-row" + (bank && !r.stac ? " poza" : "");
@@ -863,6 +890,10 @@
       storage.set("fut.budget", budgetInput.value); render();
     });
   });
+  affordableToggle.addEventListener("change", function(){
+    storage.set("fut.obs.affordable", affordableToggle.checked ? "1" : "0");
+    showObs();
+  });
 
   render();
 
@@ -898,14 +929,14 @@
     var target = document.getElementById("updated");
     var badge = document.getElementById("freshness");
     var priceAt = data && Number(data.atFast || data.at);
-    if (!priceAt) { target.textContent = "Brak czasu odświeżenia danych."; return; }
+    if (!priceAt) { target.textContent = "Brak czasu odświeżenia danych."; updateSourceFreshness(); return; }
     var stamp = new Date(priceAt * 1000);
     var minutes = Math.max(0, Math.floor((Date.now() - stamp.getTime()) / 60000));
     var time = stamp.toLocaleString("pl-PL", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" });
     var age = minutes < 1 ? "przed chwilą"
       : minutes < 60 ? minutes + " min temu"
       : Math.floor(minutes / 60) + " godz. temu";
-    target.textContent = "Dane cenowe: " + time + " · " + age;
+    target.textContent = "Główny odczyt: " + time + " · " + age;
     badge.classList.toggle("stale", minutes >= 90);
     if (minutes >= 90) target.textContent += " · odczyt może być nieaktualny";
 
@@ -925,6 +956,31 @@
           + (a.szczegoly.length > 2 ? " · i " + (a.szczegoly.length - 2) + " więcej" : "") + ")";
       }
     }
+    updateSourceFreshness();
+  }
+
+  /* Każdy strumień ma osobny zegar i próg opóźnienia zgodny z rytmem scrapera. */
+  function updateSourceFreshness(){
+    var now = Date.now() / 1000;
+    var sources = [
+      { id:"fresh-fast", name:"Ceny i historia", at:data && (data.atFast || data.at), max:90 * 60 },
+      { id:"fresh-sbc", name:"Kalendarz SBC", at:data && data.sbc && data.sbc.at, max:3 * 3600 },
+      { id:"fresh-slow", name:"Ruch rynku", at:data && data.atSlow, max:18 * 3600 }
+    ];
+    sources.forEach(function(source){
+      var el = document.getElementById(source.id);
+      var ts = Number(source.at);
+      if (!ts){ el.classList.add("stale"); el.textContent = source.name + ": brak odczytu"; return; }
+      var seconds = Math.max(0, now - ts), minutes = Math.floor(seconds / 60);
+      var age = minutes < 1 ? "przed chwilą"
+        : minutes < 60 ? minutes + " min temu"
+        : minutes < 2880 ? Math.floor(minutes / 60) + " godz. temu"
+        : Math.floor(minutes / 1440) + " dni temu";
+      var time = new Date(ts * 1000).toLocaleString("pl-PL", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" });
+      var stale = seconds > source.max;
+      el.classList.toggle("stale", stale);
+      el.textContent = source.name + ": " + time + " · " + age + (stale ? " · opóźnione" : " · aktualne");
+    });
   }
 
   /* Ruchy cen chodzą w osobnym, rzadszym cyklu niż ceny u góry strony.
