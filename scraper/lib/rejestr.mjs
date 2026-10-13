@@ -92,10 +92,19 @@ export const SWIEZOSC = 600;         // starszej ceny z momentum nie uznajemy
  *  trafienia z cudzego rynku. */
 export function zrodloCen(bands, ruchy, at = null, swiezosc = SWIEZOSC){
   const out = {};
+  /* Gdy ID karty występuje w obu źródłach, dokładny wpis z pasma ma pierwszeństwo.
+     Nie łączymy po nazwie/ratingu/pozycji: warianty karty mogą dzielić etykietę. */
+  const idPasem = new Set();
+  for (const r of Object.keys(bands || {})){
+    for (const c of (bands[r] || [])){
+      if (c && c.id) idPasem.add(String(c.id));
+    }
+  }
   for (const k of Object.keys((ruchy && ruchy.karty) || {})){
     const c = ruchy.karty[k];
     if (!c || !Number.isFinite(c.cena) || c.cena <= 0) continue;
     if (at !== null && !(Number.isFinite(c.ostatnio) && (at - c.ostatnio) <= swiezosc)) continue;
+    if (c.id && idPasem.has(String(c.id))) continue;
     out[k] = { cena: c.cena, skad: "momentum" };
   }
   for (const r of Object.keys(bands || {})){

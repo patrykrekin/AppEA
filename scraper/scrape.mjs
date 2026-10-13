@@ -150,7 +150,9 @@ function zbierzMovers(page){
       const price = lines[2] || "";
       const pct   = lines.find(l => /%$/.test(l)) || "";
       const delta = lines[lines.length - 1] || "";
-      return [`${name} ${rating} ${pos}`.trim(), price, pct, delta];
+      const href = r.getAttribute("href") || "";
+      const id = (href.match(/\/players\/(\d+)/) || [])[1] || "";
+      return [`${name} ${rating} ${pos}`.trim(), price, pct, delta, id];
     }).filter(r => r[0] && r[1]);
   }, { row: SEL.movers.row, img: SEL.movers.img });
 }
@@ -249,18 +251,22 @@ function audytIndeksu(bands, momentum){
     platformy[platform] = { kart, bezId, kolizje };
   }
 
-  let dopasowane = 0, niejednoznaczne = 0, roznicaPonadKrok = 0;
+  let etykiety = 0, idZgodne = 0, idRozne = 0, niejednoznaczne = 0, roznicaPonadKrok = 0;
   for (const m of momentum || []){
     const pasma = etykietyPs.get(norm(m.klucz));
     if (!pasma) continue;
-    dopasowane++;
+    etykiety++;
     if (pasma.length !== 1){ niejednoznaczne++; continue; }
+    if (!m.id || !pasma[0].id) continue;
+    if (String(m.id) !== String(pasma[0].id)) { idRozne++; continue; }
+    idZgodne++;
     const roznica = Math.abs(m.cena - pasma[0].price);
     if (roznica > (m.krok || 0)) roznicaPonadKrok++;
   }
 
   const ps = platformy.ps, pc = platformy.pc;
-  return `audyt indeksu: pasma PS ${ps.kart} kart/${ps.kolizje} kolizji/${ps.bezId} bez ID; PC ${pc.kart}/${pc.kolizje}/${pc.bezId}; momentum↔pasma PS ${dopasowane} dopasowań, ${niejednoznaczne} niejednoznacznych, ${roznicaPonadKrok} różnic cen > krok`;
+  const bezIdMomentum = (momentum || []).filter(m => !m.id).length;
+  return `audyt indeksu: pasma PS ${ps.kart} kart/${ps.kolizje} kolizji/${ps.bezId} bez ID; PC ${pc.kart}/${pc.kolizje}/${pc.bezId}; momentum ${bezIdMomentum} bez ID; wspólne etykiety ${etykiety}, zgodne ID ${idZgodne}, różne ID ${idRozne}, niejednoznaczne ${niejednoznaczne}, różnice cen > krok ${roznicaPonadKrok}`;
 }
 
 /* ---------- platforma na fut.gg ----------

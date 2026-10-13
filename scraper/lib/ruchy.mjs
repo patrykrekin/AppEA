@@ -48,7 +48,7 @@ export function procentZTekstu(tekst){
   return Number.isFinite(n) ? n : null;
 }
 
-/** Wiersze z momentum → wpisy do szeregu. wiersz: [nazwa, cena, procent, delta]. */
+/** Wiersze z momentum → wpisy do szeregu. wiersz: [nazwa, cena, procent, delta, ID]. */
 export function zWierszy(wiersze){
   const out = [];
   for (const w of (wiersze || [])){
@@ -56,7 +56,8 @@ export function zWierszy(wiersze){
     const c = cenaZTekstu(w[1]);
     const p = procentZTekstu(w[2]);
     if (!c || p === null) continue;
-    out.push({ klucz: String(w[0]).trim(), cena: c.cena, krok: c.krok, zmiana24: p });
+    out.push({ klucz: String(w[0]).trim(), cena: c.cena, krok: c.krok, zmiana24: p,
+      ...(w[4] ? { id: String(w[4]) } : {}) });
   }
   return out;
 }
@@ -146,6 +147,7 @@ function zapisz(stary, w, at, histLimit){
 
   return {
     klucz: w.klucz,
+    ...(w.id || (stary && stary.id) ? { id: String(w.id || stary.id) } : {}),
     cena: w.cena,
     krok: w.krok,
     zmiana24: w.zmiana24,
