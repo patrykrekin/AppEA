@@ -15,25 +15,28 @@ on:
 permissions:
   contents: write
 
-# 28.09.2026: jeden wspólny tor zakleszczył wszystko. Cykl top potrafi chodzić
-# kilkanaście minut (50 kart × czekanie na dorenderowanie), a cron puka co 5 minut —
-# każde kolejne pukanie lądowało w kolejce za nim i było anulowane. Skutek: ceny
-# stanęły na dwie godziny, choć i cron, i Actions raportowały "normalnie".
-# Osobny tor per cykl: długi top mieli sobie z boku, a fast leci dalej.
+# Jeden strumień ZAPISU dla fast/slow/auto. Nie zabijaj uruchomionego scrape'a.
+# GitHub trzyma co najwyżej jeden oczekujący workflow w grupie — starsze oczekujące
+# są zastępowane najnowszym, a zapis nie jest wykonywany równolegle.
 concurrency:
-  group: refresh-${{ github.event.inputs.cycle || 'auto' }}
-  cancel-in-progress: false      # dwa przebiegi tego samego cyklu nie mogą pisać naraz
+  group: appea-refresh-market-data
+  cancel-in-progress: false
 
 jobs:
   refresh:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+
+      # Pobierz stan najnowszej gałęzi PRZED wyborem cyklu auto.
+      # W kolejce GitHub job może mieć starszy SHA niż obecny main.
+      - name: Dociągnij świeży main
+        run: git pull --rebase --autostash origin main
 
       - name: Który cykl
         id: c
@@ -54,42 +57,26 @@ jobs:
         working-directory: scraper
         run: npm install --no-audit --no-fund
 
-      # Chromium waży ~150 MB. Cache oszczędza minuty i ruch przy każdym przebiegu.
-      - uses: actions/cache@v4
-        id: pw
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-chromium-${{ runner.os }}
-
-      # 30.09.2026: sześć przebiegów na 150 padło na wysyłce mimo udanego scrape'a.
-      # To NIE był wyścig dwóch przebiegów — concurrency działa poprawnie, sprawdzone
-      # na czasach faktycznego wykonania: ani jednej nakładki. Przyczyna jest inna:
-      # zakolejkowany przebieg dostaje commit z chwili WYZWOLENIA, nie z chwili startu.
-      # Gdy poprzedni przebieg zwolnił (30.09 rekord: 679 s zamiast typowych 70),
-      # następny odczekiwał swoje w kolejce, startował ze starym SHA, robił checkout
-      # nieaktualnego drzewa i przy wysyłce dostawał non-fast-forward.
-      # Dowód: przebiegi #878 i #880 miały ten sam head_sha 25dd3ac, a #880 padł.
-      # Dociągamy świeży main PRZED pracą — wtedy wysyłka jest zawsze fast-forward
-      # i nie ma czego rebase'ować. --autostash, bo drzewo ma tu być czyste, ale
-      # nie chcemy paść, gdyby jednak coś w nim siedziało.
-      - name: Dociągnij świeży main
-        run: git pull --rebase --autostash origin main
-            # 04.10.2026: dwa razy w tygodniu przy wklejaniu bloku znikała deklaracja
-      # stałej. Moduł wywalał się ReferenceError-em przy imporcie, czyli ZANIM
-      # scrape.mjs wszedł w swój try — więc nie zapisywała się nawet `awaria`
-      # i ceny stawały bez śladu. Walidator tego nie łapie, bo sprawdza gotowy
-      # plik, a plik w ogóle nie powstawał.
-      # Idzie PRZED Chromium: nie ma sensu ściągać 150 MB przeglądarki i mielić
-      # dwóch rynków, żeby paść na literówce w deklaracji.
       - name: Dymny test modułów
         working-directory: scraper
         run: |
           node smoke.mjs
           node trefresh.mjs
           node tstabilnosc.mjs
-      - name: Chromium
-        working-directory: scraper
-        run: npx playwright install --with-deps chromium
+      # Izolowany test 05.11.2026 potwierdził pełny scrape fast na tym Chrome:
+      # 7 pasm PS i PC, 12 snajpów/rynek, walidacja OK, 26 s właściwego odczytu.
+      # NIE instalujemy przeglądarki ani zależności apt przy każdym przebiegu.
+      - name: Systemowy Chrome
+        shell: bash
+        run: |
+          set -euo pipefail
+          CHROME="$(command -v google-chrome || true)"
+          if [ -z "$CHROME" ]; then
+            echo "::error::Brak systemowego Google Chrome — odmawiam pracy na niezweryfikowanej przeglądarce."
+            exit 1
+          fi
+          "$CHROME" --version
+          echo "FUT_CHROMIUM=$CHROME" >> "$GITHUB_ENV"
 
       - name: Pobierz ceny
         working-directory: scraper
