@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, renameSync, existsSync, openSync, closeSync, unlinkSync } from "node:fs";
+import { readFileSync, writeFileSync, renameSync, existsSync, openSync, closeSync, unlinkSync, statSync } from "node:fs";
 
 /* Dwa crony piszą do jednego pliku, więc każdy zapis idzie przez lock i jest atomowy.
    Bez tego szybki cykl potrafi nadpisać to, co wolny właśnie zapisał. */
@@ -11,7 +11,9 @@ function lock(path){
     try { closeSync(openSync(lf, "wx")); return lf; }
     catch {
       try {
-        const age = Date.now() - Number(readFileSync(lf, "utf8") || 0);
+        /* Pusty lock jest poprawny: poprzednio "" → 0 i drugi proces
+           usuwał nowo utworzoną blokadę natychmiast. */
+        const age = Date.now() - statSync(lf).mtimeMs;
         if (age > LOCK_STALE_MS) unlinkSync(lf);
       } catch {}
       Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 100);
