@@ -475,7 +475,7 @@
   var SIATKA = [[1000,50],[10000,100],[50000,250],[100000,500],[Infinity,1000]];
   function krokSiatki(c){ for (var i=0;i<SIATKA.length;i++) if (c <= SIATKA[i][0]) return SIATKA[i][1]; return 1000; }
   function wDol(c){ var k = krokSiatki(c); return Math.floor(c / k) * k; }
-  function wystawPod(bin){ return wDol(bin) - krokSiatki(bin); }
+  function wystawPod(bin){ return wDol(wDol(bin) - 1); }
   function ratingZNazwy(n){ var m = String(n||"").match(/\b(\d{2})\b/); return m ? +m[1] : null; }
 
   function pozycje(){
@@ -499,7 +499,9 @@
        paśmie — a to przy Isaku 88 byłaby liczba nie mająca z nim nic wspólnego. */
     var obs = (platforma === "ps") && data && data.obserwacja && data.obserwacja.karty
       && data.obserwacja.karty[nazwa];
-    if (obs && obs.cena > 0) return { cena: obs.cena, zrodlo: "nasz szereg" };
+    if (obs && obs.cena > 0 && obs.ostatnio && data && Number(data.atFast || data.at) >= obs.ostatnio
+      && Number(data.atFast || data.at) - obs.ostatnio <= 600)
+      return { cena: obs.cena, zrodlo: "szacunkowa cena Fut.gg" };
     var rows = (data && data.snipe && data.snipe[platforma] && data.snipe[platforma].rows) || [];
     for (var i=0;i<rows.length;i++) if (rows[i][0] === nazwa && Number(rows[i][1]) > 0)
       return { cena: Number(rows[i][1]), zrodlo: "BIN karty" };
@@ -559,7 +561,7 @@
          Gdy rynek go dobije — mówimy wprost, że to moment na wystawienie. */
       var obsK = (p.platforma === "ps") && data && data.obserwacja && data.obserwacja.karty
         && data.obserwacja.karty[p.nazwa];
-      var planK = obsK ? obsPlan(obsK) : null;
+      var planK = obsK && kurs ? obsPlan(obsK) : null;
       if (planK){
         var celS = document.createElement("small");
         if (kurs && kurs.cena >= planK.cel){ celS.className = "ok"; celS.textContent = "cel osiągnięty"; }
@@ -572,7 +574,7 @@
         var cel = wystawPod(kurs.cena);
         var netto = Math.floor(cel * 0.95 - p.cena);
         w.classList.add(netto > 0 ? "zysk" : "strata");
-        w.textContent = (netto > 0 ? "+" : "") + coins(netto);
+        w.textContent = (netto > 0 ? "+" : "") + coins(netto) + " szac.";
         w.title = "Wystaw po " + coins(cel) + ", zostaje " + coins(netto) + " po podatku";
       } else { w.textContent = "—"; }
 
@@ -664,8 +666,19 @@
     var box = document.getElementById("obs-list");
     var cap = document.getElementById("obs-caption");
     var o = data && data.obserwacja;
-    var karty = (o && o.karty && typeof o.karty === "object") ? o.karty : null;
-    var klucze = karty ? Object.keys(karty) : [];
+    if (platform !== "ps"){
+      cap.textContent = "PC · brak osobnych danych obserwacyjnych";
+      setEmpty(box, "Ten szereg pochodzi z konsoli. Nie przenosimy cen ani celów na PC.", "empty-moves");
+      return;
+    }
+    var karty = (o && o.platforma === "console" && o.karty && typeof o.karty === "object") ? o.karty : null;
+    var wszystkieKlucze = karty ? Object.keys(karty) : [];
+    var terazCen = data && Number(data.atFast || data.at);
+    var klucze = wszystkieKlucze.filter(function(k){
+      var w = karty[k];
+      return !!(w && w.cena > 0 && Number.isFinite(w.ostatnio) && Number.isFinite(terazCen)
+        && terazCen >= w.ostatnio && terazCen - w.ostatnio <= 600);
+    });
     if (!klucze.length){
       cap.textContent = "";
       setEmpty(box, loadError ? "Nie udało się pobrać danych." : "Szereg rusza przy najbliższym odczycie.", "empty-moves");
@@ -697,7 +710,7 @@
     var wraca = wiersze.filter(function(x){ return x.trend !== null && x.trend > 0; }).length;
     var widoczne = wiersze.filter(function(x){ return !affordableToggle.checked || x.stac; });
     cap.textContent = (o.at ? "Odczyt " + czasHM(o.at) + " · " : "")
-      + klucze.length + " " + odm(klucze.length, "karta", "karty", "kart")
+      + klucze.length + " świeżych z " + wszystkieKlucze.length + " " + odm(wszystkieKlucze.length, "karta", "karty", "kart")
       + (bank ? (affordableToggle.checked ? " · pokazuję " + widoczne.length + " w limicie" : " · " + ileStac + " w twoim limicie") : "")
       + (wraca ? " · " + wraca + " zawraca" : "");
 
@@ -798,7 +811,7 @@
         sprz.append(document.createTextNode(coins(plan.cel)));
         var zysk = document.createElement("small");
         zysk.className = "ok";
-        zysk.textContent = "+" + coins(plan.netto) + " netto";
+        zysk.textContent = "+" + coins(plan.netto) + " netto warunkowo";
         sprz.appendChild(zysk);
         sprz.title = "Po dzisiejszej cenie wyjście na zero to " + coins(plan.naZero) + ".";
       }
@@ -819,10 +832,15 @@
   var OBS_OKNO_TRENDU = 1800;
   function obsTrend(w, at){
     var h = (w && Array.isArray(w.hist)) ? w.hist : [];
-    if (h.length < 2) return { trend: null, powod: "za mało pomiarów" };
-    var baza = null;
-    for (var i = 0; i < h.length; i++){ if ((at - h[i][0]) <= OBS_OKNO_TRENDU){ baza = h[i]; break; } }
-    if (!baza) baza = h[0];
+    if (h.length < 2 || !w.ostatnio || at < w.ostatnio || at - w.ostatnio > 600)
+      return { trend:null, powod:"nieaktualne notowanie" };
+    var baza = null, najmniejszyBlad = Infinity;
+    for (var i = 0; i < h.length; i++){
+      var blad = Math.abs((w.ostatnio - h[i][0]) - OBS_OKNO_TRENDU);
+      if (blad <= 600 && blad < najmniejszyBlad){ baza = h[i]; najmniejszyBlad = blad; }
+    }
+    if (!baza || Math.abs(h[h.length-1][0] - w.ostatnio) > 600)
+      return { trend:null, powod:"brak odniesienia do 30 min" };
     var od = baza[1], doC = h[h.length - 1][1];
     if (!(od > 0)) return { trend: null, powod: "brak ceny odniesienia" };
     if (Math.abs(doC - od) < (w.krok || 1)) return { trend: 0, powod: "" };
@@ -971,7 +989,7 @@
       : minutes < 60 ? minutes + " min temu"
       : Math.floor(minutes / 60) + " godz. temu";
     target.textContent = "Główny odczyt: " + time + " · " + age;
-    badge.classList.toggle("stale", minutes >= 90);
+    badge.classList.toggle("stale", minutes >= 10);
     if (minutes >= 90) target.textContent += " · odczyt może być nieaktualny";
 
     /* Od 30.09 scraper zapisuje powód nieudanego przebiegu wprost do data.json.
@@ -1006,7 +1024,7 @@
   function updateSourceFreshness(){
     var now = Date.now() / 1000;
     var sources = [
-      { id:"fresh-fast", name:"Ceny i historia", at:data && (data.atFast || data.at), max:90 * 60 },
+      { id:"fresh-fast", name:"Ceny i historia", at:data && (data.atFast || data.at), max:10 * 60 },
       { id:"fresh-sbc", name:"Kalendarz SBC", at:data && data.sbc && data.sbc.at, max:3 * 3600 },
       { id:"fresh-slow", name:"Ruch rynku", at:data && data.atSlow, max:18 * 3600 }
     ];
@@ -1155,11 +1173,11 @@
         : pierwszy.ile === 1 ? "Sprzedaj fodder " + pierwszy.r + " do jutra"
         : "Sprzedaj fodder " + pierwszy.r + " w ciągu " + pierwszy.ile + " dni";
     } else if (nagrody && nagrody.ile === 0){
-      title.textContent = "Kupuj dziś rano, póki trwa zalew z nagród";
+      title.textContent = "Obserwuj reakcję cen na nagrody";
     } else if (nagrody){
-      title.textContent = nagrody.ile === 1 ? "Nic nie kupuj — czekaj do jutra rana" : "Nic nie kupuj — czekaj " + nagrody.ile + " dni";
+      title.textContent = "Obserwuj ceny przed terminem nagród";
     } else {
-      title.textContent = "Dziś nic nie wymaga ruchu";
+      title.textContent = "Brak potwierdzonego sygnału transakcyjnego";
     }
 
     /* Osobne linie, nie jeden akapit. Cztery zdania pod rząd czyta się jak
@@ -1173,11 +1191,10 @@
     }
 
     if (nagrody){
-      zdania.push(nagrody.ile === 0
-        ? "kupuj|Kupuj: dziś rano, po tym jak weszły nagrody — wtedy podaż jest największa, a cena najniższa."
-        : "kupuj|Kupuj: dopiero " + (nagrody.ile === 1 ? "jutro" : "za " + nagrody.ile + " dni") + " rano, gdy wejdą nagrody i zaleją rynek podażą.");
+      zdania.push("tlo|Nagrody: " + (nagrody.ile === 0 ? "dziś" : nagrody.ile === 1 ? "jutro" : "za " + nagrody.ile + " dni")
+        + ". Termin sam nie dowodzi przeceny — konieczna jest obserwacja cen.");
     } else if (!sprzedaz.length){
-      zdania.push("|Nie ma dziś ani terminu sprzedaży, ani dnia nagród. Trzymaj, co masz, i nie dokładaj na siłę.");
+      zdania.push("|Brak potwierdzonego katalizatora — bez wyznaczania transakcji na podstawie samej daty.");
     }
 
     /* Stan rynku tylko jako powód decyzji, nie jako raport. */
@@ -1313,9 +1330,9 @@
       pewnosc: "rozumowanie"
     };
     if (nagrody) return {
-      klasa: "czekaj",
-      komenda: doKiedyKupic(nagrody.ile),
-      powod: nagrody.tytul + " · brak terminu sprzedaży",
+      klasa: "",
+      komenda: "Obserwuj ceny po nagrodach",
+      powod: nagrody.tytul + " · reakcja cen niepotwierdzona",
       pewnosc: "rozumowanie"
     };
     return {
@@ -1487,7 +1504,7 @@
       setEmpty(calendar, loadError ? "Nie udało się pobrać danych." : "Kalendarz policzy się przy najbliższym odczycie.", "plan-empty");
       return;
     }
-    var IKONA = { sprzedaj: "Sprzedaj", podaz: "Podaż", pomiar: "Pomiar" };
+    var IKONA = { sprzedaj: "Sprzedaj", termin: "Termin", podaz: "Podaż", pomiar: "Pomiar" };
     dni.forEach(function(d){
       d.wpisy.forEach(function(w){
         var row = document.createElement("div"); row.className = "calendar-row";
