@@ -724,7 +724,7 @@
     var head = document.createElement("div"); head.className = "obs-row head";
     var hNaz = document.createElement("span"); hNaz.className = "obs-nazwa"; hNaz.textContent = "Karta";
     var hLicz = document.createElement("span"); hLicz.className = "obs-liczby";
-    ["Teraz", "Kupno do", "Sprzedaj po"].forEach(function(t){
+    ["Cena ≈", "Limit przy odbiciu", "Cel warunkowy"].forEach(function(t){
       var x = document.createElement("span"); x.className = "obs-val"; x.textContent = t; hLicz.appendChild(x);
     });
     head.append(hNaz, hLicz);
@@ -753,7 +753,7 @@
       var meta = document.createElement("small");
       var czesci = [];
       if (typeof w.zmiana24 === "number") czesci.push("doba " + procTekst(w.zmiana24));
-      if (r.trend === null) czesci.push("30 min: za mało pomiarów");
+      if (r.trend === null) czesci.push("30 min: brak wiarygodnego odniesienia");
       else if (r.trend === 0) czesci.push("30 min bez ruchu");
       else czesci.push("30 min " + procTekst(r.trend));
       if (r.bezDna !== null) czesci.push(r.noweDno ? "dno przed chwilą" : "bez nowego dna " + obsGodziny(r.bezDna));
@@ -762,7 +762,7 @@
       n.appendChild(meta);
 
       var c = document.createElement("span"); c.className = "obs-val";
-      c.append(document.createTextNode(w.cena > 0 ? coins(w.cena) : "—"));
+      c.append(document.createTextNode(w.cena > 0 ? "≈ " + coins(w.cena) : "—"));
       if (plan){
         var wcz = document.createElement("small");
         wcz.textContent = "wczoraj " + coins(plan.wczoraj);
@@ -1162,7 +1162,9 @@
     var terminy = terminyKalendarza();
     var sprzedaz = pasmaZeSprzedaza(terminy, pasma);
     var nagrody = najblizszeNagrody(terminy);
-    var rozklad = rozkladPasm(okno, pasma);
+    var pokrycie = okno.length > 1 ? ostatni.at - okno[0].at : 0;
+    var rozklad = pokrycie >= 24 * 3600 ? rozkladPasm(okno, pasma)
+      : { gora:0,dol:0,razem:0 };
 
     /* NAGŁÓWEK: jedna komenda, ta najpilniejsza. Termin sprzedaży bije okno zakupu,
        bo ma twardą datę — po wygaśnięciu SBC nie da się już nic naprawić, a dzień
@@ -1226,8 +1228,7 @@
     if (zrodlo){
       var dni = Math.max(0, Math.floor((Date.now() - ZBIERAMY_OD) / 86400000));
       zrodlo.textContent = "Terminy pochodzą z kalendarza SBC. Że popyt na fodder rośnie przed wygaśnięciem,"
-        + " a dni nagród dają poranny dołek — to mechanizm, nie nasz pomiar; zbieramy na to własne ceny od 04.10 ("
-        + dni + " " + plDni(dni) + " z " + POTRZEBA_DNI + ").";
+        + " a dni nagród dają poranny dołek — to hipotezy, nie potwierdzony pomiar. Nie wyznaczamy transakcji z samej daty.";
     }
   }
 
