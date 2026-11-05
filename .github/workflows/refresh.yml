@@ -86,6 +86,7 @@ jobs:
         run: |
           node smoke.mjs
           node trefresh.mjs
+          node tstabilnosc.mjs
       - name: Chromium
         working-directory: scraper
         run: npx playwright install --with-deps chromium
