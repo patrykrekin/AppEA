@@ -87,25 +87,24 @@ export function policz(hist){
   const teraz = hist[hist.length - 1];
   const start = hist[0];
 
-  // punkt odniesienia dla doby: najbliższy pomiar sprzed >= 24 h, inaczej najstarszy jaki mamy
-  const doba = [...hist].reverse().find(h => teraz.at - h.at >= DOBA) || start;
+  /* Dobę mierzymy WYŁĄCZNIE do rzeczywistego punktu sprzed 24 h (±3 h).
+     Nie podstawiamy kotwicy sprzed tygodni — taka liczba nie jest zmianą dobową. */
+  const TOLERANCJA_DOBY = 3 * 3600;
+  const kandydaci = hist.filter(h => h && h.floors && h.at < teraz.at
+    && Math.abs(teraz.at - h.at - DOBA) <= TOLERANCJA_DOBY);
+  const doba = kandydaci.sort((a,b) =>
+    Math.abs(teraz.at - a.at - DOBA) - Math.abs(teraz.at - b.at - DOBA))[0] || null;
 
   const odStartu = zmiana(start.floors, teraz.floors);
-  const odDoby   = zmiana(doba.floors,  teraz.floors);
-  const sz       = szerokosc(doba.floors, teraz.floors);
-
-  /* Odniesienie uznajemy za dobowe tylko w rozsądnym paśmie. Samo „>= 24 h"
-     przepuszczało kotwicę sprzed tygodnia i strona nazywała to zmianą dobową. */
-  const wiek = teraz.at - doba.at;
-  const godzin = Math.max(1, Math.round(wiek / 3600));
-  const prawdziwaDoba = wiek >= DOBA && wiek < 36 * 3600;
+  const odDoby   = doba ? zmiana(doba.floors, teraz.floors) : null;
+  const sz       = doba ? szerokosc(doba.floors, teraz.floors)
+    : { gora: 0, dol: 0, plask: 0, razem: 0 };
 
   return {
     wartosc: odStartu === null ? null : +(100 * (1 + odStartu)).toFixed(2),
-    zmiana:  odDoby   === null ? null : +(odDoby * 100).toFixed(2),
-    okno:    prawdziwaDoba ? "24 h" : (godzin < 48 ? godzin + " h" : Math.round(godzin / 24) + " dni"),
-    /* Żeby dało się potem sprawdzić, skąd ta liczba naprawdę jest. */
-    odniesienie: prawdziwaDoba ? "doba" : "poczatek",
+    zmiana:  odDoby === null ? null : +(odDoby * 100).toFixed(2),
+    okno:    doba ? "24 h" : "brak odniesienia dobowego",
+    odniesienie: doba ? "doba" : "brak-doby",
     szerokosc: sz,
     pomiarow: hist.length,
     odKiedy: start.at,
