@@ -19,13 +19,13 @@ export const DNI = 13;
    To jest CUDZE źródło, nie nasz pomiar — dlatego każdy taki wpis jest tak
    podpisany, a docelowo sprawdzimy na własnym szeregu, czy dno pasm faktycznie
    dołuje w te poranki. Jak nie dołuje, te reguły wylatują. */
+/* Regularne godziny nagród są hipotezą do porównania z pomiarami, nie sygnałem kupna.
+   Nie przypisujemy Champions jednej stałej piątkowej godziny. */
 export const RYTM = [
-  { dzien: 4, godzina: "08:00", tytul: "Nagrody Rivals",
-    tresc: "Nagrody wpadają rano — ludzie otwierają paczki i wrzucają zawartość na rynek. Podaż rośnie, dno pasm zwykle jest wtedy najniższe w tygodniu. To dzień na kupno, nie na wystawianie." },
-  { dzien: 5, godzina: "08:00", tytul: "Nagrody Champions",
-    tresc: "Druga fala podaży w tygodniu, z tego samego powodu co w czwartek. Jeśli trzymasz fodder, wystaw go przed, nie po." },
-  { dzien: 0, godzina: "08:05", tytul: "Nagrody Squad Battles",
-    tresc: "Najsłabsza z trzech fal, ale ta sama mechanika: rano więcej podaży niż wieczorem." }
+  { dzien:4, godzina:"orientacyjnie", tytul:"Potencjalna podaż po Rivals",
+    tresc:"Możliwy wzrost podaży po nagrodach. Bez pomiaru cen nie ma potwierdzonego dołka ani zalecenia kupna." },
+  { dzien:0, godzina:"orientacyjnie", tytul:"Potencjalna podaż po Squad Battles",
+    tresc:"Hipoteza o podaży, nie potwierdzona przecena ani zalecenie transakcyjne." }
 ];
 
 const DZIEN = 86400;
@@ -82,7 +82,10 @@ export function zbuduj(sbc, okazje, floors, at, dni = DNI){
   /* 1. SBC z terminem — sygnał WYJŚCIA. Popyt na fodder rośnie do terminu
         i znika po nim, więc data wygaśnięcia to ostatni moment na sprzedaż. */
   const zrodloSbc = sbc?.at ? `fut.gg, odczyt ${godzinaHM(sbc.at)}` : "fut.gg";
-  for (const w of (sbc?.lista || [])){
+  /* Przeterminowane źródło nie generuje nowych terminów handlowych. */
+  const sbcAktualne = sbc && Number.isFinite(sbc.at)
+    && at >= sbc.at && at - sbc.at <= 3 * 3600;
+  for (const w of (sbcAktualne ? sbc.lista || [] : [])){
     if (!w || !w.wygasaAt || w.trwala) continue;
     const { prog, skad } = progSbc(w);
     const dno = (prog && floors && Number(floors[prog]) > 0) ? Number(floors[prog]) : null;
