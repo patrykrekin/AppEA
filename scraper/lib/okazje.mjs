@@ -230,7 +230,9 @@ export function aktualizujPoziomyD(stareD, szybkie, bands, at, alfa = ALFA_D, ma
         };
       } else {
         /* Po zmianie ID nie dziedzicz poziomu szybkiego, bo on też jest pod kluczem etykiety. */
-        const szybki = !innyId && s[k] && s[k].p > 0 && Number.isFinite(s[k].t)
+        const szybki = !innyId && s[k] && s[k].v === EMA_WERSJA
+          && !(s[k].id && c.id && String(s[k].id) !== String(c.id))
+          && s[k].p > 0 && Number.isFinite(s[k].t)
           && at >= s[k].t && at - s[k].t <= MAX_PRZERWA_EMA_SZYBKA ? s[k] : null;
         const zasiew = szybki ? szybki.p : c.price;
         out[k] = {
@@ -259,7 +261,8 @@ export function policzInwestycje(bands, poziomyD, trwalosc, at, prog = PROG_INW,
       if (!c || !Number.isFinite(c.price) || c.price <= 0) continue;
       const klucz = kluczKarty(c.name, r);
       const w = p[klucz];
-      if (!dojrzały(w, at, minOdczytow, MIN_WIEK_DOBOWEJ)) continue;
+      if (!dojrzały(w, at, minOdczytow, MIN_WIEK_DOBOWEJ)
+          || at - w.t > MAX_PRZERWA_EMA_DOBOWA) continue;
       if (w.id && c.id && String(w.id) !== String(c.id)) continue;
       if (!podProgiem(c.price, w.p, prog)) continue;
 
