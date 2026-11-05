@@ -38,7 +38,10 @@
   .dzis-linia.tlo{font-size:13px;color:var(--soft)}
   .lead-zrodlo{margin:10px 0 0;font-size:11px;line-height:1.5;color:var(--soft)}
   .freshness{margin:-7px 0 17px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;color:var(--muted);font-size:12px}
-  .freshness strong{color:var(--ink);font-weight:600}.freshness.stale{border-color:#71543a;color:var(--gold)}
+  .freshness strong{color:var(--ink);font-weight:600}.freshness-top{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+  .refresh-button{padding:4px 9px;border:1px solid var(--line);border-radius:6px;color:var(--ink);font-size:11px}
+  .refresh-button:disabled{opacity:.5;cursor:wait}.refresh-note{margin-top:4px;color:var(--soft);font-size:11px}
+  .freshness.stale{border-color:#71543a;color:var(--gold)}
   .freshness-sources{display:flex;gap:8px 16px;flex-wrap:wrap;margin-top:7px}
   .freshness-source{color:var(--soft);font:11px "IBM Plex Mono",monospace}
   .freshness-source.stale{color:var(--gold)}
@@ -220,7 +223,8 @@
   </section>
 
   <div class="freshness" id="freshness" aria-live="polite">
-    <strong id="updated">Wczytuję czas odświeżenia…</strong>
+    <div class="freshness-top"><strong id="updated">Wczytuję czas odświeżenia…</strong><button type="button" id="refresh-now" class="refresh-button" title="Pobiera najnowszy opublikowany plik; nie uruchamia scrapera">Sprawdź nowe dane</button></div>
+    <div class="refresh-note" id="refresh-note" aria-live="polite"></div>
     <div class="freshness-sources" aria-label="Aktualność źródeł">
       <span class="freshness-source" id="fresh-fast">Ceny: wczytuję…</span>
       <span class="freshness-source" id="fresh-sbc">SBC: wczytuję…</span>
@@ -897,33 +901,63 @@
 
   render();
 
-  /* Strona pobierała data.json raz przy wejściu i nigdy więcej — minutnik odświeżał
-     tylko napis "X min temu", więc otwarta karta pokazywała ceny z chwili wejścia,
-     a licznik przy nich rósł. Przy zakładce otwartej przez godzinę użytkownik
-     patrzył na dno sprzed godziny i nie miał jak tego poznać.
-     Teraz dociągamy plik co minutę. Nieudane odświeżenie zostawia poprzedni
-     odczyt — lepszy stary komplet niż pusta strona. */
+  /* Widok nie wyzwala scrapera: pobiera tylko najnowszy opublikowany data.json.
+     Przeglądarki usypiają setInterval w tle, dlatego po powrocie/focus/online
+     pobieramy od razu. Pojedyncze trwające żądanie nie uruchamia kolejnego. */
   var ODSWIEZANIE_MS = 60000;
+  var pobieranie = false;
+  var bladSieci = "";
+  var ostatniaProba = null;
+  var przyciskOdswiez = document.getElementById("refresh-now");
+  var uwagaOdswiez = document.getElementById("refresh-note");
 
+  function pokazStanPobierania(){
+    if (pobieranie){ uwagaOdswiez.textContent = "Sprawdzam opublikowane dane…"; return; }
+    var godzina = ostatniaProba ? new Date(ostatniaProba).toLocaleTimeString("pl-PL", {hour:"2-digit",minute:"2-digit"}) : "";
+    uwagaOdswiez.textContent = bladSieci
+      ? "Ostatnia próba " + godzina + ": nie udało się połączyć ze źródłem. Widoczne ceny mogą być stare."
+      : ostatniaProba ? "Ostatnia próba pobrania: " + godzina + ". Czas odczytu cen jest pokazany poniżej." : "";
+  }
   function wczytajDane(pierwszy){
-    return fetch("data.json?t=" + Date.now(), { cache:"no-store" })
-      .then(function(response){ if (!response.ok) throw new Error("data.json unavailable"); return response.json(); })
-      .then(function(result){ data = result; loadError = false; render(); updateTimestamp(); })
-      .catch(function(){
-        if (!pierwszy) return;                 // mamy już dane z wcześniej, nie kasujemy ekranu
-        loadError = true;
-        document.getElementById("updated").textContent = "Nie udało się wczytać czasu ani danych.";
-        render();
+    if (pobieranie) return Promise.resolve(false);
+    pobieranie = true;
+    przyciskOdswiez.disabled = true;
+    pokazStanPobierania();
+    var controller = new AbortController();
+    var timeout = setTimeout(function(){ controller.abort(); }, 15000);
+    return fetch("data.json?t=" + Date.now(), { cache:"no-store", signal:controller.signal })
+      .then(function(response){ if (!response.ok) throw new Error("HTTP " + response.status); return response.json(); })
+      .then(function(result){
+        if (!result || !Number.isFinite(Number(result.atFast || result.at))) throw new Error("Brak daty danych");
+        data = result; loadError = false; bladSieci = "";
+        render(); updateTimestamp(); return true;
+      })
+      .catch(function(error){
+        bladSieci = String(error && error.message || error);
+        if (pierwszy){
+          loadError = true;
+          document.getElementById("updated").textContent = "Nie udało się pobrać danych.";
+          render();
+        }
+        return false;
+      })
+      .finally(function(){
+        clearTimeout(timeout);
+        ostatniaProba = Date.now(); pobieranie = false;
+        przyciskOdswiez.disabled = false;
+        pokazStanPobierania();
       });
   }
 
   wczytajDane(true);
   setInterval(updateTimestamp, 60000);
-  setInterval(function(){ wczytajDane(false); }, ODSWIEZANIE_MS);
-  /* Powrót do karty po przerwie ma pokazać świeże ceny, a nie czekać na minutnik. */
-  document.addEventListener("visibilitychange", function(){
-    if (!document.hidden) wczytajDane(false);
-  });
+  setInterval(function(){ if (!document.hidden) wczytajDane(false); }, ODSWIEZANIE_MS);
+  function odswiezPoPowrocie(){ if (!document.hidden) wczytajDane(false); }
+  document.addEventListener("visibilitychange", odswiezPoPowrocie);
+  window.addEventListener("focus", odswiezPoPowrocie);
+  window.addEventListener("online", odswiezPoPowrocie);
+  window.addEventListener("pageshow", odswiezPoPowrocie);
+  przyciskOdswiez.addEventListener("click", function(){ wczytajDane(false); });
 
   function updateTimestamp(){
     var target = document.getElementById("updated");
@@ -955,6 +989,15 @@
         target.textContent += " (" + a.szczegoly.slice(0, 2).join(" · ")
           + (a.szczegoly.length > 2 ? " · i " + (a.szczegoly.length - 2) + " więcej" : "") + ")";
       }
+    }
+    var rejestrStatus = data && data.statusRejestru;
+    if (rejestrStatus && rejestrStatus.powod && rejestrStatus.powod.length){
+      badge.classList.add("stale");
+      target.textContent += " · rejestr statystyk wstrzymany, ale ceny odświeżono";
+    }
+    if (bladSieci){
+      badge.classList.add("stale");
+      target.textContent += " · ostatnie pobranie ze strony nieudane";
     }
     updateSourceFreshness();
   }
