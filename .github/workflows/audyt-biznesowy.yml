@@ -32,6 +32,25 @@ jobs:
           node trefresh.mjs
           node tstabilnosc.mjs
           node tliczby.mjs
+      - name: Uruchom izolowany przebieg fast bez publikacji
+        env:
+          FUT_DATA: ${{ runner.temp }}/data.json
+        run: |
+          cp data.json "$RUNNER_TEMP/data.json"
+          cp historia.json "$RUNNER_TEMP/historia.json"
+          CHROME="$(command -v google-chrome || true)"
+          test -n "$CHROME" || { echo "Brak systemowego Chrome"; exit 1; }
+          cd scraper
+          FUT_CHROMIUM="$CHROME" node scrape.mjs fast
+          node validate.mjs "$FUT_DATA"
+          node --input-type=module <<'NODE'
+          import {readFileSync} from 'node:fs';
+          const d = JSON.parse(readFileSync(process.env.FUT_DATA,'utf8'));
+          if (d.awaria) throw new Error(JSON.stringify(d.awaria));
+          if (d.okazje?.poziomy?.ps && !Object.values(d.okazje.poziomy.ps).some(x=>x.v===3)) throw new Error('Brak modelu EMA v3');
+          if (!d.tier?.cards?.ps || !d.tier?.cards?.pc) throw new Error('Brak rynku PC lub konsoli');
+          console.log('OK: obie platformy i EMA v3, bez zapisu na main');
+          NODE
       - name: Sprawdz skladnie JavaScript na stronie
         run: |
           node --input-type=module <<'NODE'
