@@ -37,7 +37,7 @@
    robimy. */
 
 import { PROG_INW, MIN_KROKOW, ALFA_D, MIN_ODCZYTOW_D, MIN_TRWALOSC, MIN_TRWALOSC_SEK } from "./okazje.mjs";
-import { onGrid } from "./grid.mjs";
+import { onGrid, net } from "./grid.mjs";
 import { kluczKarty } from "./klucz-karty.mjs";
 
 export const HORYZONT = 24 * 3600;   // doba na rozstrzygnięcie pozycji
@@ -60,6 +60,30 @@ export const MIN_PROB = 15;          // poniżej tego nie ogłaszamy żadnej sku
    dotknięcia, nie od potwierdzenia — bo wtedy cena faktycznie tam była,
    a drugi odczyt tylko mówi, że to nie było mrugnięcie. */
 export const MIN_TRWALOSC_CELU = 2;
+export const ODRZUCONE_LIMIT = 40; // zachowujemy ślad o błędnych wpisach bez blokowania cen
+
+/* Tylko stare, NIESPÓJNE wyniki; nowe błędy nadal zatrzymuje walidator.
+   Nie zmieniamy ich na sukces ani porażkę: odkładamy poza statystykami. */
+function powodOdrzuceniaWyniku(w){
+  if (!w || !w.def) return "brak podpisu definicji";
+  if (w.werdykt === "cel" && !(Number.isFinite(w.doCelu) && w.doCelu > 0))
+    return "cel bez dodatniego czasu dojścia";
+  if (w.werdykt !== "cel" && Number.isFinite(w.doCelu))
+    return "czas celu przy innym werdykcie";
+  if (w.werdykt === "poziom" && !(w.poziomMin <= w.wejscie))
+    return "werdykt poziom bez potwierdzenia";
+  return null;
+}
+function powodOdrzuceniaOtwartego(w){
+  if (!w || !w.def) return "brak podpisu definicji";
+  if (!(Number.isFinite(w.wejscie) && w.wejscie > 0)) return "brak wejścia";
+  if (!onGrid(w.cel0) || !(w.cel0 > w.wejscie)) return "niepoprawny cel";
+  if (Number.isFinite(w.sufit) && w.sufit > 0 && !onGrid(w.sufit))
+    return "sufit poza siatką";
+  if (Number.isFinite(w.sufit) && w.sufit > 0 && net(w.sufit, w.cel0) <= 0)
+    return "ujemna marża po podatku";
+  return null;
+}
 
 /** Podpis definicji pozycji. Wchodzą tu WYŁĄCZNIE parametry, które zmieniają
  *  znaczenie wiersza — próg, pamięć poziomu, wymagana obserwacja i trwałość.
@@ -158,6 +182,11 @@ function zamknij(r, at){
 export function dopiszRejestr(stan, at, inwestycje, ceny, poziomyD, def = definicja()){
   const s = stan && typeof stan === "object" ? stan : {};
   const otwarte = {};
+  const odrzucone = Array.isArray(s.odrzucone) ? [...s.odrzucone].slice(-ODRZUCONE_LIMIT) : [];
+  function odloz(typ, klucz, wpis, powod){
+    odrzucone.push({ typ, klucz, powod, wykryto: at, wpis });
+    if (odrzucone.length > ODRZUCONE_LIMIT) odrzucone.shift();
+  }
     /* 01.10.2026: wiersz z celem poza siatką nie przechodzi dalej.
 
      Do tego dnia `listBelow` potrafiło zwrócić cenę, której w grze nie da się
@@ -175,7 +204,8 @@ export function dopiszRejestr(stan, at, inwestycje, ceny, poziomyD, def = defini
      siatką wypadnie tak samo, zamiast zatrzymać zapis na dobę. */
   for (const k of Object.keys(s.otwarte || {})){
     const r = s.otwarte[k];
-    if (r && Number.isFinite(r.cel0) && !onGrid(r.cel0)) continue;
+    const powod = powodOdrzuceniaOtwartego(r);
+    if (powod){ odloz("otwarta", k, r, powod); continue; }
     otwarte[k] = { ...r };
     /* Migracja bez usuwania pozycji: stary kod liczył kontakt z celem już
        w chwili jej utworzenia. W zarchiwizowanym stanie Donnarumma 89 ma
@@ -187,7 +217,12 @@ export function dopiszRejestr(stan, at, inwestycje, ceny, poziomyD, def = defini
       otwarte[k].celOstatni = null;
     }
   }
-  const wyniki = Array.isArray(s.wyniki) ? [...s.wyniki] : [];
+  const wyniki = [];
+  for (const w of (Array.isArray(s.wyniki) ? s.wyniki : [])){
+    const powod = powodOdrzuceniaWyniku(w);
+    if (powod) odloz("wynik", w?.klucz || "?", w, powod);
+    else wyniki.push(w);
+  }
   const c = ceny || {};
   const p = poziomyD || {};
 
@@ -218,6 +253,10 @@ export function dopiszRejestr(stan, at, inwestycje, ceny, poziomyD, def = defini
         liczymy — zamknie się z własnym podpisem i trafi do "starszych". */
   for (const k of Object.keys(otwarte)){
     const r = otwarte[k];
+    /* Nie uznajemy aktualnej ceny za brakujące pomiary sprzed wielu godzin.
+       Przestarzałą otwartą pozycję zamykamy na dotychczasowych dowodach,
+       zanim przejdziemy do obserwacji nowego rynku. */
+    if (at - (r.ostatnio || r.od) > LUKA) continue;
     /* Nowe pozycje aktualizujemy po ID, bo różne warianty karty mogą dzielić
        etykietę. Wiersze historyczne bez ID zachowują dotychczasowy klucz. */
     const widok = r.id ? c[`@id:${r.id}`] : c[k];
@@ -274,7 +313,7 @@ if (!r.osiagnietyAt && r.cel0 > 0){
     else dalej[k] = r;
   }
 
-  return { def, at, otwarte: dalej, wyniki: wyniki.slice(-WYNIKI_LIMIT) };
+  return { def, at, otwarte: dalej, wyniki: wyniki.slice(-WYNIKI_LIMIT), odrzucone };
 }
 
 function policz(rows){
@@ -283,7 +322,7 @@ function policz(rows){
   /* Mianownik bez "urwanych": tam po prostu nie wiemy, jak się skończyło.
      Wrzucenie ich do pudeł zaniżałoby wynik tym mocniej, im lepiej by wychodziło —
      bo karta, która wróciła do poziomu, właśnie dlatego wypada z jedenastki. */
-  const znane = rows.length - kubelki.urwane;
+  const znane = kubelki.cel + kubelki.poziom + kubelki.glebiej + kubelki.plasko;
   const czasy = rows.map(r => r.doCelu).filter(Number.isFinite).sort((a, b) => a - b);
   return {
     probek: rows.length, znane, ...kubelki,
@@ -298,11 +337,14 @@ export function skutecznoscInw(stan, def = definicja(), minProb = MIN_PROB){
   const wsz = Array.isArray(stan && stan.wyniki) ? stan.wyniki : [];
   const biez = wsz.filter(r => r.def === def);
   const stare = wsz.filter(r => r.def !== def);
+  const stat = policz(biez);
   return {
     def,
     otwartych: Object.keys((stan && stan.otwarte) || {}).length,
-    ...policz(biez),
-    gotowe: biez.length >= minProb,
+    ...stat,
+    /* "urwane" nie dają wyniku. Gotowość wymaga minimum ZNANYCH rozstrzygnięć,
+       inaczej walidator słusznie blokuje fałszywą deklarację skuteczności. */
+    gotowe: stat.znane >= minProb,
     minProb,
     starsze: stare.length ? policz(stare) : null
   };
