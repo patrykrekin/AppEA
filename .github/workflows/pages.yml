@@ -38,6 +38,11 @@ concurrency:
 
 jobs:
   deploy:
+    # Cron co minutę potrafi zastąpić oczekujący przebieg nowszym.
+    # Anulowany przed startem przebieg niczego nie zapisał. Jeżeli rozpoczął się
+    # i został anulowany po zapisaniu cen, NIE pomijamy publikacji.
+    # Failure również publikujemy: mógł zapisać pole `awaria`.
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion != 'cancelled' || github.event.workflow_run.run_started_at != null }}
     # Błędny scrape zapisuje do data.json pole awaria, nie ruszając cen.
     # Takie diagnostyczne zmiany MUSZĄ być widoczne na stronie również po
     # nieudanym workflow; inaczej komunikat o awarii pozostaje ukryty w repo.
