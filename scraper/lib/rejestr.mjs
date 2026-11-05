@@ -36,7 +36,7 @@
    zmianie parametru odbierałoby nam dokładnie ten dowód, dla którego zmianę
    robimy. */
 
-import { PROG_INW, MIN_KROKOW, ALFA_D, MIN_ODCZYTOW_D, MIN_TRWALOSC, MIN_TRWALOSC_SEK } from "./okazje.mjs";
+import { PROG_INW, MIN_KROKOW, ALFA_D, EMA_WERSJA, EMA_ODSTEP_REFERENCYJNY, MIN_WIEK_DOBOWEJ, MIN_ODCZYTOW_D, MIN_TRWALOSC, MIN_TRWALOSC_SEK } from "./okazje.mjs";
 import { onGrid, net } from "./grid.mjs";
 import { kluczKarty } from "./klucz-karty.mjs";
 
@@ -93,6 +93,9 @@ export function definicja(){
     `p${Math.round(PROG_INW * 100)}`,
     `k${MIN_KROKOW}`,
     `a${Math.round(ALFA_D * 1000)}`,
+    `ema${EMA_WERSJA}`,
+    `dt${EMA_ODSTEP_REFERENCYJNY}`,
+    `wiek${MIN_WIEK_DOBOWEJ}`,
     `o${MIN_ODCZYTOW_D}`,
     `t${MIN_TRWALOSC}`,
     `s${MIN_TRWALOSC_SEK}`,
@@ -295,7 +298,10 @@ if (!r.osiagnietyAt && r.cel0 > 0){
       if (!ost || ost[1] !== widok.cena) r.hist = [...r.hist, [at, widok.cena, r.poziom]].slice(-HIST_LIMIT);
     }
     const poz = p[k];
-    if (poz && Number.isFinite(poz.p) && poz.p > 0){
+    /* Stare otwarte pozycje utrzymują własne historyczne cele i poziomy.
+       Nowa EMA nie może wstecznie dopisać im werdyktu 'poziom'. */
+    if (r.def === def && poz && poz.v === EMA_WERSJA
+        && Number.isFinite(poz.p) && poz.p > 0){
       r.poziom = poz.p;
       if (!Number.isFinite(r.poziomMin) || poz.p < r.poziomMin) r.poziomMin = poz.p;
     }
