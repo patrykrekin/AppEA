@@ -45,6 +45,24 @@ export const LOG_LIMIT = 288;      // doba przy przebiegu co 5 minut
 export const KART_LIMIT = 80;      // ile kart trzymamy w rejestrze przeżywalności
 export const KART_WIEK = 3 * 86400;
 
+/* Po przerwie pomiary nie są ciągłe. Zachowujemy długą historię w historia.json,
+   ale nie pozwalamy na używanie przeterminowanych modeli jako bieżącej wyceny.
+   Zasada nie zależy od częstotliwości crona, tylko od FAKTYCZNYCH czasów danych. */
+export const MAX_PRZERWA_EMA_SZYBKA = 30 * 60;
+export const MAX_PRZERWA_EMA_DOBOWA = 2 * 3600;
+export const MAX_ODSTEP_TRWALOSCI = 10 * 60;
+
+export function filtrujPoziomy(stan, at, maxPrzerwa){
+  return Object.fromEntries(Object.entries(stan || {}).filter(([, w]) =>
+    w && Number.isFinite(w.p) && w.p > 0 && Number.isFinite(w.t) &&
+    at >= w.t && at - w.t <= maxPrzerwa));
+}
+export function filtrujTrwalosc(stan, at, maxPrzerwa = MAX_ODSTEP_TRWALOSCI){
+  return Object.fromEntries(Object.entries(stan || {}).filter(([, w]) =>
+    w && Number.isFinite(w.t) && at > w.t && at - w.t <= maxPrzerwa));
+}
+
+
 /** Podpis definicji okazji. Wchodzą parametry, które zmieniają znaczenie wpisu:
  *  wersja definicji, próg i ile odczytów musi mieć poziom, żebyśmy mu wierzyli. */
 export function definicjaOkazji(){
@@ -155,9 +173,11 @@ export function aktualizujTrwalosc(stare, bands, poziomyD, at, prog = PROG_INW){
       if (pod){
         const było = s[k];
         const taSamaKarta = !(było && było.id && c.id && String(było.id) !== String(c.id));
+        const odstep = było && Number.isFinite(było.t) ? at - było.t : Infinity;
+        const ciagly = taSamaKarta && odstep > 0 && odstep <= MAX_ODSTEP_TRWALOSCI;
         out[k] = {
-          n: ((taSamaKarta && było && było.n) || 0) + 1,
-          od: (taSamaKarta && było && było.n && było.od) || at,
+          n: (ciagly ? (było.n || 0) : 0) + 1,
+          od: (ciagly && było.od) || at,
           t: at,
           ...(c.id ? { id: String(c.id) } : {})
         };
@@ -183,17 +203,21 @@ export function aktualizujPoziomyD(stareD, szybkie, bands, at, alfa = ALFA_D, ma
       const k = kluczKarty(c.name, r);
       const w = p[k];
       const innyId = w && w.id && c.id && String(w.id) !== String(c.id);
-      if (w && w.p > 0 && !innyId){
+      const swiezy = w && w.p > 0 && !innyId && Number.isFinite(w.t)
+        && at > w.t && at - w.t <= MAX_PRZERWA_EMA_DOBOWA;
+      if (swiezy){
         out[k] = {
           p: Math.round(w.p * (1 - alfa) + c.price * alfa), n: (w.n || 0) + 1, t: at,
           ...(c.id ? { id: String(c.id) } : {})
         };
       } else {
         /* Po zmianie ID nie dziedzicz poziomu szybkiego, bo on też jest pod kluczem etykiety. */
-        const szybki = !innyId && s[k] && s[k].p > 0 ? s[k] : null;
+        const szybki = !innyId && s[k] && s[k].p > 0 && Number.isFinite(s[k].t)
+          && at >= s[k].t && at - s[k].t <= MAX_PRZERWA_EMA_SZYBKA ? s[k] : null;
         const zasiew = szybki ? szybki.p : c.price;
         out[k] = {
-          p: zasiew, n: (szybki && szybki.n) || 1, t: at,
+          /* Nowa EMA dobowa ma jeden własny pomiar, nawet jeżeli została zasiana szybką EMA. */
+          p: zasiew, n: 1, t: at,
           ...(c.id ? { id: String(c.id) } : {})
         };
       }
@@ -294,7 +318,9 @@ export function aktualizujPoziomy(stare, bands, at, alfa = ALFA, maxWiek = KART_
       if (!c || !Number.isFinite(c.price) || c.price <= 0) continue;
       const k = kluczKarty(c.name, r);
       const w = p[k];
-      out[k] = w && w.p > 0
+      const swiezy = w && w.p > 0 && Number.isFinite(w.t)
+        && at > w.t && at - w.t <= MAX_PRZERWA_EMA_SZYBKA;
+      out[k] = swiezy
         ? { p: Math.round(w.p * (1 - alfa) + c.price * alfa), n: (w.n || 0) + 1, t: at }
         : { p: c.price, n: 1, t: at };
     }
