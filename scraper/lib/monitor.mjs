@@ -102,7 +102,12 @@ export function policzMonitor(bands, poziomyD, szereg, trwalosc, at, prog = PROG
       if (!c || !Number.isFinite(c.price) || c.price <= 0) continue;
       const klucz = kluczKarty(c.name, r);
       const w = pd[klucz];
-      if (!w || !(w.p > 0) || (w.n || 0) < minOdczytow) continue;
+      /* Model musi być nowej, czasowej definicji; liczba próbek bez upływu
+         rzeczywistych dwóch godzin nie potwierdza poziomu dobowego. */
+      if (!w || w.v !== 3 || !(w.p > 0) || (w.n || 0) < minOdczytow
+          || !Number.isFinite(w.od) || at - w.od < 2 * 3600
+          || !Number.isFinite(w.t) || at < w.t || at - w.t > 2 * 3600) continue;
+      if (w.id && c.id && String(w.id) !== String(c.id)) continue;
 
       /* Dwa warunki naraz: procent ORAZ co najmniej jeden krok siatki.
          Przy karcie za 650 pięć procent to 32 monety, czyli mniej niż krok —
