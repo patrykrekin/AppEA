@@ -372,7 +372,7 @@ export function policzOkazje(bands, poziomy, prog = PROG, minOdczytow = MIN_ODCZ
       if (!c || !Number.isFinite(c.price) || c.price <= 0) continue;
       const k = kluczKarty(c.name, r);
       const w = poz[k];
-      if (!dojrzały(w, w.t, minOdczytow, MIN_WIEK_SZYBKIEJ)) continue;
+      if (!w || !dojrzały(w, w.t, minOdczytow, MIN_WIEK_SZYBKIEJ)) continue;
       if (w.id && c.id && String(w.id) !== String(c.id)) continue;
       if (!podProgiem(c.price, w.p, prog)) continue;
       tanie.push(c);
