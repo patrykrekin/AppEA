@@ -3,7 +3,7 @@ import { SOURCES, SEL, CYCLES, OUT, PACING, SNIPE_BANDS, SNIPE_DISCOUNT } from "
 import { patch, read } from "./lib/store.mjs";
 import { przygotujPublikacje } from "./lib/publikacja.mjs";
 import { policz, dopisz, floorsZPasm } from "./lib/indeks.mjs";
-import { policzOkazje, dopiszOkazje, aktualizujPoziomy, aktualizujPoziomyD, policzInwestycje, aktualizujTrwalosc, MIN_ODCZYTOW } from "./lib/okazje.mjs";
+import { policzOkazje, dopiszOkazje, aktualizujPoziomy, aktualizujPoziomyD, policzInwestycje, aktualizujTrwalosc, MIN_ODCZYTOW , filtrujPoziomy, filtrujTrwalosc, MAX_PRZERWA_EMA_SZYBKA, MAX_PRZERWA_EMA_DOBOWA } from "./lib/okazje.mjs";
 import { readSbc, dopiszKoszty } from "./lib/sbc.mjs";
 import { zWierszy, dopiszRuchy, odbicia } from "./lib/ruchy.mjs";
 import { zbuduj as zbudujKalendarz } from "./lib/kalendarz.mjs";
@@ -406,7 +406,11 @@ try {
     /* Okazja to karta tania WZGLĘDEM SIEBIE, nie względem pasma. Najpierw liczymy
        na poziomach sprzed tego odczytu — inaczej dzisiejsza tania cena sama
        obniżyłaby próg, który ma pobić — a dopiero potem poziomy aktualizujemy. */
-    const poprzPoziomy = (prev.okazje && prev.okazje.poziomy) || {};
+    const poprzedniePoziomy = (prev.okazje && prev.okazje.poziomy) || {};
+    const poprzPoziomy = {
+      ps: filtrujPoziomy(poprzedniePoziomy.ps, at, MAX_PRZERWA_EMA_SZYBKA),
+      pc: filtrujPoziomy(poprzedniePoziomy.pc, at, MAX_PRZERWA_EMA_SZYBKA)
+    };
     const okazjePs = policzOkazje(bands.ps, poprzPoziomy.ps);
     const okazjePc = policzOkazje(bands.pc, poprzPoziomy.pc);
     okazjePs.poziomy = aktualizujPoziomy(poprzPoziomy.ps, bands.ps, at);
@@ -426,8 +430,16 @@ try {
        Z niego liczymy pozycje inwestycyjne — kartę, która naprawdę zeszła niżej
        i stoi tam od godzin, a nie mignięcie, które zabierze bot. Pozycje liczymy
        na poziomach SPRZED tego odczytu, tak samo jak okazje. */
-    const poprzD = (prev.okazje && prev.okazje.poziomyD) || {};
-    const poprzT = (prev.okazje && prev.okazje.trwalosc) || {};
+    const stareD = (prev.okazje && prev.okazje.poziomyD) || {};
+    const stareT = (prev.okazje && prev.okazje.trwalosc) || {};
+    const poprzD = {
+      ps: filtrujPoziomy(stareD.ps, at, MAX_PRZERWA_EMA_DOBOWA),
+      pc: filtrujPoziomy(stareD.pc, at, MAX_PRZERWA_EMA_DOBOWA)
+    };
+    const poprzT = {
+      ps: filtrujTrwalosc(stareT.ps, at),
+      pc: filtrujTrwalosc(stareT.pc, at)
+    };
     /* Trwałość aktualizujemy PRZED policzeniem pozycji, żeby karta stojąca tanio
        już szósty odczyt z rzędu została zgłoszona w tym przebiegu, a nie dopiero
        w następnym. Poziomy zostają na wersji sprzed odczytu — tak jak przy okazjach. */
