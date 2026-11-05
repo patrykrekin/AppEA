@@ -80,7 +80,10 @@ export function toSnipeRows(bands, poziomy, pasma = PASMA, rabat = RABAT, minOdc
       const market = c.price;
 
       const w = poz[kluczKarty(c.name, band)];
-      const dojrzaly = !!(w && w.p > 0 && (w.n || 0) >= minOdczytow);
+      const dojrzaly = !!(w && w.v === 3 && w.p > 0 && (w.n || 0) >= minOdczytow
+        && Number.isFinite(w.od) && Number.isFinite(w.t) && w.t >= w.od
+        && w.t - w.od >= 25 * 60
+        && !(w.id && c.id && String(w.id) !== String(c.id)));
       /* Poziom zaciskamy do siatki, bo średnia wykładnicza daje 4005, a takiej
          ceny nie da się wpisać w grze. */
       const odniesienie = dojrzaly ? snapDown(Math.round(w.p)) : market;
