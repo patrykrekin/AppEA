@@ -19,13 +19,13 @@ export const DNI = 13;
    To jest CUDZE źródło, nie nasz pomiar — dlatego każdy taki wpis jest tak
    podpisany, a docelowo sprawdzimy na własnym szeregu, czy dno pasm faktycznie
    dołuje w te poranki. Jak nie dołuje, te reguły wylatują. */
+/* Regularne godziny nagród są hipotezą do porównania z pomiarami, nie sygnałem kupna.
+   Nie przypisujemy Champions jednej stałej piątkowej godziny. */
 export const RYTM = [
-  { dzien: 4, godzina: "08:00", tytul: "Nagrody Rivals",
-    tresc: "Nagrody wpadają rano — ludzie otwierają paczki i wrzucają zawartość na rynek. Podaż rośnie, dno pasm zwykle jest wtedy najniższe w tygodniu. To dzień na kupno, nie na wystawianie." },
-  { dzien: 5, godzina: "08:00", tytul: "Nagrody Champions",
-    tresc: "Druga fala podaży w tygodniu, z tego samego powodu co w czwartek. Jeśli trzymasz fodder, wystaw go przed, nie po." },
-  { dzien: 0, godzina: "08:05", tytul: "Nagrody Squad Battles",
-    tresc: "Najsłabsza z trzech fal, ale ta sama mechanika: rano więcej podaży niż wieczorem." }
+  { dzien:4, godzina:"orientacyjnie", tytul:"Potencjalna podaż po Rivals",
+    tresc:"Możliwy wzrost podaży po nagrodach. Bez pomiaru cen nie ma potwierdzonego dołka ani zalecenia kupna." },
+  { dzien:0, godzina:"orientacyjnie", tytul:"Potencjalna podaż po Squad Battles",
+    tresc:"Hipoteza o podaży, nie potwierdzona przecena ani zalecenie transakcyjne." }
 ];
 
 const DZIEN = 86400;
@@ -43,13 +43,15 @@ export function dzienTygodniaPL(ts){
   return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(s);
 }
 
-/** Próg pasma, który ta SBC zjada. Z nazwy ("83+ Upgrade", "2x 79+ Upgrade")
- *  albo z oceny karty-nagrody. null, gdy nie wiemy — i wtedy tak piszemy,
- *  zamiast zgadywać pasmo i wysyłać kogoś po niewłaściwe karty. */
+/** Wymagania składu to NIE nazwa nagrody ("83+ Upgrade") ani OVR
+ *  karty, którą dostaje gracz. Dopóki źródło nie podaje zweryfikowanych wymagań,
+ *  nie przypisujemy SBC do pasma rynku i nie generujemy polecenia sprzedaży.
+ *  Przyszłe źródło może podać rating składu oraz jawne pochodzenie odczytu. */
 export function progSbc(wpis){
-  const m = String(wpis?.nazwa || "").match(/(\d{2})\s*\+/);
-  if (m) return { prog: +m[1], skad: "nazwy SBC" };
-  if (Number.isFinite(wpis?.nagroda)) return { prog: wpis.nagroda, skad: "oceny karty-nagrody" };
+  const prog = wpis?.wymaganyRating;
+  if (Number.isInteger(prog) && prog >= 83 && prog <= 89
+      && wpis?.zrodloWymagan === "potwierdzone-wymagania-skladu")
+    return { prog, skad: "potwierdzonych wymagań składu" };
   return { prog: null, skad: null };
 }
 
@@ -80,15 +82,18 @@ export function zbuduj(sbc, okazje, floors, at, dni = DNI){
   /* 1. SBC z terminem — sygnał WYJŚCIA. Popyt na fodder rośnie do terminu
         i znika po nim, więc data wygaśnięcia to ostatni moment na sprzedaż. */
   const zrodloSbc = sbc?.at ? `fut.gg, odczyt ${godzinaHM(sbc.at)}` : "fut.gg";
-  for (const w of (sbc?.lista || [])){
+  /* Przeterminowane źródło nie generuje nowych terminów handlowych. */
+  const sbcAktualne = sbc && Number.isFinite(sbc.at)
+    && at >= sbc.at && at - sbc.at <= 3 * 3600;
+  for (const w of (sbcAktualne ? sbc.lista || [] : [])){
     if (!w || !w.wygasaAt || w.trwala) continue;
     const { prog, skad } = progSbc(w);
     const dno = (prog && floors && Number(floors[prog]) > 0) ? Number(floors[prog]) : null;
     dodaj(w.wygasaAt, {
-      typ: "sprzedaj",
-      tytul: prog ? `Sprzedaj fodder ${prog}+ — wygasa ${w.nazwa}` : `Wygasa ${w.nazwa}`,
+      typ: "termin",
+      tytul: `Wygasa ${w.nazwa}`,
       tresc: (w.koszt ? `Koszt składu ${monety(w.koszt)}. ` : "")
-        + (prog ? `Próg czytamy z ${skad}. ` : "Nie wiemy, który próg ta SBC zjada — fut.gg nie podaje wymagań składu. ")
+        + (prog ? `Próg składu: ${prog}, z ${skad}. ` : "Brak potwierdzonych wymagań składu — nie wyznaczamy ratingu kart do sprzedaży. ")
         + (dno ? `Dno pasma ${prog} w ostatnim odczycie: ${monety(dno)}. ` : "")
         + "Termin z fut.gg jest zaokrąglony do doby, więc traktuj go jako ostatni dzień, nie jako godzinę.",
       zrodlo: zrodloSbc,

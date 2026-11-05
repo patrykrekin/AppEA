@@ -631,6 +631,7 @@ try {
 } catch (e) {
   const powod = String((e && e.message) || e).split("\n")[0].slice(0, 300);
   console.error(`${cycle}: PRZERWANE — ${powod}`);
+  if (e && e.stack) console.error("stos diagnostyczny:", e.stack);
 
   /* 30.09.2026: dziewięć przebiegów z rzędu padło na „Pobierz ceny" i przez godzinę
      nie dało się powiedzieć DLACZEGO. Tekst błędu szedł wyłącznie do logu Actions,

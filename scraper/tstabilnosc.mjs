@@ -11,8 +11,8 @@ import { readFileSync } from 'node:fs';
 const at = 1_800_000_000;
 const bands = { 87: [{name:'Próbna',id:'993144',price:6000}] };
 const key = 'Próbna 87';
-const old = { [key]: { p:7200, n:150, t:at-7*86400, id:'993144' } };
-const fresh = { [key]: { p:7200, n:150, t:at-60, id:'993144' } };
+const old = { [key]: { p:7200, n:150, od:at-7*86400-7200, v:3, t:at-7*86400, id:'993144' } };
+const fresh = { [key]: { p:7200, n:150, od:at-7200, v:3, t:at-60, id:'993144' } };
 assert.deepEqual(filtrujPoziomy(old, at, MAX_PRZERWA_EMA_SZYBKA), {});
 assert.deepEqual(filtrujPoziomy(old, at, MAX_PRZERWA_EMA_DOBOWA), {});
 assert.equal(Object.keys(filtrujPoziomy(fresh, at, MAX_PRZERWA_EMA_SZYBKA)).length,1);
@@ -71,7 +71,7 @@ assert.equal(sk.trafienie,null);
 console.log('ok: stare urwane wyniki nie tworzą fałszywej gotowości statystyk');
 
 // Model nadal potrafi zgłosić realną, ciągłą przecenę po 6 obserwacjach.
-const slowModel = {[key]: {p:7200,n:40,t:at-6*300,id:'993144'}};
+const slowModel = {[key]: {p:7200,n:40,od:at-7200,t:at-6*300,v:3,id:'993144'}};
 let streak = {};
 for (let j=0;j<6;j++){
   const t=at+j*300;
@@ -80,7 +80,7 @@ for (let j=0;j<6;j++){
 }
 assert.equal(streak[key].n,6);
 assert.equal(streak[key].od,at);
-assert.equal(policzInwestycje(bands,{[key]:{p:7200,n:50,t:at+5*300}},streak,at+5*300).length,1);
+assert.equal(policzInwestycje(bands,{[key]:{p:7200,n:50,od:at-7200,t:at+5*300,v:3,id:'993144'}},streak,at+5*300).length,1);
 console.log('ok: sześć rzeczywiście kolejnych pomiarów nadal daje sygnał');
 
 

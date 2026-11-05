@@ -18,17 +18,25 @@ export function onGrid(price){
   return Number.isInteger(price) && price > 0 && price % stepFor(price) === 0;
 }
 
-/** Zaokrągla w dół do najbliższego legalnego kroku. */
+/** Ostatnia legalna cena <= podanej wartości (również na granicy widełek). */
 export function snapDown(price){
+  if (!Number.isFinite(price) || price <= 0) return 0;
   const s = stepFor(price);
   return Math.floor(price / s) * s;
 }
 
-/** Cena wystawienia: jeden krok POD podanym BIN-em.
-   Równo z rynkiem = kolejka za całą tańszą podażą. Wyżej = nie sprzeda się. */
+/** Pierwsza legalna cena >= podanej wartości. Krok może zmieniać się na progu. */
+export function snapUp(price){
+  if (!Number.isFinite(price) || price <= 0) return 0;
+  const down = snapDown(price);
+  return down >= price ? down : down + stepFor(down + 1);
+}
+
+/** Jedna LEGALNA cena poniżej podanego BIN-u — także przy progach 1k/10k/50k/100k.
+    Nie odejmujemy kroku wyznaczonego z BIN-u, bo poniżej progu krok jest inny. */
 export function listBelow(bin){
-  const s = stepFor(bin);
-  return snapDown(snapDown(bin) - s);
+  const near = snapDown(bin);
+  return near > 0 ? snapDown(near - 1) : 0;
 }
 
 /** Netto po 5% podatku liczonym od całej ceny sprzedaży. */

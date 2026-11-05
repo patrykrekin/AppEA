@@ -40,7 +40,7 @@ export const MIN_ODCZYTOW = 6;     // pół godziny obserwacji, zanim uwierzymy 
    przy pierwszym odczycie w nowej definicji (bo mieszanie jej widzeń z dwóch
    progów byłoby zwykłym fałszem), a resztę zostawia z podpisem starym, do
    osobnego rachunku. */
-export const WERSJA = 2;
+export const WERSJA = 3;
 export const LOG_LIMIT = 288;      // doba przy przebiegu co 5 minut
 export const KART_LIMIT = 80;      // ile kart trzymamy w rejestrze przeżywalności
 export const KART_WIEK = 3 * 86400;
@@ -54,7 +54,7 @@ export const MAX_ODSTEP_TRWALOSCI = 10 * 60;
 
 export function filtrujPoziomy(stan, at, maxPrzerwa){
   return Object.fromEntries(Object.entries(stan || {}).filter(([, w]) =>
-    w && Number.isFinite(w.p) && w.p > 0 && Number.isFinite(w.t) &&
+    w && w.v === EMA_WERSJA && Number.isFinite(w.p) && w.p > 0 && Number.isFinite(w.t) &&
     at >= w.t && at - w.t <= maxPrzerwa));
 }
 export function filtrujTrwalosc(stan, at, maxPrzerwa = MAX_ODSTEP_TRWALOSCI){
@@ -66,7 +66,7 @@ export function filtrujTrwalosc(stan, at, maxPrzerwa = MAX_ODSTEP_TRWALOSCI){
 /** Podpis definicji okazji. Wchodzą parametry, które zmieniają znaczenie wpisu:
  *  wersja definicji, próg i ile odczytów musi mieć poziom, żebyśmy mu wierzyli. */
 export function definicjaOkazji(){
-  return `w${WERSJA}-p${Math.round(PROG * 100)}-o${MIN_ODCZYTOW}`;
+  return `w${WERSJA}-p${Math.round(PROG * 100)}-o${MIN_ODCZYTOW}-ema${EMA_WERSJA}-t${MIN_WIEK_SZYBKIEJ}`;
 }
 
 /* ── Poziom DOBOWY i pozycje inwestycyjne ────────────────────────────────────
@@ -85,6 +85,23 @@ export function definicjaOkazji(){
    inaczej pierwszego dnia każda karta miałaby poziom równy swojej cenie i nic
    by się nie zgłaszało. */
 export const ALFA_D = 0.005;
+export const EMA_WERSJA = 3;
+export const EMA_ODSTEP_REFERENCYJNY = 300; // alfy 0,05 i 0,005 z historycznego cyklu co 5 minut
+export const MIN_WIEK_SZYBKIEJ = 25 * 60;
+export const MIN_WIEK_DOBOWEJ = 2 * 3600;
+
+/** Waga odpowiadająca rzeczywiście minionemu czasowi, a nie liczbie wywołań crona.
+    Dla 300 s dokładnie stara alfa, dla 60 s mniejsza; czas > maxPrzerwa jest
+    obsługiwany osobno jako nowe zasianie modelu. */
+export function alfaZaCzas(alfa, sekundy){
+  if (!(alfa > 0 && alfa < 1) || !(sekundy > 0)) return 0;
+  return -Math.expm1(Math.log1p(-alfa) * sekundy / EMA_ODSTEP_REFERENCYJNY);
+}
+function dojrzały(w, at, minN, minWiek){
+  return !!(w && w.v === EMA_WERSJA && w.p > 0 && (w.n || 0) >= minN
+    && Number.isFinite(w.od) && at - w.od >= minWiek
+    && Number.isFinite(w.t) && at >= w.t);
+}
 /* 30.09.2026, po dobie pomiaru. Było 0,08 i przez to rejestr miał WYŁĄCZNIE karty
    po 32 000–152 000. Przyczyna nie jest oczywista: procent zderza się z siatką cen.
 
@@ -203,21 +220,24 @@ export function aktualizujPoziomyD(stareD, szybkie, bands, at, alfa = ALFA_D, ma
       const k = kluczKarty(c.name, r);
       const w = p[k];
       const innyId = w && w.id && c.id && String(w.id) !== String(c.id);
-      const swiezy = w && w.p > 0 && !innyId && Number.isFinite(w.t)
+      const swiezy = w && w.v === EMA_WERSJA && w.p > 0 && !innyId && Number.isFinite(w.t)
         && at > w.t && at - w.t <= MAX_PRZERWA_EMA_DOBOWA;
       if (swiezy){
         out[k] = {
-          p: Math.round(w.p * (1 - alfa) + c.price * alfa), n: (w.n || 0) + 1, t: at,
+          p: w.p + alfaZaCzas(alfa, at - w.t) * (c.price - w.p),
+          n: (w.n || 0) + 1, od: w.od || w.t, v: EMA_WERSJA, t: at,
           ...(c.id ? { id: String(c.id) } : {})
         };
       } else {
         /* Po zmianie ID nie dziedzicz poziomu szybkiego, bo on też jest pod kluczem etykiety. */
-        const szybki = !innyId && s[k] && s[k].p > 0 && Number.isFinite(s[k].t)
+        const szybki = !innyId && s[k] && s[k].v === EMA_WERSJA
+          && !(s[k].id && c.id && String(s[k].id) !== String(c.id))
+          && s[k].p > 0 && Number.isFinite(s[k].t)
           && at >= s[k].t && at - s[k].t <= MAX_PRZERWA_EMA_SZYBKA ? s[k] : null;
         const zasiew = szybki ? szybki.p : c.price;
         out[k] = {
           /* Nowa EMA dobowa ma jeden własny pomiar, nawet jeżeli została zasiana szybką EMA. */
-          p: zasiew, n: 1, t: at,
+          p: zasiew, n: 1, od: at, v: EMA_WERSJA, t: at,
           ...(c.id ? { id: String(c.id) } : {})
         };
       }
@@ -241,7 +261,9 @@ export function policzInwestycje(bands, poziomyD, trwalosc, at, prog = PROG_INW,
       if (!c || !Number.isFinite(c.price) || c.price <= 0) continue;
       const klucz = kluczKarty(c.name, r);
       const w = p[klucz];
-      if (!w || !(w.p > 0) || (w.n || 0) < minOdczytow) continue;
+      if (!dojrzały(w, at, minOdczytow, MIN_WIEK_DOBOWEJ)
+          || at - w.t > MAX_PRZERWA_EMA_DOBOWA) continue;
+      if (w.id && c.id && String(w.id) !== String(c.id)) continue;
       if (!podProgiem(c.price, w.p, prog)) continue;
 
       /* Pod progiem od co najmniej pół godziny — inaczej to nie pozycja,
@@ -318,11 +340,15 @@ export function aktualizujPoziomy(stare, bands, at, alfa = ALFA, maxWiek = KART_
       if (!c || !Number.isFinite(c.price) || c.price <= 0) continue;
       const k = kluczKarty(c.name, r);
       const w = p[k];
-      const swiezy = w && w.p > 0 && Number.isFinite(w.t)
+      const innyId = w && w.id && c.id && String(w.id) !== String(c.id);
+      const swiezy = w && w.v === EMA_WERSJA && w.p > 0 && !innyId && Number.isFinite(w.t)
         && at > w.t && at - w.t <= MAX_PRZERWA_EMA_SZYBKA;
       out[k] = swiezy
-        ? { p: Math.round(w.p * (1 - alfa) + c.price * alfa), n: (w.n || 0) + 1, t: at }
-        : { p: c.price, n: 1, t: at };
+        ? { p: w.p + alfaZaCzas(alfa, at - w.t) * (c.price - w.p),
+            n: (w.n || 0) + 1, od: w.od || w.t, v: EMA_WERSJA, t: at,
+            ...(c.id ? { id: String(c.id) } : {}) }
+        : { p: c.price, n: 1, od: at, v: EMA_WERSJA, t: at,
+            ...(c.id ? { id: String(c.id) } : {}) };
     }
   }
   /* Karty, które wypadły z dna pasma, trzymamy jeszcze chwilę — wrócą pod tą samą
@@ -346,7 +372,8 @@ export function policzOkazje(bands, poziomy, prog = PROG, minOdczytow = MIN_ODCZ
       if (!c || !Number.isFinite(c.price) || c.price <= 0) continue;
       const k = kluczKarty(c.name, r);
       const w = poz[k];
-      if (!w || !(w.p > 0) || (w.n || 0) < minOdczytow) continue;   // za mało obserwacji
+      if (!w || !dojrzały(w, w.t, minOdczytow, MIN_WIEK_SZYBKIEJ)) continue;
+      if (w.id && c.id && String(w.id) !== String(c.id)) continue;
       if (!podProgiem(c.price, w.p, prog)) continue;
       tanie.push(c);
       karty.push({
