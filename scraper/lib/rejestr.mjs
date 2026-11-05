@@ -177,6 +177,15 @@ export function dopiszRejestr(stan, at, inwestycje, ceny, poziomyD, def = defini
     const r = s.otwarte[k];
     if (r && Number.isFinite(r.cel0) && !onGrid(r.cel0)) continue;
     otwarte[k] = { ...r };
+    /* Migracja bez usuwania pozycji: stary kod liczył kontakt z celem już
+       w chwili jej utworzenia. W zarchiwizowanym stanie Donnarumma 89 ma
+       celOd === od i celN=1; następny odczyt dawał doCelu=0 i zatrzymywał
+       odświeżanie. Usuwamy wyłącznie nieważne potwierdzenie, nie historię. */
+    if (Number.isFinite(r.celOd) && Number.isFinite(r.od) && r.celOd - r.od < 60){
+      otwarte[k].celOd = null;
+      otwarte[k].celN = 0;
+      otwarte[k].celOstatni = null;
+    }
   }
   const wyniki = Array.isArray(s.wyniki) ? [...s.wyniki] : [];
   const c = ceny || {};
@@ -225,15 +234,22 @@ export function dopiszRejestr(stan, at, inwestycje, ceny, poziomyD, def = defini
    jak przy trwałości wejścia w okazje.mjs. */
 if (!r.osiagnietyAt && r.cel0 > 0){
   if (widok.cena >= r.cel0){
-    if (!r.celOd) r.celOd = at;
-    r.celN = (r.celN || 0) + 1;
-    if (r.celN >= MIN_TRWALOSC_CELU){
+    /* Pierwszy odczyt i odczyty < 60 s od założenia pozycji nie są
+       potwierdzeniem odbicia. Bez tej bramki rejestr tworzył trafienia w
+       0 minut i blokował publikację WSZYSTKICH cen przez walidator. */
+    if (at - r.od >= 60 && r.celOstatni !== at){
+      if (!r.celOd) r.celOd = at;
+      r.celN = (r.celN || 0) + 1;
+      r.celOstatni = at;
+    }
+    if (r.celN >= MIN_TRWALOSC_CELU && at - r.celOd >= 60){
       r.osiagnietyAt = r.celOd;
       r.skadCelu = widok.skad;
     }
   } else {
     r.celOd = null;
     r.celN = 0;
+    r.celOstatni = null;
   }
 }
       const ost = r.hist[r.hist.length - 1];
