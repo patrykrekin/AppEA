@@ -47,12 +47,29 @@ assert.equal(r.wyniki[0].werdykt,"cel");
 assert.ok(r.wyniki[0].doCelu > 0);
 console.log("ok: trafienie wymaga dwóch różnych późniejszych próbek");
 
-// 3b: Dokładna przyczyna blokady z załączonego data.json: Donnarumma 89.
-const legacy = dane.rejestr.ps.otwarte["Donnarumma 89"];
-assert.equal(legacy.celOd, legacy.od);
-const stanNaprawiony = dopiszRejestr(dane.rejestr.ps, 1_792_674_441, [], {}, {});
-assert.ok(!stanNaprawiony.wyniki.some(w => w.klucz === "Donnarumma 89" && w.doCelu === 0));
-console.log("ok: naprawa starego licznika Donnarummy bez czyszczenia rejestru");
+// 3b: Migracja starego licznika. Test jest samodzielny: nie zależy od tego,
+//      czy historyczna karta Donnarumma 89 nadal znajduje się w data.json.
+const startLegacy = 2_000_000;
+const bazaLegacy = dopiszRejestr({}, startLegacy, [inwestycja], ceny, {});
+const staryWpis = structuredClone(bazaLegacy.otwarte[inwestycja.klucz]);
+assert.ok(staryWpis, "brak testowej pozycji do migracji");
+staryWpis.celOd = staryWpis.od;
+staryWpis.celN = 1;
+staryWpis.celOstatni = staryWpis.od;
+const staryStan = {
+  ...bazaLegacy,
+  otwarte: { [inwestycja.klucz]: staryWpis }
+};
+const stanNaprawiony = dopiszRejestr(staryStan, startLegacy + 120, [], ceny, {});
+assert.equal(stanNaprawiony.wyniki.length, 0, "stara próbka nie może dawać trafienia");
+assert.equal(stanNaprawiony.otwarte[inwestycja.klucz].celN, 1,
+  "po migracji liczy się tylko nowy odczyt");
+assert.equal(stanNaprawiony.otwarte[inwestycja.klucz].celOd, startLegacy + 120);
+const poPotwierdzeniu = dopiszRejestr(stanNaprawiony, startLegacy + 190, [], ceny, {});
+assert.equal(poPotwierdzeniu.wyniki.length, 1);
+assert.equal(poPotwierdzeniu.wyniki[0].werdykt, "cel");
+assert.ok(poPotwierdzeniu.wyniki[0].doCelu > 0);
+console.log("ok: migracja starego licznika bez fikcyjnego trafienia");
 
 // 4: Watchdog nie duplikuje zdrowego harmonogramu.
 assert.equal(wybierzRatunek({atFast:1000,atSlow:1000}, 1060, 6), "skip");
