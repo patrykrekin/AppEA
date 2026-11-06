@@ -114,3 +114,32 @@ https://www.publichealth.columbia.edu/research/population-health-methods/time-ev
 Zamiast czekać na pełne 12h, znaleźć źródło, które dla określonego *item ID i platformy* udostępnia **liczbową cenę z czasem publikacji** także poza TOP 5/11. Porównać 3–5 kart w nieprodukcyjnej próbie i 1–2 kontrole. Wykluczyć źródła agregujące ten sam FUT.GG bez nowego, niezależnego pomiaru. Jeżeli źródło istnieje i jest stabilne, dopiero wtedy rozważyć dodatkowe pobieranie; w przeciwnym razie raportować wyłącznie warunkowy wynik na dostępnych próbkach.
 
 **Stan:** eksperyment przeprowadzony, indywidualne profile FUT.GG odrzucone jako źródło liczbowej weryfikacji. Nie wybrano nowego algorytmu wyceny.
+
+
+## Zagadnienie 4 — próba rozszerzenia głębokości listy FUT.GG (2026-11-06)
+
+**Źródło operacyjne:** [FUT.GG Cheapest by Rating](https://www.fut.gg/cheapest-by-rating/) i link „View All” do [filtrowanych zawodników 86 OVR](https://www.fut.gg/players/?market_players=true&overall__gte=86&overall__lte=86&sorts=current_price). Przefiltrowana strona pokazuje paginację, ale to samo w sobie nie jest potwierdzeniem dostępności wycen.
+
+**Test read-only:** [PR #7](https://github.com/patrykrekin/AppEA/pull/7), [Actions – log drugiej próby](https://github.com/patrykrekin/AppEA/actions/runs/42297258742). Systemowy Chrome/Playwright, rating 86, 2 strony × 2 rynki (konsola i PC). W każdym przypadku HTTP 200, poprawny nagłówek tytułowy i `futgg_platform`, paginacja 1–4 obecna. **0 widocznych elementów kart z ID, 0 liczbowych wycen** we wszystkich 4 widokach. Zrzut tekstowy zawierał filtry i stopkę zamiast listy zawodników. Nie zakładamy, że nie ma ofert w grze: możliwy brak ładowania wyników lub inny sposób prezentacji. Wynik dla naszego kanału odczytu: **brak wartościowego rozszerzenia historii**.
+
+**Decyzja:** nie scalać eksperymentalnego scrapera, nie zwiększać liczby requestów, nie zmieniać `refresh.yml` i produkcyjnej EMA. Kryterium ">11 kart z potwierdzonym ID i ceną" nie zostało spełnione. Status: *odrzucone jako źródło cen w przetestowanym środowisku*, bez twierdzenia o całym FUT.GG.
+
+## Zagadnienie 5 — dojrzałość archiwum v2 i prognoza horyzontu (2026-11-06)
+
+**Źródła metodyczne:** Hyndman/Athanasopoulos, [Forecasting: Principles and Practice, rozdz. 5](https://otexts.com/fpp3/toolbox.html) — walidacja kolejnego okresu, naiwny benchmark; Little/Rubin, [Statistical Analysis with Missing Data](https://onlinelibrary.wiley.com/doi/10.1002/9781119482260.ch3) — selekcja obserwowanych przypadków. **Dane empiryczne:** archiwum repo `historia-kart.json` v2, odczyt `2026-11-06T21:28:26Z`. Analiza read-only, łączna retencja widoczna ok. 14,8 h.
+
+**Jakość / rotacja:** 81 migawek/rynek i 80 par z odstępem ≤20 min (powtarzane, zależne obserwacje); PS 351 kart, 10 970 punktów cen, PC 448 kart, 10 767 punktów. Zniknięcia z *odczytanego wycinka*: PS **3147/10061=31,28%**, PC **3771/9880=38,17%**. Przy remisach cenowych na medianie: PS **2244/4934=45,48%**, PC **2307/4463=51,69%**. Dla cen poniżej mediany: PS 21,24%, PC 28,27%; powyżej: PS 13,42%, PC 25,58%. To wyłącznie opis wycinka i hipoteza o wpływie remisów na ranking; nie prognoza sprzedaży.
+
+**Dojrzałe historie wg aktualnego filtra** (>=36 próbek w 12h, >=8h pokrycia, luka <=20min, świeżość <=20min): PS **34/351**, tylko ratingi 88–90, 92, 93; PC **27/448**, tylko 89, 90, 92, 93. Żadna karta 83–87 nie spełniała tego warunku. Modelu nie wolno oceniać jako reprezentatywnego dla tanich kart.
+
+**Eksploracyjny rolling-origin 2h**, na danych warunkowo obserwowanych, z regułami istniejącego `sprawdzMetody()`:
+| Rynek | Początki | Oczekujące | Zaobserwowane | Unikalne karty z wynikiem | MAPE ostatnia | Mediana | EMA | Hybryda |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| PS | 230 | 67 | 163 | 35 | 3,383% | 3,725% | 4,056% | 3,837% |
+| PC | 201 | 55 | 146 | 30 | 4,168% | 4,184% | 4,668% | 4,405% |
+
+Wszystkie obserwowane rozliczenia dotyczą powracających, wysoko ocenionych kart. **12h: 0 wyników, wszystkie 230/201 początków oczekują.** Zbyt krótka historia, by porównywać modele na horyzoncie docelowym. Pary/pochodzenia nie są statystycznie niezależne.
+
+**Ważna nierówność informacyjna:** `sprawdzMetody()` jako naiwną prognozę bierze ostatnią cenę w t, ale EMA/medianę liczy tylko na danych <t. Przy uczciwym porównaniu tego samego zbioru informacji trzeba zaktualizować EMA/medianę o p(t), albo cofnąć benchmark do poprzedniego pomiaru. Pomocniczy offline wariant inkluzywny dał (2h): PS EMA 4,032%, mediana 3,707%; PC EMA 4,641%, mediana 4,144%. Nie kalibrowano wag ani progów i nie wyznaczono zwycięzcy strategii.
+
+**Decyzja:** brak zmian w produkcji. Następny test ma wyrównać informację dostępną metodom w t, raportować agregację po kartach oraz oddzielnie ratingach, i nie przedstawiać 2h w selektywnym zbiorze jako wyniku 12h ani ceny transakcji. Status: *weryfikacja wstępna na danych*, nie wdrożone do rekomendacji.
