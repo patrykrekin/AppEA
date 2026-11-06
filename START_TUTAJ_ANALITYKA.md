@@ -50,7 +50,13 @@ Próba offline z rzeczywistego `historia-kart.json`, stan archiwum `2026-11-06T2
 
 **Następny najlepszy krok:** bez zmian produkcyjnych, przygotować porównanie metodyk prognostycznych na *tym samym zbiorze informacji do t*, z rozliczeniem wyników dla każdej karty, klastrów i ratingów osobno. Nie optymalizować progów, dopóki 83–87 nie będą dostatecznie obserwowalne. Później wrócić do problemu zewnętrznego źródła wycen, tylko jeśli będzie faktycznie dostępne i wiarygodne.
 
-## 6. Jak wznowić pracę po utracie konwersacji
+## 6. Zagadnienie 6 — porównanie prognoz na równych danych (06.11, zakończone, bez wdrożenia)
+
+[Pełny audyt z tabelami, zamrożonym commit SHA i źródłami](AUDYT_POROWNANIE_PROGNOZ_2H_20261106.md). Wyrównano do chwili t dane wejściowe do ostatniej ceny, mediany 12h, EMA shadow i hybrydy, osobno PS i PC. Przy pochodzeniach co 1h: 163 wyników PS (35 kart), 146 PC (30 kart). Mediana PC była lepsza od ostatniej ceny jedynie o **0,024 p.p.** w micro, ale przy pochodzeniach co 2h ostatnia cena miała niższy błąd (**3,675% vs 4,520%**). To próba wrażliwa na nakładanie okien, brak reprezentacji kart 83–87 i nadal 0 rozliczeń prognoz 12h.
+
+**NOWE krytyczne ustalenie:** EMA badawcza (resetowana do pierwszej ceny w oknie) nie odtwarza produkcyjnego `aktualizujPoziomyD`, gdzie występuje zasiew z szybkiej EMA i reset po >2h. Zatem testy MAPE nie walidują algorytmu inwestycyjnego. Nie zmieniać EMA ani rekomendacji na podstawie samej predykcji przyszłych ofert. Prawidłowy następny krok: projekt niewpływającej na rekomendacje **instrumentacji stanu przed sygnałem** (t, ID, platforma, cena, EMA szybka/dobowa, wersja definicji i pokrycie), wyłącznie z już pobranych danych; ocena ryzyka i regresji zanim cokolwiek trafi na main.
+
+## 7. Jak wznowić pracę po utracie konwersacji
 
 W nowym czacie podaj link do tego dokumentu i napisz: „Kontynuujemy AppEA według START_TUTAJ_ANALITYKA.md; przeczytaj też REJESTR_ZRODEL_BADAWCZYCH.md, sprawdź obecny main, ostatnie Actions i PR, a potem podejmij najbliższy otwarty eksperyment. Nie modyfikuj produkcji bez testów”.
 
