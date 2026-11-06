@@ -81,6 +81,12 @@ jobs:
           if(r.cenzurowanie.platformy.ps.obserwowanePrzejscia<0) throw new Error("Zle liczniki migawek");
           console.log("Raport jakości ma spójne liczniki dla PC/PS");
           NODE
+      - name: Jednorazowy test cen na stronach zawodnikow FUT.GG
+        working-directory: scraper
+        env:
+          FUT_CHROMIUM: /usr/bin/google-chrome
+        run: |
+          node jednorazowy-test-futgg-detail.mjs
       - name: Sprawdz skladnie JavaScript na stronie
         run: |
           node --input-type=module <<'NODE'
