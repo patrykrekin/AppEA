@@ -27,19 +27,28 @@ AppEA to autorski system analityki rynku kart EA FC. Priorytetem jest **wiarygod
 - **Indywidualne profile FUT.GG odrzucone jako źródło dodatkowej ceny:** w izolowanym teście [Actions #42177575612](https://github.com/patrykrekin/AppEA/actions/runs/42177575612) poprawnie zidentyfikowano 8/8 kart (wersja, identyfikatory i platformy), ale 0/8 dostarczyło ceny, również kontrole. [PR #6](https://github.com/patrykrekin/AppEA/pull/6) zamknięty **bez merge**.
 - **Dla istniejących mechanizmów:** nie wprowadzono zmian produkcyjnych na podstawie powyższych wyników; aktualną kondycję systemu trzeba każdorazowo sprawdzić na nowo.
 
-## 4. Otwarty kierunek: głębsze listy kart (na 06.11.2026)
+## 4. Zagadnienie 4 — głębsze listy FUT.GG (06.11, zakończone bez wdrożenia)
 
-**Problem:** strona `https://www.fut.gg/cheapest-by-rating/` pokazuje tylko **11 kart na rating i platformę**, więc pojedyncze historie znikają z obserwacji przez rotację rankingu.
+Z rankingu `/cheapest-by-rating/` link **View All** prowadzi do filtrowanego `/players/?market_players=true&overall__gte=86&overall__lte=86&sorts=current_price`, z paginacją `page=2`. Sprawdzono rating 86, dwie strony, osobno konsola i PC, systemowy Chrome/Playwright. [PR #7](https://github.com/patrykrekin/AppEA/pull/7), [próba diagnostyczna](https://github.com/patrykrekin/AppEA/actions/runs/42297258742).
 
-**Nowy trop do sprawdzenia, nie wynik:** link „View All” z ratingu 86 prowadzi do
-`https://www.fut.gg/players/?market_players=true&overall__gte=86&overall__lte=86&sorts=current_price`;
-przy nazwie `page=2` dostępna jest paginacja. Nie ustalono jeszcze, czy dynamiczna lista udostępnia poprawne, aktualne **ceny** i **item ID** dla obu platform; wyniki z renderowania tekstowego nie zawierały kart. To jest krytyczny warunek. Wersja karty i platforma muszą być jednoznaczne.
+**Wynik:** HTTP 200 i cookie `futgg_platform` były poprawne na każdej z 4 stron, lecz w renderowanym DOM były filtry i paginacja, **0 linków do kart** i **0 potwierdzonych cen** na obu rynkach. Nie wiadomo, czy chodzi o brak ładowania wyników w tej sesji, czy inny mechanizm prezentacji; nie udowodniono, że na stronie jest 0 ofert. Brak użytecznego źródła cen dla naszego scrapera: nie wdrażać i nie kontynuować masowego pobierania. Kod testu w osobnym PR, **nie przeznaczony do scalenia**. Produkcyjne `scrape.mjs`, `refresh.yml`, EMA i rekomendacje bez zmian.
 
-**Minimalny test:** tylko rating 86, konsola i PC; próbka strony 1 i ewentualnie 2. Zapisz liczbę widocznych kart, liczbę z wiarygodną ceną, identyfikatory/wersje, poprawność sortowania, porównanie przecięcia z listą TOP 11, czas odpowiedzi i koszt dodatkowych odczytów. Najpierw jedno odizolowane uruchomienie; nie zmieniaj `scrape.mjs` ani `refresh.yml`. Jeśli ceny są nieobecne lub nieweryfikowalne, przerwij i nie rozwijaj dalej ścieżki. Nie opieraj rekomendacji na niedostępnych cenach.
+## 5. Zagadnienie 5 — archiwum v2 po 14,8 h (06.11, pomiar wstępny)
 
-**Decyzja oczekująca:** dopiero po faktycznym wyniku ocenić, czy głębszy odczyt zwiększa ciągłość obserwacji i czy koszt jest akceptowalny. W przeciwnym razie raportować metryki warunkowe na widocznych kartach i poszukiwać niezależnego źródła.
+Próba offline z rzeczywistego `historia-kart.json`, stan archiwum `2026-11-06T21:28:26Z`. **81 migawek/rynek**, 80 sąsiednich par z odstępem <20 minut/rynek. 351 unikalnych kart PS i 448 PC w retencji; 10 970 i 10 767 punktów cenowych. W kolejnych wycinkach wypadło **3 147/10 061 = 31,28%** obserwacji PS i **3 771/9 880 = 38,17%** PC. Duża rotacja w remisach cenowych przy medianie: PS 45,48%, PC 51,69%. Są to przejścia powtarzane, współzależne, NIE niezależne transakcje i NIE prawdopodobieństwa sprzedaży.
 
-## 5. Jak wznowić pracę po utracie konwersacji
+**Warunek dojrzałości w konkretnym momencie:** 36 historycznych punktów, >=8 h pokrycia w oknie 12 h, bez luk >20 min i ze świeżym ostatnim odczytem. Spełniają go **34 karty PS** i **27 kart PC**. W PS tylko ratingi 88/89/90/92/93; PC tylko 89/90/92/93. **Zero kart 83–87** — istotny problem uogólnienia wyników na tańsze ratingi.
+
+**Eksploracyjny walk-forward 2h** (obecna definicja algorytmu, wynik *wyłącznie* w później obserwowanych, wysoko ocenionych kartach):
+- PS: 230 początków, 67 oczekujących, 163 obserwowane, 0 braków po rozliczeniu; 35 różnych kart. MAPE ostatnia 3,383%, mediana 3,725%, EMA 4,056%, hybryda 3,837%.
+- PC: 201 początków, 55 oczekujących, 146 obserwowanych, 0 braków po rozliczeniu; 30 różnych kart. MAPE ostatnia 4,168%, mediana 4,184%, EMA 4,668%, hybryda 4,405%.
+- **Horyzont 12h:** wszystkie 230 (PS) i 201 (PC) początków oczekują; 0 zaobserwowanych wyników. Przy min. 8h wcześniejszej historii 14,8h całkowitej obserwacji nie wystarcza na pierwsze w pełni dojrzałe 12h.
+- Uwaga o uczciwym porównaniu: w istniejącym `sprawdzMetody()` benchmark ostatniej ceny dostaje świeże `p(t)`, podczas gdy EMA i mediana liczą tylko punkty **sprzed t**. Jest to nierówny informacyjnie wariant; kolejne porównania powinny aktualizować też EMA/medianę o `p(t)` (albo porównywać wszystkie metody na danych do `t-1`). Próbny wariant `t`-inclusive daje PS EMA 4,032%, mediana 3,707%; PC EMA 4,641%, mediana 4,144%. To wciąż mała i selektywna próba, **nie powód do wdrożenia**.
+- Zmienne archiwum i historia ulegają dalszym zmianom, liczby są wyłącznie migawką na podany czas. Późniejsze raporty muszą odczytać nowe dane; nie dopisywać cen ani wyników brakujących.
+
+**Następny najlepszy krok:** bez zmian produkcyjnych, przygotować porównanie metodyk prognostycznych na *tym samym zbiorze informacji do t*, z rozliczeniem wyników dla każdej karty, klastrów i ratingów osobno. Nie optymalizować progów, dopóki 83–87 nie będą dostatecznie obserwowalne. Później wrócić do problemu zewnętrznego źródła wycen, tylko jeśli będzie faktycznie dostępne i wiarygodne.
+
+## 6. Jak wznowić pracę po utracie konwersacji
 
 W nowym czacie podaj link do tego dokumentu i napisz: „Kontynuujemy AppEA według START_TUTAJ_ANALITYKA.md; przeczytaj też REJESTR_ZRODEL_BADAWCZYCH.md, sprawdź obecny main, ostatnie Actions i PR, a potem podejmij najbliższy otwarty eksperyment. Nie modyfikuj produkcji bez testów”.
 
