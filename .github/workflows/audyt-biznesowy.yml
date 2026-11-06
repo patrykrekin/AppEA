@@ -34,6 +34,7 @@ jobs:
           node tliczby.mjs
           node thistoria.mjs
           node tjakosc-historii.mjs
+          node tcenzurowanie.mjs
           node raport-historyczny.mjs ../historia-kart.json > /tmp/raport-historyczny-test.json
       - name: Uruchom izolowany przebieg fast bez publikacji
         env:
@@ -41,6 +42,7 @@ jobs:
         run: |
           cp data.json "$RUNNER_TEMP/data.json"
           cp historia.json "$RUNNER_TEMP/historia.json"
+          cp historia-kart.json "$RUNNER_TEMP/historia-kart.json"
           CHROME="$(command -v google-chrome || true)"
           test -n "$CHROME" || { echo "Brak systemowego Chrome"; exit 1; }
           cd scraper
@@ -53,7 +55,7 @@ jobs:
           if (d.awaria) throw new Error(JSON.stringify(d.awaria));
           const path = process.env.FUT_DATA.replace(/[^/]+$/, "historia-kart.json");
           const h = JSON.parse(readFileSync(path,"utf8"));
-          if (h.wersja !== 1 || !Object.keys(h.ps||{}).length || !Object.keys(h.pc||{}).length)
+          if (h.wersja !== 2 || !h.migawki?.ps?.length || !h.migawki?.pc?.length || !Object.keys(h.ps||{}).length || !Object.keys(h.pc||{}).length)
             throw new Error("Archiwum nie zebralo cen obu platform");
           console.log("Historia kart: " + Object.keys(h.ps).length + " PS, " + Object.keys(h.pc).length + " PC");
           if (d.okazje?.poziomy?.ps && !Object.values(d.okazje.poziomy.ps).some(x=>x.v===3)) throw new Error('Brak modelu EMA v3');
@@ -76,6 +78,7 @@ jobs:
                 throw new Error("Brak rozliczenia kohorty: "+side+" "+h);
             }
           }
+          if(r.cenzurowanie.platformy.ps.obserwowanePrzejscia<0) throw new Error("Zle liczniki migawek");
           console.log("Raport jakości ma spójne liczniki dla PC/PS");
           NODE
       - name: Sprawdz skladnie JavaScript na stronie
