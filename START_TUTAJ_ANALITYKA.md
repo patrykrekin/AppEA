@@ -39,12 +39,14 @@ Próba offline z rzeczywistego `historia-kart.json`, stan archiwum `2026-11-06T2
 
 **Warunek dojrzałości w konkretnym momencie:** 36 historycznych punktów, >=8 h pokrycia w oknie 12 h, bez luk >20 min i ze świeżym ostatnim odczytem. Spełniają go **34 karty PS** i **27 kart PC**. W PS tylko ratingi 88/89/90/92/93; PC tylko 89/90/92/93. **Zero kart 83–87** — istotny problem uogólnienia wyników na tańsze ratingi.
 
-**Eksploracyjny walk-forward 2h** (obecna definicja algorytmu, wynik *wyłącznie* w później obserwowanych, wysoko ocenionych kartach):
+**Eksploracyjny walk-forward 2h** (obecna definicja algorytmu, wynik *wyłącznie* w później obserwowanych, wysoko ocenionych kartach; powtarzalna migawka danych: [commit b745843](https://github.com/patrykrekin/AppEA/commit/b745843bba39ea29d06ec397dbf20638e0f4ba01)):
 - PS: 230 początków, 67 oczekujących, 163 obserwowane, 0 braków po rozliczeniu; 35 różnych kart. MAPE ostatnia 3,383%, mediana 3,725%, EMA 4,056%, hybryda 3,837%.
 - PC: 201 początków, 55 oczekujących, 146 obserwowanych, 0 braków po rozliczeniu; 30 różnych kart. MAPE ostatnia 4,168%, mediana 4,184%, EMA 4,668%, hybryda 4,405%.
 - **Horyzont 12h:** wszystkie 230 (PS) i 201 (PC) początków oczekują; 0 zaobserwowanych wyników. Przy min. 8h wcześniejszej historii 14,8h całkowitej obserwacji nie wystarcza na pierwsze w pełni dojrzałe 12h.
 - Uwaga o uczciwym porównaniu: w istniejącym `sprawdzMetody()` benchmark ostatniej ceny dostaje świeże `p(t)`, podczas gdy EMA i mediana liczą tylko punkty **sprzed t**. Jest to nierówny informacyjnie wariant; kolejne porównania powinny aktualizować też EMA/medianę o `p(t)` (albo porównywać wszystkie metody na danych do `t-1`). Próbny wariant `t`-inclusive daje PS EMA 4,032%, mediana 3,707%; PC EMA 4,641%, mediana 4,144%. To wciąż mała i selektywna próba, **nie powód do wdrożenia**.
 - Zmienne archiwum i historia ulegają dalszym zmianom, liczby są wyłącznie migawką na podany czas. Późniejsze raporty muszą odczytać nowe dane; nie dopisywać cen ani wyników brakujących.
+
+**Kontrola wrażliwości na ważenie po kartach (2h, uaktualniona mediana/EMA o p(t)):** w PS 35 kart: makro-MAPE ostatnia **3,515%**, mediana **3,628%**, EMA **4,099%**; w PC 30 kart: ostatnia **4,082%**, mediana **4,055%**, EMA **4,562%**. Różnica mediana minus ostatnia po uśrednieniu po kartach: PS **+0,114 p.p.**, PC **−0,027 p.p.**. Eksploracyjny bootstrap grupowany po kartach (4000 resampli, stały seed) dał bardzo szeroki zakres 95% dla różnicy: PS **−0,506 do +0,745 p.p.**, PC **−1,236 do +1,199 p.p.**. Zakłada niezależność kart i ignoruje wspólne szoki rynku, więc to **nie jest dowód równoważności ani istotności**; wskazuje tylko, że na tej próbce nie ma stabilnej podstawy do wyboru modelu.
 
 **Następny najlepszy krok:** bez zmian produkcyjnych, przygotować porównanie metodyk prognostycznych na *tym samym zbiorze informacji do t*, z rozliczeniem wyników dla każdej karty, klastrów i ratingów osobno. Nie optymalizować progów, dopóki 83–87 nie będą dostatecznie obserwowalne. Później wrócić do problemu zewnętrznego źródła wycen, tylko jeśli będzie faktycznie dostępne i wiarygodne.
 
