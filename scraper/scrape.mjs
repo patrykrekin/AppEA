@@ -11,6 +11,7 @@ import { dopiszRejestr, zrodloCen, skutecznoscInw } from "./lib/rejestr.mjs";
 import { toSnipeRows } from "./lib/snajperka.mjs";
 import { dopiszSzereg, policzMonitor } from "./lib/monitor.mjs";
 import { dopiszHistorie } from "./lib/historia.mjs";
+import { dopisz as dopiszHistorieKart } from "./lib/eksperyment-historii-kart.mjs";
 import { kluczKarty } from "./lib/klucz-karty.mjs";
 
 /* SBC co godzinę, nie dwa razy na dobę. 28.09: SBC z terminem 24 h potrafi
@@ -375,11 +376,13 @@ let browser, page;
 const at = Math.floor(Date.now() / 1000);
 const stamp = new Date().toLocaleString("pl-PL", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" });
 let fields = {};
+let bandsDoArchiwumKart = null; // probki z tego samego poprawnie zwalidowanego cyklu fast
 
 try {
   ({ browser, page } = await open());
   if (cycle === "fast"){
     const bands = await readBandsGG(page);
+    bandsDoArchiwumKart = bands;
     const prev = read(OUT);
 
     /* Własny indeks z dna pasm. PC i konsola liczone osobno — to dwa rynki.
@@ -627,6 +630,21 @@ try {
   const poprzedniAlarm = read(OUT).awaria;
   const zakonczylSieCyklAwarii = !poprzedniAlarm || poprzedniAlarm.cykl === cycle;
   patch(OUT, { ...fields, ...(zakonczylSieCyklAwarii ? { awaria: null } : {}) });
+  /* ARCHIWUM BADAWCZE — dopiero PO zatwierdzonej walidacji i zapisie data.json.
+     Żaden pomiar nie wpływa na EMA, indeks, rekomendacje ani rejestr skuteczności.
+     Nie dodajemy wejść na fut.gg. Błąd archiwum nie może wstrzymać cen. */
+  if (cycle === "fast" && bandsDoArchiwumKart) {
+    try {
+      const startArchiwum = Date.now();
+      const archivePath = OUT.replace(/[^/\\]+$/, "historia-kart.json");
+      const archiwum = dopiszHistorieKart(read(archivePath), bandsDoArchiwumKart, at);
+      if (archiwum.statystyki.dopisano > 0) patch(archivePath, archiwum.stan);
+      console.log("historia-kart (tylko badanie): " + JSON.stringify(archiwum.statystyki)
+        + ", czas=" + (Date.now()-startArchiwum) + " ms");
+    } catch (e) {
+      console.warn("historia-kart: pomijam blad eksperymentu — " + String(e.message||e).split("\\n")[0]);
+    }
+  }
   console.log(`${cycle}: zapisano ${OUT} (${stamp})`);
 } catch (e) {
   const powod = String((e && e.message) || e).split("\n")[0].slice(0, 300);
