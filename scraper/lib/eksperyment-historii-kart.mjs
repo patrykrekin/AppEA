@@ -4,7 +4,7 @@
  */
 import { onGrid } from "./grid.mjs";
 
-export const WERSJA = 1;
+export const WERSJA = 2; // Migawki od v2; historia v1 nie ma dowodow nieobecnosci
 export const PROBKA = 600;      // co 10 minut; PARAMETR DO WALIDACJI
 export const RETENCJA = 48*3600;
 export const OKNO = 12*3600;
@@ -26,32 +26,53 @@ const mediana = xs => {
 
 /** Bez I/O; nie wypelnia brakujacych cen i nie miesza rynkow. */
 export function dopisz(stary, bands, at, krok = PROBKA, retencja = RETENCJA) {
-  if (!Number.isInteger(at) || at <= 0) throw new Error("Nieprawidlowy czas");
-  const prev = stary?.wersja === WERSJA ? stary : {ps:{},pc:{}};
-  const out = {wersja:WERSJA,at,ps:{},pc:{}};
-  let dopisano=0,odrzucono=0;
+  if(!Number.isInteger(at)||at<=0)throw new Error("Nieprawidlowy czas");
+  /* V1 -> V2 zachowuje ceny, ale nie dopisuje fikcyjnych migawek przeszlosci. */
+  const prev=stary&&[1,WERSJA].includes(stary.wersja)?stary:{ps:{},pc:{}};
+  if(Number.isFinite(prev.at)&&prev.at>at)throw new Error("Odczyt sprzed archiwum");
+  const out={wersja:WERSJA,at,ps:{},pc:{},migawki:{ps:[],pc:[]}};
+  let dopisano=0,odrzucono=0,dodaneMigawki=0,odrzuconePasma=0;
   for(const side of ["ps","pc"]){
-    for(const [k,v] of Object.entries(prev[side]||{})){
+    for(const [key,v] of Object.entries(prev[side]||{})){
       if(!Array.isArray(v?.punkty))continue;
       const punkty=v.punkty.filter(x=>Array.isArray(x)&&Number.isFinite(x[0])
-        && Number.isFinite(x[1])&&x[0]<=at&&at-x[0]<=retencja);
-      if(punkty.length)out[side][k]={...v,punkty};
+        &&Number.isFinite(x[1])&&x[0]<=at&&at-x[0]<=retencja);
+      if(punkty.length)out[side][key]={...v,punkty};
     }
+    const wcześniejsze=Array.isArray(prev.migawki?.[side])?prev.migawki[side]:[];
+    out.migawki[side]=wcześniejsze.filter(x=>Array.isArray(x)&&Number.isFinite(x[0])
+      &&x[0]<=at&&at-x[0]<=retencja).map(x=>[x[0],x[1]]);
+    const poprzednia=out.migawki[side].at(-1)?.[0];
+    if(Number.isFinite(poprzednia)&&at-poprzednia<krok)continue;
+    const oceny=[],karty=[];
     for(const [rating,arr] of Object.entries(bands?.[side]||{})){
-      for(const card of (Array.isArray(arr)?arr:[])){
-        const k=kluczKarty(+rating,card);
-        if(!k||!onGrid(card.price)){odrzucono++;continue;}
-        const old=out[side][k],punkty=old?.punkty||[];
-        const ostatni=punkty.at(-1);
-        if(ostatni&&at-ostatni[0]<krok)continue;
-        out[side][k]={id:String(card.id),rating:+rating,nazwa:card.name,
-          punkty:[...punkty,[at,card.price]]};
-        dopisano++;
+      if(!Number.isInteger(+rating)||!Array.isArray(arr)||!arr.length)continue;
+      let ok=true;const unique=new Set(),temp=[];
+      for(const card of arr){
+        const key=kluczKarty(+rating,card);
+        if(!key||!onGrid(card.price)||unique.has(key)){
+          ok=false;odrzucono++;continue;
+        }
+        unique.add(key);temp.push({key,rating:+rating,card});
       }
+      /* Wadliwy rekord dyskwalifikuje pasmo jako dowod NIEOBECNOSCI.
+         Pomijamy cala migawke pasma, nie usuwamy poprawnej historii. */
+      if(!ok){odrzuconePasma++;continue;}
+      oceny.push(+rating);karty.push(...temp);
+    }
+    if(!oceny.length)continue;
+    out.migawki[side].push([at,oceny.sort((a,b)=>a-b)]);
+    dodaneMigawki++;
+    for(const {key,rating,card} of karty){
+      const last=out[side][key]?.punkty||[];
+      if(last.length&&last.at(-1)[0]>=at)continue;
+      out[side][key]={id:String(card.id),rating,nazwa:card.name,
+        punkty:[...last,[at,card.price]]};
+      dopisano++;
     }
   }
-  return {stan:out,statystyki:{dopisano,odrzucono,ps:Object.keys(out.ps).length,
-    pc:Object.keys(out.pc).length}};
+  return {stan:out,statystyki:{dopisano,odrzucono,dodaneMigawki,odrzuconePasma,
+    ps:Object.keys(out.ps).length,pc:Object.keys(out.pc).length}};
 }
 
 /** Wszystkie estymatory otrzymuja te same PRZESZLE punkty; odczyt t nie wchodzi.
