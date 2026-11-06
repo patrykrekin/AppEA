@@ -84,3 +84,31 @@ https://www.publichealth.columbia.edu/research/population-health-methods/time-ev
 **Uwaga o migracji:** przejście `historia-kart.json` v1→v2 zachowuje wszystkie surowe ceny i nie odtwarza fikcyjnych migawek z przeszłości. Z v1 można obliczać ceny, ale NIE można stwierdzić, czy karta była nieobecna w niezapisanym wcześniej odczycie.
 
 **Kolejny warunek testu:** co najmniej kilkadziesiąt kolejnych poprawnych migawek na platformę i dostateczne liczebności w grupach cenowych. Brak danych nie zostaje sztucznie zamieniony na liczbę 0 lub cel transakcji. Część testów może pozostać niedostępna, jeśli lista jest zbyt selektywna.
+
+
+## Zagadnienie 3 — szybka próba niezależnej wyceny po wypadnięciu z listy (2026-11-06)
+
+**Źródło operacyjne:** indywidualne profile FC27 na FUT.GG, zweryfikowane przez oddzielne GitHub Actions (systemowy Chrome/Playwright), bez zmiany produkcyjnego scrapera. Raport: https://github.com/patrykrekin/AppEA/pull/6 ; log i artefakt: https://github.com/patrykrekin/AppEA/actions/runs/42177575612 . Porównanie dodatkowe: https://github.com/patrykrekin/AppEA/pull/5 .
+
+### Wynik bez oczekiwania 8–12 h
+- Dwie poprawne migawki v2: 06:38:32 i 06:50:40 UTC. Z 125 konsolowych kart 31 (24,80%) nie wystąpiło w następnej migawce; z 122 PC — 40 (32,79%). To *rotacja odczytanego wycinka* w jednej parze, nie rynek transakcji.
+- Użyto 6 **konkretnych kart znikających w v2** (Konaté, Isak, Lavelle PS; Bruno Guimarães, Musiala, Kimmich PC) oraz 2 kontrole widoczne nadal (Schick PS, David Raya PC).
+- Profil indywidualny: zweryfikowano platformę, player ID/item ID, OVR i wersję FC27 w **8/8** przypadków. Wszystkie 8 pokazały `Price: —`. **0/8 niezależnych liczbowych wycen**, również w grupie kontrolnej.
+- Wniosek: nie wdrażać dodatkowych odczytów z tych samych profili FUT.GG. Kod HTTP 200 i obecność karty nie gwarantują dostępności wyceny. `Grading Score` nie jest ceną. Brak wartości na profilu nie oznacza braku kart na rynku.
+- Test trwał poniżej 10 sekund samego odwiedzania stron, w osobnym, read-only workflow. PR z kodem testowym zamknięty bez scalenia; `main`, EMA, indeks, snajperka i cron bez zmian.
+
+### Test hipotezy selekcji (tylko opisowo, jedna para migawek)
+| Grupa ceny względem mediany tego samego pasma | Konsola | PC |
+|---|---:|---:|
+| Taniej od mediany | 6/39 = 15,38% poza listą | 11/36 = 30,56% |
+| Drożej od mediany | 3/26 = 11,54% | 8/34 = 23,53% |
+| Równo z medianą | 22/60 = 36,67% | 21/52 = 40,38% |
+
+**Porównanie z hipotezą z zagadnienia 2:** w pierwszej parze droższa grupa NIE wypadała częściej niż tańsza (odwrotny kierunek: PS 11,54% wobec 15,38%; PC 23,53% wobec 30,56%). Największą rotację miały remisy na medianie. To wskazówka, że kolejność/tie-break przy identycznych cenach może mieć znaczenie, ale nie dowód przyczyny ani statystycznie stabilny wynik.
+
+**Co zostaje z literatury (Little/Rubin, Columbia) i wcześniejszych testów:** obciążenie przez nieprzypadkową dostępność danych nadal jest możliwe. Nie możemy wnioskować o sukcesie transakcji z braku notowania. Metody selekcji muszą być oceniane na kolejnych próbach i z jawnie zapisaną obserwowalnością.
+
+### Następny test o najwyższej wartości
+Zamiast czekać na pełne 12h, znaleźć źródło, które dla określonego *item ID i platformy* udostępnia **liczbową cenę z czasem publikacji** także poza TOP 5/11. Porównać 3–5 kart w nieprodukcyjnej próbie i 1–2 kontrole. Wykluczyć źródła agregujące ten sam FUT.GG bez nowego, niezależnego pomiaru. Jeżeli źródło istnieje i jest stabilne, dopiero wtedy rozważyć dodatkowe pobieranie; w przeciwnym razie raportować wyłącznie warunkowy wynik na dostępnych próbkach.
+
+**Stan:** eksperyment przeprowadzony, indywidualne profile FUT.GG odrzucone jako źródło liczbowej weryfikacji. Nie wybrano nowego algorytmu wyceny.
