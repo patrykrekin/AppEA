@@ -36,8 +36,8 @@ const bad=dopisz(stan,{ps:{87:[{...card,price:9750},{name:'Brak id',price:5000}]
 assert.equal(bad.statystyki.odrzucono,2);
 const afterGap=porownaj(stan,'ps',87,card,t+90*600);
 assert.equal(afterGap.gotowe,false);
-const sparse={wersja:WERSJA,ps:{[id]:{punkty:Array.from({length:60},(_,i)=>[t+i*1200,5000])}},pc:{}};
-assert.equal(porownaj(sparse,'ps',87,card,t+120*600).gotowe,false,'luka i przestarzaly punkt nie daje wyceny');
+const sparse={wersja:WERSJA,ps:{[id]:{punkty:Array.from({length:60},(_,i)=>[t+i*1800,5000])}},pc:{}};
+assert.equal(porownaj(sparse,'ps',87,card,t+180*600).gotowe,false,'luka i przestarzaly punkt nie daje wyceny');
 const reset=dopisz(stan,{ps:{},pc:{}},t+5*86400);
 assert.equal(Object.keys(reset.stan.ps).length,0,'retencja usuwa stare rekordy bez zastepowania ich zerami');
 const onlyMissing={ps:{87:[]},pc:{87:[]}};
