@@ -1,0 +1,41 @@
+name: Badanie — głębsze listy 86 OVR (tylko PR)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scraper/badanie-glebokosci-86.mjs'
+      - '.github/workflows/badanie-glebokosci-86.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  tylko-odczyt:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Zależności bez instalowania nowej przeglądarki
+        working-directory: scraper
+        run: npm install --no-audit --no-fund
+      - name: Chrome i kontrola składni
+        working-directory: scraper
+        run: |
+          node --check badanie-glebokosci-86.mjs
+          CHROME="$(command -v google-chrome || true)"
+          test -n "$CHROME" || { echo "Brak systemowego Chrome"; exit 1; }
+          echo "FUT_CHROMIUM=$CHROME" >> "$GITHUB_ENV"
+      - name: 86 OVR / PS i PC / strony 1 i 2
+        working-directory: scraper
+        run: node badanie-glebokosci-86.mjs
+      - name: Zachowaj wynik także po błędzie
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnostyka-glebszych-list-86
+          path: scraper/glebokosc-86-raport.json
+          if-no-files-found: warn
+          retention-days: 3
