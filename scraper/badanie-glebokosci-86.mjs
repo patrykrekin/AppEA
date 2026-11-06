@@ -25,7 +25,7 @@ async function pobierz(platform, pageNo) {
       const cookie = (document.cookie.split(";").map(x => x.trim())
         .find(x => x.startsWith("futgg_platform=")) || "").split("=")[1] || "";
       const linki = [...document.querySelectorAll("a[href]")].filter(a => {
-        try { return /^\\/players\\/\\d+(?:\\/|$)/.test(new URL(a.href).pathname); }
+        try { return /^\/players\/\d+(?:\/|$)/.test(new URL(a.href).pathname); }
         catch { return false; }
       });
       const seen = new Set();
@@ -34,17 +34,17 @@ async function pobierz(platform, pageNo) {
         const href = new URL(a.href).pathname;
         if (seen.has(href)) continue;
         seen.add(href);
-        const tekst = (a.innerText || "").replace(/\\s+/g, " ").trim();
-        const blisko = (a.parentElement?.innerText || "").replace(/\\s+/g, " ").trim();
+        const tekst = (a.innerText || "").replace(/\s+/g, " ").trim();
+        const blisko = (a.parentElement?.innerText || "").replace(/\s+/g, " ").trim();
         karty.push({
-          id: (href.match(/\\/players\\/(\\d+)/) || [])[1] || null,
+          id: (href.match(/\/players\/(\d+)/) || [])[1] || null,
           url: href,
           tekst: tekst.slice(0, 200),
           okolica: blisko.slice(0, 280),
           alt: a.querySelector("img[alt]")?.alt?.slice(0, 150) || ""
         });
       }
-      const visibleText = (document.body?.innerText || "").replace(/\\n{3,}/g, "\\n\\n");
+      const visibleText = (document.body?.innerText || "").replace(/\n{3,}/g, "\n\n");
       const pageLinks = [...document.querySelectorAll('a[href*="page="]')]
         .slice(0, 15).map(a => ({ text: a.innerText?.trim(), href: a.getAttribute("href") }));
       return {
@@ -54,7 +54,7 @@ async function pobierz(platform, pageNo) {
         pagination: pageLinks,
         trailingText: visibleText.slice(-1700),
         bodyCharacters: visibleText.length,
-        priceTokensInExamples: karty.filter(k => /\\b(?:\\d{1,3}(?:,\\d{3})+|\\d+(?:\\.\\d+)?[KM])\\b/i.test(k.tekst + " " + k.okolica)).length
+        priceTokensInExamples: karty.filter(k => /\b(?:\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?[KM])\b/i.test(k.tekst + " " + k.okolica)).length
       };
     });
     const expected = platform === "ps" ? "ps5" : "pc";
