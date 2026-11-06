@@ -51,3 +51,36 @@ https://itl.nist.gov/div898/software/dataplot/refman2/auxillar/mad.htm
 
 ## Status po etapie 1
 Dotychczasowe produkcyjne obliczenia cen i rekomendacje bez zmian. Nowe funkcje jako odczytowe badanie offline, gotowość dopiero po rzeczywistej, potwierdzonej sekwencji próbek.
+
+
+## Zagadnienie 2 — zniknięcie karty z limitowanej listy (2026-11-06)
+
+### Źródło C: Little & Rubin, Statistical Analysis with Missing Data, wyd. 3, rozdz. 3 (2019)
+https://onlinelibrary.wiley.com/doi/10.1002/9781119482260.ch3
+
+**Wniosek ze źródła:** badanie wyłącznie kompletnych przypadków może obciążać wynik, gdy prawdopodobieństwo dostępności danych zależy od badanego procesu; ważenie przypadków wymaga dodatkowych założeń i oszacowania prawdopodobieństwa bycia zaobserwowanym.
+**Hipoteza dla EA:** karta droższa względem innych w tym samym pasmie częściej wypada z ograniczonej listy; próba składająca się tylko z kart widocznych po 12 godzinach zafałszuje szacowaną skuteczność strategii.
+**Test:** `audytNieobecnosci` liczy odsetek zniknięć z listy osobno dla kart tańszych od mediany pasma, droższych od mediany i przy remisach. To WYŁĄCZNIE porównanie opisowe, bez przypisywania przyczynowości. Przed nowymi migawkami brak dowodu nieobecności.
+**Status:** weryfikacja w eksperymencie; nie wdrożono ważenia IPCW ani predykcji transakcji.
+
+### Źródło D: Columbia University Mailman School of Public Health — Time-to-Event Data Analysis
+https://www.publichealth.columbia.edu/research/population-health-methods/time-event-data-analysis
+
+**Wniosek ze źródła:** standardowe metody analizy czasu do zdarzenia wymagają założeń o nieinformacyjnym cenzurowaniu. Przy podejrzeniu cenzurowania informacyjnego należy badać wrażliwość wyników na scenariusze najlepszego i najgorszego przypadku.
+**Hipoteza dla EA:** brak przyszłego odczytu może być związany z ceną, zniknięciem wystawienia albo zmianą rankingu, nie z faktem sprzedaży. Standardowe Kaplan–Meier i niezweryfikowane IPCW nie naprawią tego automatycznie.
+**Test:** jawna migawka poprawnie odczytanego fragmentu pasma; statusy `widoczna-w-liscie`, `poza-odczytana-lista`, `nieocenialne-brak-migawki-pasma`. Pomocniczy wzór:
+- `N = S + F + U` (S=tak, F=nie, U=brak rozstrzygnięcia dla **zadanego binarnego zdarzenia w punkcie h**).
+- `p_obserwowanych = S/(S+F)` — tylko warunkowy na widoczności.
+- `p_min=S/N`, `p_max=(S+U)/N` — zakres skrajnych scenariuszy, nie przedział ufności ani prawdopodobieństwo sprzedaży w grze.
+
+### Porównanie ze wcześniejszymi ustaleniami
+| Temat | Etap 0/1 | Dodatkowe ustalenie | Decyzja |
+|---|---|---|---|
+| Brak późniejszego notowania | Oznaczony jako nierozstrzygnięty | Rozdzielamy brak całej migawki, brak poprawnego pasma i nieobecność konkretnej karty w poprawnie pobranym wycinku | Wersja archiwum 2; bez imputacji |
+| Wygrana w backteście | Wymagany późniejszy, rzeczywiście zaobserwowany punkt | Wybór obserwowanych przypadków może zależeć od ceny; nie wolno przełożyć warunkowej skuteczności na ogół kart | Raportuj brakujące wyniki i granice skrajne |
+| Wiarygodność hipotezy o selekcji | Znana konstrukcja źródła (limit listy) | Trzeba sprawdzić, czy brak zależy od względnej ceny w tym samym pasmie i na tej samej platformie | Porównanie grup po dłuższej historii, bez wniosków przy n<20/grupę |
+| „Karta zniknęła, więc sprzedana” | Brak dowodu | Zniknięcie nie rozróżnia wyprzedania oferty, zmiany ceny, limitu listy ani błędu parsera | Nigdy nie zapisuj jako sprzedaży |
+
+**Uwaga o migracji:** przejście `historia-kart.json` v1→v2 zachowuje wszystkie surowe ceny i nie odtwarza fikcyjnych migawek z przeszłości. Z v1 można obliczać ceny, ale NIE można stwierdzić, czy karta była nieobecna w niezapisanym wcześniej odczycie.
+
+**Kolejny warunek testu:** co najmniej kilkadziesiąt kolejnych poprawnych migawek na platformę i dostateczne liczebności w grupach cenowych. Brak danych nie zostaje sztucznie zamieniony na liczbę 0 lub cel transakcji. Część testów może pozostać niedostępna, jeśli lista jest zbyt selektywna.

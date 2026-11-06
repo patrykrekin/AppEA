@@ -23,6 +23,7 @@ jobs:
       - name: Sprawdz historie i warunkowy wynik modeli
         run: |
           node scraper/tjakosc-historii.mjs
+          node scraper/tcenzurowanie.mjs
           node scraper/raport-historyczny.mjs historia-kart.json > raport-jakosci.json
           node --input-type=module <<'NODE'
           import {readFileSync,appendFileSync} from "node:fs";
@@ -40,6 +41,17 @@ jobs:
             lines.push("| "+p+" | "+q.kart+" | "+q.probek+" | "+q.swiezych20min+
               " | "+q.gotowych12h+" | "+q.odstajacych+" |");
           }
+          lines.push("","## Nieobecnosc w limitowanej liscie (tylko od migawek v2)","",
+            "| Rynek | Pary migawek | Przejscia kart | Zniknelo z listy | Udzial % | Gorna polowa % | Dolna polowa % |",
+            "|---|---:|---:|---:|---:|---:|---:|");
+          for(const p of ["ps","pc"]){
+            const q=r.cenzurowanie.platformy[p],f=x=>x===null?"—":x;
+            lines.push("| "+p+" | "+q.paryMigawek+" | "+q.obserwowanePrzejscia+
+              " | "+q.zniknelyZListy+" | "+f(q.udzialZnikajacychPct)+
+              " | "+f(q.zniknieciaWGornejPolowie.udzialPct)+
+              " | "+f(q.zniknieciaWDolnejPolowie.udzialPct)+" |");
+          }
+          lines.push("","Nieobecnosc w ograniczonej liscie NIE dowodzi sprzedazy, braku karty na rynku ani przyszlej ceny.");
           lines.push("","## Ocena modeli po 2 h i 12 h","",
             "| Rynek | Horyzont | Oceniane początki | Rozstrzygnięte | Niewidoczne | Czekające | Błąd ostatniej | Błąd EMA | Błąd mediany | Błąd hybrydy |",
             "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|");
