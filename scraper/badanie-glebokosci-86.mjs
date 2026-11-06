@@ -78,6 +78,13 @@ try {
       first, second, overlapPage1Page2: overlap,
       uniqueAcrossPages: new Set([...first.ids, ...second.ids]).size
     };
+    for (const r of [first,second]) {
+      console.log("DIAGNOSTYKA " + platform + " strona " + r.page + ": " + JSON.stringify({
+        http: r.http, cookie: r.cookie, title: r.title, bodyCharacters: r.bodyCharacters,
+        pagination: r.pagination, visibleTail: r.trailingText?.slice(-1100),
+        links: r.linkCount, cards: r.uniqueCards
+      }));
+    }
     console.log(platform.toUpperCase() + ": page1=" + first.uniqueCards + ", page2=" +
       second.uniqueCards + ", wspólne ID=" + overlap + ", poprawne cookies=" +
       first.cookieCorrect + "/" + second.cookieCorrect +
