@@ -1,5 +1,7 @@
 # Rejestr źródeł i hipotez AppEA — log kumulacyjny
 
+> **Punkt wznowienia po utracie rozmowy:** [START_TUTAJ_ANALITYKA.md](START_TUTAJ_ANALITYKA.md) — obowiązujący protokół pracy, zasady bezpieczeństwa i aktualny etap. Przed nowym eksperymentem przeczytaj oba dokumenty.
+
 ## Zasada weryfikacji (od 2026-11-06)
 Przy KAŻDYM nowym zagadnieniu dobieramy 1–3 konkretne źródła. Notujemy:
 - wniosek z publikacji; jaką nową cechę metody uzasadnia;
