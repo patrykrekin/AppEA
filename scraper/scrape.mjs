@@ -642,7 +642,7 @@ try {
       console.log("historia-kart (tylko badanie): " + JSON.stringify(archiwum.statystyki)
         + ", czas=" + (Date.now()-startArchiwum) + " ms");
     } catch (e) {
-      console.warn("historia-kart: pomijam blad eksperymentu — " + String(e.message||e).split("\\n")[0]);
+      console.warn("historia-kart: pomijam blad eksperymentu — " + String(e.message||e).split("\n")[0]);
     }
   }
   console.log(`${cycle}: zapisano ${OUT} (${stamp})`);
