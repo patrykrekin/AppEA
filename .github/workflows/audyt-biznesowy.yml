@@ -33,6 +33,8 @@ jobs:
           node tstabilnosc.mjs
           node tliczby.mjs
           node thistoria.mjs
+          node tjakosc-historii.mjs
+          node raport-historyczny.mjs ../historia-kart.json > /tmp/raport-historyczny-test.json
       - name: Uruchom izolowany przebieg fast bez publikacji
         env:
           FUT_DATA: ${{ runner.temp }}/data.json
@@ -57,6 +59,24 @@ jobs:
           if (d.okazje?.poziomy?.ps && !Object.values(d.okazje.poziomy.ps).some(x=>x.v===3)) throw new Error('Brak modelu EMA v3');
           if (!d.tier?.cards?.ps || !d.tier?.cards?.pc) throw new Error('Brak rynku PC lub konsoli');
           console.log('OK: obie platformy i EMA v3, bez zapisu na main');
+          NODE
+      - name: Sprawdz raport historii na izolowanym pobraniu
+        working-directory: scraper
+        run: |
+          node raport-historyczny.mjs "$RUNNER_TEMP/historia-kart.json" > /tmp/raport-historyczny-po-odczycie.json
+          node --input-type=module <<'NODE'
+          import {readFileSync} from "node:fs";
+          const r=JSON.parse(readFileSync("/tmp/raport-historyczny-po-odczycie.json","utf8"));
+          if(r.audyt.platformy.ps.kart===0||r.audyt.platformy.pc.kart===0)
+            throw new Error("Brak kart w raporcie");
+          for(const side of ["ps","pc"]){
+            for(const h of ["7200","43200"]){
+              const x=r.backtest.wyniki[side][h];
+              if(x.poczatki!==x.oczekujace+x.brakKolejnegoNotowania+x.wynikiZaobserwowane)
+                throw new Error("Brak rozliczenia kohorty: "+side+" "+h);
+            }
+          }
+          console.log("Raport jakości ma spójne liczniki dla PC/PS");
           NODE
       - name: Sprawdz skladnie JavaScript na stronie
         run: |
