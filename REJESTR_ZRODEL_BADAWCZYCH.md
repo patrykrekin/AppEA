@@ -147,3 +147,25 @@ Wszystkie obserwowane rozliczenia dotyczą powracających, wysoko ocenionych kar
 **Kontrola wag i niezależności obserwacji:** 163 i 146 rozliczeń pochodziło tylko od 35 kart PS i 30 PC. Po uaktualnieniu metod o p(t) oraz zrównaniu wagi każdej karty (średnia błędów w obrębie karty, następnie średnia po kartach), makro-MAPE PS: ostatnia 3,515%, mediana 3,628%, EMA 4,099%; PC: ostatnia 4,082%, mediana 4,055%, EMA 4,562%. Odchylenie mediana minus ostatnia: PS +0,114 p.p., PC −0,027 p.p. Eksploracyjny bootstrap klastrowy (4000 losowań kart ze zwracaniem, seed 20261106) daje szerokie 95% zakresy różnicy: PS [-0,506; +0,745] p.p., PC [-1,236; +1,199] p.p. Bootstrap nie uwzględnia szoków wspólnych dla różnych kart i nie jest podstawą formalnej istotności. **Nie ma podstaw do wskazania zwycięzcy modelu.**
 
 **Decyzja:** brak zmian w produkcji. Następny test ma wyrównać informację dostępną metodom w t, raportować agregację po kartach oraz oddzielnie ratingach, i nie przedstawiać 2h w selektywnym zbiorze jako wyniku 12h ani ceny transakcji. Status: *weryfikacja wstępna na danych*, nie wdrożone do rekomendacji.
+
+
+## Zagadnienie 6 — uczciwe porównanie prognoz 2h i analiza odporności (2026-11-06)
+
+**Pełny, powtarzalnie opisany audyt:** [AUDYT_POROWNANIE_PROGNOZ_2H_20261106.md](AUDYT_POROWNANIE_PROGNOZ_2H_20261106.md). Dane zamrożone w [commit `b745843`](https://github.com/patrykrekin/AppEA/commit/b745843bba39ea29d06ec397dbf20638e0f4ba01), `historia-kart.json` blob `a361dc2b96f7eef96570713cc9aa64d0593297e3` (`at=1794000506`).
+
+**Źródło E:** Hyndman, Athanasopoulos, *Forecasting: Principles and Practice* 3e, [§5.10](https://otexts.com/fpp3/tscv.html) — osobne pochodzenia i przyszły wynik. **Źródło F:** Deen, de Rooij, [ClusterBootstrap](https://pmc.ncbi.nlm.nih.gov/articles/PMC7148287/) (Behav Res Methods, 2020) — powtórzenia jednego obiektu nie są niezależnymi próbami i powinny być traktowane jako klastry, z osobnym zastrzeżeniem o wspólnych szokach rynkowych. Transfer do EA: ważenie po identyfikatorach kart i kontrola odporności na zależność czasową; żadne źródło nie określa progów optymalnych EA.
+
+**Wyrównanie informacji:** dla porównania prognoz `p(t+2h)` wszystkie metody korzystają z danych **do t włącznie**, a przyszła cena służy wyłącznie ocenie. Filtr: 36 punktów, 8h pokrycia, luka 20min; przyszły pomiar w tolerancji ±15min. 163 wyników PS (35 kart) i 146 PC (30 kart). 12h: nadal 0 rozliczeń. **Żadnych ratingów 83–87**.
+
+| Wariant | PS ostatnia / mediana MAPE | PC ostatnia / mediana MAPE |
+|---|---:|---:|
+| Micro (co 1h) | 3,383% / 3,707% | 4,168% / 4,144% |
+| Macro po kartach (co 1h) | 3,515% / 3,628% | 4,082% / 4,055% |
+| Micro przy pochodzeniach co >=2h | 3,320% / 3,571% | 3,675% / 4,520% |
+| Macro po kartach (co >=2h) | 3,434% / 3,513% | 3,608% / 4,443% |
+
+**Wynik:** maleńka przewaga mediany na PC z próby co 1h **odwraca się** po ograniczeniu nakładania prognoz. Na ratingach 89–90 lepiej wypada ostatnia cena, na 92 częściej mediana; te podgrupy to tylko 8–11 kart na platformę. Różnice statystyczne są niepewne, a horyzont 12h pozostaje nierozliczony. **Nie wdrażać** per-rating ani zmian wag.
+
+**Kluczowa korekta interpretacyjna:** eksperymentalna EMA z 12h okna, inicjowana pierwszą ceną, **nie jest** produkcyjną EMA v3. Produkcyjny poziom dobowy bywa zasiewany szybką EMA, jest resetowany po luce >2h lub zmianie ID i wykorzystywany w sygnale **przed** aktualizacją obecną ofertą. Taka pre-update baza historyczna jest celowa dla wykrywania przeceny i nie stanowi błędu. MAPE z eksperymentalnej EMA nie może służyć do oceny/zmiany produkcyjnej.
+
+**Decyzja:** pozostawić produkcję bez zmian. Następnym etapem jest projekt pasywnej, minimalnej historii **faktycznych stanów produkcyjnej EMA i definicji sygnału sprzed aktualizacji**, bez nowych zapytań do FUT.GG; dopiero po sprawdzeniu kosztu, retencji i regresji rozważać osobne wdrożenie instrumentacji. Status: *audyt wstępny zakończony, brak dowodu przewagi algorytmu*.
