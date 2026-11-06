@@ -1,0 +1,64 @@
+name: Jednorazowy test cen kart poza rankingiem
+on:
+  pull_request:
+    paths:
+      - "scraper/probe-odpadlych.mjs"
+      - ".github/workflows/probe-odpadlych.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: probe-cen-kart-read-only
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    steps:
+      - name: Pobierz kod testowy
+        uses: actions/checkout@v4
+      - name: Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Zależności bez instalowania przeglądarki
+        working-directory: scraper
+        run: npm install --no-audit --no-fund
+      - name: Weryfikuj składnię sondy
+        run: node --check scraper/probe-odpadlych.mjs
+      - name: Sonda 8 kart (bez zapisu cen produkcyjnych)
+        working-directory: scraper
+        run: |
+          CHROME="$(command -v google-chrome)"
+          test -n "$CHROME"
+          FUT_CHROMIUM="$CHROME" node probe-odpadlych.mjs
+      - name: Podsumowanie testu
+        if: always()
+        run: |
+          node --input-type=module <<'NODE'
+          import {existsSync,readFileSync,appendFileSync} from "node:fs";
+          const path="scraper/probe-odpadlych-wynik.json";
+          if(!existsSync(path))process.exit(0);
+          const d=JSON.parse(readFileSync(path,"utf8"));
+          const lines=[
+            "# Test niezależnego notowania kart poza rankingiem",
+            "",
+            "| Rynek | Karta | Próba | Wcześniejsza cena | Status strony | Jawne pole ceny |",
+            "|---|---|---|---:|---|---|"
+          ];
+          for(const x of d.items)lines.push("| "+x.side+" | "+x.name+" "+x.ovr+
+            " | "+x.test+" | "+x.historical+" | "+x.status+" | "+(x.priceText||"brak")+" |");
+          lines.push("","**UWAGA**: znalezione pole ceny nie dowodzi transakcji. Brak ceny nie oznacza zerowej ceny.");
+          appendFileSync(process.env.GITHUB_STEP_SUMMARY,lines.join("\n")+"\n");
+          NODE
+      - name: Zachowaj raport diagnostyczny
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: indywidualne-ceny-futgg
+          path: scraper/probe-odpadlych-wynik.json
+          retention-days: 7
+          if-no-files-found: warn
