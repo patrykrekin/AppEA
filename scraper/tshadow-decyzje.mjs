@@ -50,12 +50,12 @@ check("stan faktycznej decyzji, t oraz niezależność PC/PS",()=>{
  assert.equal(migawka.ps[0][10],30000);
  assert.equal(migawka.ps[0][11],5);
  assert.equal(migawka.ps[0][12],2200);
- assert.deepEqual(migawka.ps[0].slice(13),[1,1,1350,1050]);
+ assert.deepEqual(migawka.ps[0].slice(13,17),[1,1,1350,1050]);
  assert.equal(migawka.pc[0][3],1100.7);
  assert.equal(migawka.pc[0][7],1400);
- assert.deepEqual(migawka.pc[0].slice(13),[0,0,null,null]);
+ assert.deepEqual(migawka.pc[0].slice(13,17),[0,0,null,null]);
  assert.equal(migawka.ps[1][7],null,"kolizja item ID nie moze dziedziczyc starej EMA");
- assert.deepEqual(migawka.ps[1].slice(13),[0,0,null,null]);
+ assert.deepEqual(migawka.ps[1].slice(13,17),[0,0,null,null]);
  assert.equal(statystyki.ps,2);assert.equal(statystyki.pc,1);
  assert.ok(statystyki.bajty<65536);
 });
