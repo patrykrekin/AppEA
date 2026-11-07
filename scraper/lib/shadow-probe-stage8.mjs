@@ -7,6 +7,7 @@ import { writeFileSync } from "node:fs";
 import { zbudujMigawkeDecyzji } from "./shadow-decyzje.mjs";
 import { definicjaOkazji } from "./okazje.mjs";
 import { definicja } from "./rejestr.mjs";
+import { KOSZYK } from "./indeks.mjs";
 
 export function przeprowadzProbeShadow({
   at, bands, preFast, preSlow, trwaloscPo, okazje, inwestycje, sciezka, commit
@@ -18,8 +19,13 @@ export function przeprowadzProbeShadow({
   const wejscie={at,bands,preFast,preSlow,trwaloscPo,okazje,inwestycje};
   const przed=JSON.stringify(wejscie);
   const started=process.hrtime.bigint();
+  // Badamy rzeczywista populacje strategii, tylko te OVR sa analizowane
+  // przez policzOkazje, policzInwestycje i aktualizujPoziomyD.
+  // Ratingi spoza koszyka NIE sa kontrola inwestycyjna; nie walidujemy ich.
+  const selected = Object.fromEntries(["ps","pc"].map(side=>[side,
+    Object.fromEntries(Object.entries(bands[side]||{}).filter(([r])=>KOSZYK.includes(Number(r))))]));
   const {migawka,statystyki}=zbudujMigawkeDecyzji({
-    ...wejscie,definicje:{
+    ...wejscie,bands:selected,definicje:{
       szybka:definicjaOkazji(),inwestycja:definicja(),commit
     }
   });
@@ -32,6 +38,7 @@ export function przeprowadzProbeShadow({
     const szybkie=(okazje[side]?.karty||[]).map(x=>x.klucz);
     metryki[side]={
       obserwowane:rows.length,
+      pominietePasmaPozaStrategia:Object.keys(bands[side]||{}).filter(k=>!KOSZYK.includes(Number(k))).length,
       decyzjaRozpatrywana:rows.filter(x=>KOSZYK.includes(x[0])).length,
       pozaKoszykiem:rows.filter(x=>!KOSZYK.includes(x[0])).length,
       zEMAprzedSzybka:rows.filter(x=>x[3]!=null).length,
