@@ -4,6 +4,7 @@
  * Wołający musi przekazać poziomy sprzed aktualizacji p(t), faktyczne wyniki
  * policzOkazje/policzInwestycje oraz trwalosc juz odswiezona w tym przebiegu.
  *
+ * Klucz obserwacji: platforma + rating + itemId (ID moze wystapic w roznych OVR).
  * Wiersz jest opisem odczytanego wycinka FUT.GG, nie transakcja.
  * Brak karty w kolejnym odczycie nie rozstrzyga ceny ani sprzedazy.
  */
@@ -65,7 +66,7 @@ export function zbudujMigawkeDecyzji({
     const ryn = bands?.[side];
     if (!isObj(ryn) || !Object.keys(ryn).length)
       throw new Error("shadow: brak poprawnych pasm " + side);
-    const seenId = new Set(), seenName = new Set();
+    const seenWariant = new Set(), seenCard = new Set(), seenName = new Set();
     const fast = preFast?.[side] || {}, slow = preSlow?.[side] || {};
     const tr = trwaloscPo?.[side] || {};
     const fastList = okazje?.[side]?.karty || [];
@@ -73,11 +74,11 @@ export function zbudujMigawkeDecyzji({
     if (!Array.isArray(fastList) || !Array.isArray(investList))
       throw new Error("shadow: nieprawidlowa lista wynikow " + side);
     const fastNames = new Set(fastList.map(x => x.klucz));
-    const investById = new Map();
+    const investByCard = new Map();
     for (const x of investList) {
-      if (!goodId(x.id) || !x.klucz || investById.has(String(x.id)))
+      if (!goodId(x.id) || !x.klucz || investByCard.has(x.klucz + "|" + String(x.id)))
         throw new Error("shadow: nierozstrzygalna tozsamosc inwestycji " + side);
-      investById.set(String(x.id), x);
+      investByCard.set(x.klucz + "|" + String(x.id), x);
     }
     for (const rawR of Object.keys(ryn).sort((a,b) => Number(a) - Number(b))) {
       const rating = Number(rawR), cards = ryn[rawR];
@@ -85,14 +86,15 @@ export function zbudujMigawkeDecyzji({
         throw new Error("shadow: wadliwe pasmo " + side + "/" + rawR);
       for (const c of cards) {
         const id = String(c?.id || ""), key = kluczKarty(c?.name, rating);
+        const wariant = rating + "/" + id;
         if (!goodId(id) || typeof c.name !== "string" || !c.name.trim()
-          || !onGrid(c.price) || seenId.has(id) || seenName.has(key))
+          || !onGrid(c.price) || seenWariant.has(wariant) || seenName.has(key))
           throw new Error("shadow: wadliwy/niejednoznaczny rekord " + side + "/" + rawR);
-        seenId.add(id); seenName.add(key);
+        seenWariant.add(wariant); seenCard.add(key + "|" + id); seenName.add(key);
         const f = poziomPrzed(fast[key], id, at);
         const s = poziomPrzed(slow[key], id, at);
         const t = poprawnaTrwalosc(tr[key], id, at);
-        const inv = investById.get(id);
+        const inv = investByCard.get(key + "|" + id);
         if (inv && inv.klucz !== key)
           throw new Error("shadow: inwestycja ma inna wersje karty " + side + "/" + id);
         result[side].push([
@@ -108,8 +110,8 @@ export function zbudujMigawkeDecyzji({
       }
     }
     // Wynik rekomendacji niewidziany w przekazanym wycinku to NIE fałszywy brak sukcesu.
-    for (const id of investById.keys()) if (!seenId.has(id))
-      throw new Error("shadow: rekomendacja nieobecna w poprawnym wycinku " + side + "/" + id);
+    for (const pair of investByCard.keys()) if (!seenCard.has(pair))
+      throw new Error("shadow: rekomendacja nieobecna w poprawnym wycinku " + side + "/" + pair);
     for (const key of fastNames) if (!seenName.has(key))
       throw new Error("shadow: szybki sygnal nieobecny w wycinku " + side + "/" + key);
   }
