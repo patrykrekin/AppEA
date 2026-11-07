@@ -6,6 +6,8 @@ on:
     paths:
       - '.github/workflows/stage12-node24-s3-contract.yml'
       - 'research/stage12/node24-s3-contract.mjs'
+      - 'research/stage12/live-r2-manual.mjs'
+      - 'research/stage12/live-workflow-template.yml'
 permissions:
   contents: read
 jobs:
