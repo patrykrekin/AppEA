@@ -104,7 +104,21 @@ Próba offline z rzeczywistego `historia-kart.json`, stan archiwum `2026-11-06T2
 
 **Decyzja:** moduł monolityczny JSON — niewłaściwy do produkcji; SQLite HOT + ledger — **kandydat do dalszej izolowanej próby, nie wdrożony**. Wszystkie progi EMA, logika okazji, indeks i źródła pozostają nietknięte. **Kolejny etap 11:** wybór i audyt faktycznie trwałego zapisu z kontrolą generacji/ETag/CAS między uruchomieniami, koszt, retencja i retry po utracie potwierdzenia; dopiero wtedy możliwy świadomy pilot. Każdy eksperymentalny zapis w repo wymaga sprawdzenia `main` po stronie GitHub.
 
-## 11. Jak wznowić pracę po utracie konwersacji
+## 11. Zagadnienie 11 — trwały remote CAS, GitHub vs R2 (07.11, pilot częściowy)
+
+**Pełny raport:** [AUDYT_ZDALNY_CAS_ETAP11_20261107.md](AUDYT_ZDALNY_CAS_ETAP11_20261107.md). **Kod, wyniki i instrukcja:** ZIP `AppEA_etap11_protokol_CAS_i_testy.zip`, SHA256 `57e46c616488be3835ee32637cf36ebb2e2885635001c403fd8e9841b92e1cba` (link w rozmowie, **nie** w repozytorium). Nie załączano źródeł prototypu do `main`; nie podłączano do `scrape.mjs`, `refresh.yml`, `data.json` ani do FUT.GG.
+
+**Rzeczywisty remote GitHub test** na odrębnej [gałęzi `research/remote-cas-stage11-20261107`](https://github.com/patrykrekin/AppEA/tree/research/remote-cas-stage11-20261107): **3 zatwierdzone generacje** sekwencyjnie `e361defe821e0a86a48f516cdcd989643a869175` → `f11b7c8ba13dec2ff4d447fbeaafbe8196d7eff6` → `694b2d382b3440fb186a4f65016069e4ff134ef9`. Przetrwanie stanu po oddzielnym odczycie, wydzielony konkurent B nie nadpisał A, a po **symulowanej utracie ACK** nowe wywołanie odczytało `revision=3` i ten sam `runId+digest`; bez duplikacji. **Zastrzeżenie:** konkurent zwrócił `UNKNOWN GraphQL`, NIE jawne `409`; test nie stanowi certyfikacji pełnej semantyki CAS ani testu z dwóch GitHub-hosted runnerów. Github high-frequency history jest niezalecana, bo rosną commity i obciążenie repo.
+
+**Preferowany backend do późniejszej integracji:** **Cloudflare R2 Standard**, bo oficjalnie gwarantuje mocne read-after-write i atomowe `PutObject If-Match`/`If-None-Match: *`. Projekt: immutable delta najpierw → pojedynczy atomowy PUT `hot/head.json` z poprzednim ETag jako punkt COMMIT. Osierocone delty wymagają później bezpiecznego GC, a segment wskazywany przez HEAD nie może wygasnąć w TTL. Brak sekretów, konta R2 i prawdziwych requestów — **adapter S3 jest tylko referencyjny i sprawdzony składniowo**.
+
+**Lokalny emulator kontraktu R2:** **19/19 testów PASS** z ponowieniem po ACK, konkurencją, uruchomieniem innego procesu, checksum, kończeniem watchlist `observed/unobserved`, brakiem pliku, zapisem warunkowym, limitami. Stres **350 przebiegów × 154 sztuczne karty = 53 900 obserwacji**: `head.json` **35 756 B** (limit 65 536), **350** niemutowalnych delta, wszystkie generacje zatwierdzone, łączny lokalny mock **414 555 B**, średnio 3,70 ms/p95 5,35 ms **wyłącznie lokalnie w Node 22.16.0** (nie Node24 ani Cloudflare). `receipts` są limitowane do 256 wpisów; starsze niepewne retry **fail-closed**, nie gwarantowane 48h potwierdzania ACK.
+
+**Koszt wg Cloudflare R2 Pricing z 30.10.2026:** przy 2 PUT+2 GET na przebieg i 30 dniach, cykl co 2 min = **21 600 przebiegów/43 200 PUT/43 200 GET**, cykl 5min = **8 640/17 280/17 280**. Przy braku innego ruchu mieści się w opublikowanej miesięcznej bezpłatnej puli klasy Standard 10 GB, 1 mln klasy A i 10 mln B, ale **to model, nie realny rachunek/pełny koszt storage**. Brak realnego R2 i Node 24, nie znamy rzeczywistej delty czy kosztów retrial.
+
+**Decyzja:** architektura jest wiarygodnym kandydatem, etap 11 zakończony jako **remote GitHub PoC + emulator R2**. **NIE** wdrażamy jeszcze R2 ani nie modyfikujemy produkcji. **Etap 12:** dopiero po dostępie do **osobnego, prywatnego bucketa R2** i najmniej uprzywilejowanego tokenu przekazanego przez sekrety, a nie chat, sprawdzić rzeczywiste 412 CAS/ETag i odtworzenie na drugim runnerze, oraz TTL/GC, snapshoty, limity/monitoring. Nowy workflow wyłącznie badawczy; nie dotykać `refresh.yml`.
+
+## 12. Jak wznowić pracę po utracie konwersacji
 
 W nowym czacie podaj link do tego dokumentu i napisz: „Kontynuujemy AppEA według START_TUTAJ_ANALITYKA.md; przeczytaj też REJESTR_ZRODEL_BADAWCZYCH.md, sprawdź obecny main, ostatnie Actions i PR, a potem podejmij najbliższy otwarty eksperyment. Nie modyfikuj produkcji bez testów”.
 
