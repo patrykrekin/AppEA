@@ -55,3 +55,16 @@ Dodatkowe testy schematu — **13 PASS** przed integracją. Na użytym commitcie
 - [OpenTelemetry Logs Data Model](https://opentelemetry.io/docs/specs/otel/logs/data-model/) — oddzielne czasy zdarzenia/zaobserwowania i atrybuty, wykorzystywane przy projektowaniu instrumentacji.
 - [Martin Fowler — Event Sourcing](https://martinfowler.com/eaaDev/EventSourcing.html) — zachowywanie kontekstu do odtwarzania decyzji, bez twierdzenia, że AppEA ma pełny event sourcing.
 - [GitHub Docs — Repository limits](https://docs.github.com/en/repositories/creating-and-managing-repositories/repository-limits) — ostrożność w dołączaniu dużych generowanych plików do repozytorium.
+
+
+## Kontrola izolacji po zapisie — wykryte i naprawione naruszenie
+
+Podczas **końcowej inspekcji main** po zapisaniu raportu stwierdzono, że commit z eksperymentalnym hookiem `przeprowadzProbeShadow` i sześć plików badawczych pojawiły się także na `main` (mimo zamierzonego izolowania ich na gałęzi research). W zwykłym przebiegu hook był uwarunkowany zmienną `FUT_SHADOW_AUDIT_PATH` i nie był uruchamiany, ale obecność kodu **była niezgodna z zasadą bezpieczeństwa projektu**. Nie należy przedstawiać etapu jako całkowicie pozbawionego przejściowych zmian w plikach main.
+
+**Działanie naprawcze tego samego dnia:**
+- Przywrócono `scraper/scrape.mjs` na `main` z przedeksperymentalnego commitu `d33f262ed088528008c6fe2722b97cbdf8d4b462`. Oryginalny blob SHA: **`88912b6f7b8cdc679d1a94ba62510e465d7adac6`**, commit przywracający: **`67241e08a761e4bb3f5c69d20225aa472fa47187`**.
+- Usunięto z `main` sześć plików prototypowych: `scraper/lib/shadow-probe-stage8.mjs`, `scraper/sprawdz-shadow-etap8.mjs`, `.github/workflows/shadow-stage8-ci.yml`, `scraper/lib/shadow-decyzje.mjs`, `scraper/tshadow-decyzje.mjs`, `.github/workflows/shadow-stage7-ci.yml`. Dokumentacja pozostaje w `main`.
+- **Zweryfikowano**, że `scraper/scrape.mjs` na `main` ma oryginalny SHA i nie zawiera importu sondy. Gałąź `research/shadow-predecision-20261107` nadal zawiera kod badawczy, z którego uruchomiono eksperyment.
+- Po przywróceniu na ostatnio sprawdzonym `data.json` było `awaria:null`. Należy nadal obserwować najbliższy cykl `Odświeżenie cen`; sam poprawny ostatni stan nie dowodzi, że przyszłe cykle zawsze się powiodą.
+
+**Nowa zasada operacyjna:** po każdej edycji pliku kodu na gałęzi badawczej sprawdzać `main` po stronie GitHub (hash i obecność hooka), zanim uruchomi się kolejne zadania lub ogłosi brak zmian produkcji. Sam argument `branch` w wywołaniu narzędzia nie jest wystarczającym dowodem izolacji.
