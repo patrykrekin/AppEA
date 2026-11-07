@@ -1,0 +1,1 @@
+{"schema":11,"pilot":true,"revision":1,"runId":"etap11-fixture-r1","digest":"fixture:a1","watched":[{"id":"ps|85|111|A","deadline":1794085000}],"events":[{"id":"signal:etap11-fixture-r1:ps|85|111|A","type":"synthetic_signal"}]}
