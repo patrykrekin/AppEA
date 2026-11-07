@@ -33,7 +33,7 @@ function poziomPrzed(w, id, at) {
   return w;
 }
 
-function trwaloscPo(tr, id, at) {
+function poprawnaTrwalosc(tr, id, at) {
   if (!isObj(tr) || !goodId(tr.id) || String(tr.id) !== id) return null;
   if (!Number.isInteger(tr.n) || tr.n < 0 || age(at, tr.od) === null) return null;
   if (!goodTime(tr.t) || tr.t > at) return null;
@@ -91,7 +91,7 @@ export function zbudujMigawkeDecyzji({
         seenId.add(id); seenName.add(key);
         const f = poziomPrzed(fast[key], id, at);
         const s = poziomPrzed(slow[key], id, at);
-        const t = trwaloscPo(tr[key], id, at);
+        const t = poprawnaTrwalosc(tr[key], id, at);
         const inv = investById.get(id);
         if (inv && inv.klucz !== key)
           throw new Error("shadow: inwestycja ma inna wersje karty " + side + "/" + id);
