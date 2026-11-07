@@ -5,6 +5,7 @@ import { zbudujMigawkeDecyzji, KOLUMNY, SHADOW_SCHEMA } from "./lib/shadow-decyz
 const t = 1794079947;
 const valid = () => ({
   at: t,
+  definicje: {szybka:"w3-p10-o6-ema3",inwestycja:"p5-ema3-t6",commit:"a58a10c09e04144a0e389988e143f7e162fdb15a"},
   bands: {
     ps: { "85": [
       { id: "111", name: "A", price: 1000, pos: "ST" },
@@ -58,6 +59,10 @@ check("stan faktycznej decyzji, t oraz niezależność PC/PS",()=>{
  assert.deepEqual(migawka.ps[1].slice(13,17),[0,0,null,null]);
  assert.equal(statystyki.ps,2);assert.equal(statystyki.pc,1);
  assert.ok(statystyki.bajty<65536);
+});
+check("bez definicji z wersja kodu brak dopuszczenia do audytu",()=>{
+ const v=valid();delete v.definicje.commit;
+ assert.throws(()=>zbudujMigawkeDecyzji(v),/podpisu definicji/);
 });
 check("deterministyczny wynik bez ubocznych skutkow",()=>{
  const v=valid();
@@ -131,6 +136,7 @@ try {
    }
  }
  const model=zbudujMigawkeDecyzji({at,bands,preFast,preSlow,trwaloscPo,
+   definicje:{szybka:"benchmark-formatu",inwestycja:"benchmark-formatu",commit:"a58a10c"},
    okazje:{ps:{karty:[]},pc:{karty:[]}},inwestycje:{ps:[],pc:[]}});
  sizeInfo={próbka:"SYNTETYCZNE stany EMA na rzeczywistej liczbie kart, tylko szacunek bajtow",
    karty:model.statystyki.ps+model.statystyki.pc,bajty:model.statystyki.bajty,
