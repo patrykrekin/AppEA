@@ -13,6 +13,7 @@ import { dopiszSzereg, policzMonitor } from "./lib/monitor.mjs";
 import { dopiszHistorie } from "./lib/historia.mjs";
 import { dopisz as dopiszHistorieKart } from "./lib/eksperyment-historii-kart.mjs";
 import { kluczKarty } from "./lib/klucz-karty.mjs";
+import { przeprowadzProbeShadow } from "./lib/shadow-probe-stage8.mjs"; // tylko badawcza galaz
 
 /* SBC co godzinę, nie dwa razy na dobę. 28.09: SBC z terminem 24 h potrafi
    wygasnąć i zostać zastąpiona nową, a cykl `slow` pokazywał nieistniejącą
@@ -452,6 +453,16 @@ try {
       ps: policzInwestycje(bands.ps, poprzD.ps, trwaloscPs, at),
       pc: policzInwestycje(bands.pc, poprzD.pc, trwaloscPc, at)
     };
+    // JEDNORAZOWY TEST INTEGRACYJNY: tylko runner z jawna zmienna,
+    // po policzeniu rekomendacji, PRZED aktualizacja poziomu dobowego.
+    // W repo main ten hook nie istnieje i nie jest wdrozony.
+    if (process.env.FUT_SHADOW_AUDIT_PATH) {
+      przeprowadzProbeShadow({at,bands,preFast:poprzPoziomy,preSlow:poprzD,
+        trwaloscPo:{ps:trwaloscPs,pc:trwaloscPc},
+        okazje:{ps:okazjePs,pc:okazjePc},inwestycje,
+        sciezka:process.env.FUT_SHADOW_AUDIT_PATH,
+        commit:process.env.FUT_SHADOW_COMMIT_SHA});
+    }
     okazjePs.poziomyD = aktualizujPoziomyD(poprzD.ps, poprzPoziomy.ps, bands.ps, at);
     okazjePc.poziomyD = aktualizujPoziomyD(poprzD.pc, poprzPoziomy.pc, bands.pc, at);
     okazjePs.trwalosc = trwaloscPs;
