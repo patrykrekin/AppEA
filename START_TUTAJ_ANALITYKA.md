@@ -72,6 +72,8 @@ Próba offline z rzeczywistego `historia-kart.json`, stan archiwum `2026-11-06T2
 
 **Ważna korekta:** wcześniejszy [test #42408446461](https://github.com/patrykrekin/AppEA/actions/runs/42408446461) zatrzymał się na ratingu 91 poza zakresem `KOSZYK`. Sonda została zawężona do **całej** faktycznej populacji strategii 83–89; nie odrzucamy żadnych kart z tych ratingów. To nie dowód awarii produkcji, która ich innych ratingów nie przetwarza. ID z profilu FUT.GG nie gwarantuje unikalnej edycji karty.
 
+**Korekta bezpieczeństwa:** końcowy audyt odkrył przejściowe pojawienie się kodu sondy i sześciu plików badawczych w `main`, pomimo zamierzonej izolacji. **Przywrócono** stabilny `scraper/scrape.mjs` (blob `88912b6f7b8cdc679d1a94ba62510e465d7adac6`; commit rollback `67241e08a761e4bb3f5c69d20225aa472fa47187`) oraz usunięto z `main` sześć plików shadow. Przy odtwarzaniu sprawdzić, że `main` nadal nie zawiera hooka; po każdej zmianie na gałęzi research bezwzględnie porównać hash kodu `main`. Szczegóły w [raporcie etapu 8](AUDYT_SHADOW_INTEGRACJA_20261107.md). 
+
 **Decyzja:** integracja potwierdzona tylko w jednym realnym odczycie. **Brak merge kodu badawczego, brak cyklicznej instrumentacji, brak zmian rekomendacji i EMA na main.** Koszt surowego JSON przy zachowaniu stałej próbki: 48h co 10 minut ~4,91 MiB; co 1h ~0,82 MiB, bez historii Git. **Kolejny etap 9:** test hybrydowej retencji: każdy sygnał + rzadsza pełna grupa kontrolna, porównać z kompletnymi migawkami pod względem obserwowalności i kosztu, przed jakimkolwiek wdrożeniem.
 
 ## 9. Jak wznowić pracę po utracie konwersacji
