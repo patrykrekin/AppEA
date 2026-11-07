@@ -182,3 +182,18 @@ Wszystkie obserwowane rozliczenia dotyczą powracających, wysoko ocenionych kar
 **Koszt (pomiar formatu przy 249 obserwowanych kartach, ale syntetycznych poziomach):** jedna migawka **22 217 bajtów**; 48h przy zapisie co 10min **~6,10 MiB**; 48h przy zapisie co 1h **~1,02 MiB**, *bez* dodatkowego kosztu historii Git. Istniejący `historia-kart.json` osiągnął **1 026 212 bajtów**. Pełny nowy plik w main byłby niewspółmierny do wartości i ryzykowałby dalszy wzrost repozytorium.
 
 **Decyzja:** funkcja budowania migawki i jej testy — **zweryfikowane tylko w izolacji**; żadnych danych z rzeczywistych stanów pre-decision jeszcze nie zebrano i nic nie jest podłączone do produkcji. Rozpatrywać **hybrydę** (pełne rzeczywiste sygnały + rzadsza grupa kontrolna) lub zewnętrzne/krótkotrwałe artefakty; nie wybieramy magazynu bez odrębnej próby i limitów. Następny etap: **jednorazowy izolowany test integracyjny na prawdziwym przepływie danych**, bez dodatkowych per-card żądań, bez mergowania do main. Potem decyzja o koszcie, retencji i instrumentacji.
+
+
+## Zagadnienie 8 — rzeczywista integracja shadow z produkcyjnym przebiegiem (2026-11-07)
+
+**Audyt i szczegóły:** [AUDYT_SHADOW_INTEGRACJA_20261107.md](AUDYT_SHADOW_INTEGRACJA_20261107.md). Jednorazowy [Actions #42408574206](https://github.com/patrykrekin/AppEA/actions/runs/42408574206), gałąź `research/shadow-predecision-20261107` bez scalenia. Odczyt `at=1794081368` (2026-11-07T19:56:08Z). Instrumentacja oparta na oryginalnym `policzOkazje` i `policzInwestycje` oraz rzeczywistych preFast/preSlow i trwałości po bieżącej cenie — bez powtarzania progów czy zapytań per-card.
+
+**Pierwszy test negatywny:** [#42408446461](https://github.com/patrykrekin/AppEA/actions/runs/42408446461) wykrył próbę walidacji ratingu 91 spoza koszyka inwestycyjnego. Zamiast ukrywać błąd, zmieniono zakres sondy na **cały rzeczywisty KOSZYK 83–89** (źródło kontroli: `scraper/lib/indeks.mjs`), nie odrzucając żadnych kart wewnątrz koszyka. Kolejny izolowany `fast`: **PASS**.
+
+**Wynik:** wiersze 77 PS / 77 PC, wszystkie faktyczne inwestycje zgodne 1:1 z `data.json` (PS **4/4**, PC **2/2**), sygnały okazji PS **4**, PC **1**. EMA dobowa z właściwego momentu była obecna we wszystkich 154 wierszach; EMA szybka 74 PS i 75 PC; poprawnie uchwycona trwałość po odczycie 7 PS i 8 PC. Przed/po bieżącej cenie poziom EMA różnił się w 66 PS i 67 PC — dowód uchwycenia prawidłowej fazy decyzji. Brak mutacji wejścia. Czas sondy **1,595561 ms**, JSON **17 890 B**. Testy offline 13 PASS, izolowany scraper i walidator `data.json` PASS.
+
+**Ocena kosztu:** przy stałej wielkości 154 kart i 17 890 B/migawkę: 48h co 10min **~4,91 MiB** czystego JSON, co 1h **~0,82 MiB**, bez historii Git. Ograniczenie identyfikacji edycji karty i selekcji rankingu pozostaje. Nie jest to walidacja zysków ani zachowania w innych warunkach rynkowych.
+
+**Decyzja:** etap 8 integracyjnie zakończony, ale **instrumentacja nie została wdrożona na main**. Nie modyfikować EMA, rekomendacji ani historii na podstawie jednego przebiegu. Dalsze badanie (etap 9): ocena hybrydowego zapisu wszystkich sygnałów i rzadszych pełnych kontroli, z kontrolą biasu, kosztów retencji i workflow.
+
+**Źródła metodyczne do dalszej pracy:** [OpenTelemetry Logs Data Model](https://opentelemetry.io/docs/specs/otel/logs/data-model/), [Fowler, Event Sourcing](https://martinfowler.com/eaaDev/EventSourcing.html), [GitHub Repository Limits](https://docs.github.com/en/repositories/creating-and-managing-repositories/repository-limits). Żadne nie uprawnia do uznania trafności transakcji z samego zniknięcia oferty z rankingu.
