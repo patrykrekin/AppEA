@@ -20,6 +20,8 @@ const s3=new S3Client({region:'auto',endpoint,forcePathStyle:true,maxAttempts:1,
  requestChecksumCalculation:'WHEN_REQUIRED',responseChecksumValidation:'WHEN_REQUIRED',
  credentials:{accessKeyId:process.env.R2_ACCESS_KEY_ID,secretAccessKey:process.env.R2_SECRET_ACCESS_KEY}});
 const bucket=process.env.R2_BUCKET,key='appea-research/stage12/'+runId+'/head.json';
+// R2: maximum one write/second to the SAME object key; space pilot attempts to avoid 429.
+const waitForSameKey=()=>new Promise(ok=>setTimeout(ok,1200));
 const body=revision=>JSON.stringify({stage:'12',synthetic:true,runId,revision,receipt:runId+'-g'+revision});
 const get=async()=>{
  try{
@@ -34,14 +36,16 @@ const expect412=async p=>await assert.rejects(p,e=>e?.$metadata?.httpStatusCode=
 try{
  if(phase==='writer'){
   assert.equal(await get(),null,'KEY_ALREADY_EXISTS_USE_NEW_RUN_ID');
-  await put(1,{IfNoneMatch:'*'});await expect412(put(1,{IfNoneMatch:'*'}));
+  await put(1,{IfNoneMatch:'*'});await waitForSameKey();
+  await expect412(put(1,{IfNoneMatch:'*'}));await waitForSameKey();
   const a=await get();assert.equal(a.value.revision,1);
-  await put(2,{IfMatch:a.etag});await expect412(put(999,{IfMatch:a.etag}));
+  await put(2,{IfMatch:a.etag});await waitForSameKey();
+  await expect412(put(999,{IfMatch:a.etag}));
   const b=await get();assert.equal(b.value.revision,2);
   console.log('STAGE12_REAL_R2_WRITER '+JSON.stringify({realR2:true,phase,revision:2,was412:true,runId,synthetic:true}));
  }else{
   const a=await get();assert.equal(a?.value?.revision,2,'RESTART_DID_NOT_READ_GENERATION_2');assert.equal(a.value.runId,runId);
-  await put(3,{IfMatch:a.etag});
+  await put(3,{IfMatch:a.etag});await waitForSameKey();
   // Intentionally ignore successful response, recover only from a new GET.
   const b=await get();assert.equal(b.value.revision,3);assert.equal(b.value.receipt,runId+'-g3');
   await expect412(put(4,{IfMatch:a.etag}));
