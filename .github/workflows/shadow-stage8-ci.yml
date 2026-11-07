@@ -1,3 +1,4 @@
+# Restart po poprawce: badamy wylacznie produkcyjny KOSZYK 83-89
 name: Etap 8 - rzeczywisty shadow fast (jednorazowy, izolowany)
 on:
   push:
