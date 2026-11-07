@@ -62,6 +62,14 @@ check("deterministyczny wynik bez ubocznych skutkow",()=>{
  const v=valid();
  assert.deepEqual(zbudujMigawkeDecyzji(v),zbudujMigawkeDecyzji(v));
 });
+check("ten sam item ID przy dwoch ratingach nie miesza historii",()=>{
+ const v=valid();
+ v.bands.ps[86]=[{id:"111",name:"A",price:1000}];
+ const x=zbudujMigawkeDecyzji(v).migawka.ps;
+ assert.deepEqual(x.filter(r=>r[1]==="111").map(r=>r[0]),[85,86]);
+ assert.equal(x.find(r=>r[0]===86)[3],null);
+ assert.equal(x.find(r=>r[0]===86)[14],0);
+});
 check("brak danych z przyszlosci odrzucany",()=>{
  const v=valid();v.preFast.ps["A 85"].t=t+30;
  const row=zbudujMigawkeDecyzji(v).migawka.ps[0];
