@@ -10,7 +10,7 @@ const valid = () => ({
       { id: "111", name: "A", price: 1000, pos: "ST" },
       { id: "222", name: "B", price: 1200, pos: "CM" }
     ]},
-    pc: { "85": [{ id: "111", name: "A", price: 1050, pos: "ST" }] }
+    pc: { "85": [{ id: "111", name: "A", price: 1100, pos: "ST" }] }
   },
   preFast: {
     ps: { "A 85": {id:"111", p:1250.7, n:40, od:t-10000, t:t-600, v:3}},
