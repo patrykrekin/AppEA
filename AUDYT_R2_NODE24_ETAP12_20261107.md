@@ -1,5 +1,7 @@
 # Etap 12 — Node 24, warunkowe S3 i przygotowanie realnego testu Cloudflare R2
 
+> **AKTUALIZACJA PO TESTACH NA PRAWDZIWYM R2:** [AUDYT_R2_LIVE_PILOT_ETAP12_20261107.md](AUDYT_R2_LIVE_PILOT_ETAP12_20261107.md) — rzeczywisty `PUT/GET/412` w R2 oraz dwa niezależne runnery **PASS** ([Actions #42416561870](https://github.com/patrykrekin/AppEA/actions/runs/42416561870)). Poniższy raport opisuje **historyczny stan przed podłączeniem bucketa**; jego dawne określenie „R2 niepodłączone” zostało już zastąpione wynikami pilota. Produkcja nadal bez zmian.
+
 **Data: 7 listopada 2026. Status: CZĘŚCIOWO WYKONANY. Testy Node24 i dwa niezależne joby GitHub PASS; RZECZYWISTEJ OPERACJI NA R2 JESZCZE NIE WYKONANO. Nie uruchomiono produkcyjnej instrumentacji.**
 
 > [Punkt wznowienia](START_TUTAJ_ANALITYKA.md) · [Rejestr źródeł](REJESTR_ZRODEL_BADAWCZYCH.md) · [Etap 11](AUDYT_ZDALNY_CAS_ETAP11_20261107.md).
