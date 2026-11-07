@@ -129,6 +129,16 @@ Próba offline z rzeczywistego `historia-kart.json`, stan archiwum `2026-11-06T2
 
 **Status i następne działanie:** ETAP 12 **CZĘŚCIOWO WYKONANY i OTWARTY**, nie zamykać jako pełnej integracji R2. Użytkownik musi przygotować prywatny osobny bucket R2 Standard, bucket-scoped Object Read & Write token i GitHub Environment `r2-stage12-pilot` z sekretami `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` (opcjonalna zmienna `R2_ENDPOINT`). **Sekretów nie przekazywać w czacie.** Po wyraźnej zgodzie dodać osobny manualny workflow na default `main` i uruchomić dwa niezależne joby R2; następnie sprawdzić TTL/GC, checkpointy, backupy i koszty. `scrape.mjs`, `refresh.yml`, EMA i rekomendacje zostały nienaruszone.
 
+## 12b. AKTUALIZACJA — realny Cloudflare R2 i dwa runnery (LIVE PASS)
+
+**Najświeższy, rozstrzygający wynik etapu 12:** [AUDYT_R2_LIVE_PILOT_ETAP12_20261107.md](AUDYT_R2_LIVE_PILOT_ETAP12_20261107.md). **[Actions #42416561870](https://github.com/patrykrekin/AppEA/actions/runs/42416561870)**: `completed/success`, **writer PASS i reader PASS** na dwóch odrębnych GitHub-hosted runnerach. Bucket R2 podłączony przez sekrety środowiska `r2-stage12-pilot`, bez wyświetlania żadnych kluczy.
+
+**RZECZYWISTY Cloudflare R2 (nie fake S3):** `PutObject If-None-Match: *` stworzył syntetyczny obiekt, ponowne create-only dostało **412**, `PutObject If-Match: <aktualny ETag>` przeszedł do gen2, stary ETag dał **412**. Drugi runner naprawdę odczytał gen2 i zatwierdził gen3 do tego samego bucketa; po **symulowanej** utracie ACK (celowe zignorowanie odebranego potwierdzenia) późniejszy GET odzyskał gen3, a stary ETag dał 412. Faktyczny testowy klucz `appea-research/stage12/stage12-42416561870/head.json`. Tylko sztuczne dane, ok. 6 PUT (3 nieudane 412), 5 GET, żadnych DeleteObject, żadnych nowych requestów FUT.GG. Nie odczytano faktury — brak gwarancji dokładnego kosztu, ale minimalna skala.
+
+**Po teście wyłączono automatyczny trigger push** w `main` (commit `a76e279434d131d7a78cdba77bf9ef27a6802583`); workflow [`stage12-live-r2-one-shot.yml`](https://github.com/patrykrekin/AppEA/blob/main/.github/workflows/stage12-live-r2-one-shot.yml) jest **wyłącznie ręczny** (`workflow_dispatch`) i wymaga wpisania `RUN_STAGE12_R2`. `scrape.mjs`, `refresh.yml`, `data.json`, EMA i selekcja inwestycji nietknięte.
+
+**Status: etap 12 zamknięty jako udana pojedyncza próba LIVE CAS i odczyt z drugiego runnera.** Nie oznacza gotowości kolektora HOT/COLD do produkcji: nie testowano na żywym R2 dwóch **równoczesnych** writerów, fizycznego zerwania in-flight PUT ani GC/TTL/backupów, statusu 429 pod obciążeniem i polityki kosztowej. **Kolejny etap 13:** pełne immutowalne delty + HEAD CAS, kontrola osieroconych obiektów, retencja i rzeczywiste współbieżności na osobnym buckecie, a dopiero potem pasywna instrumentacja rynku.
+
 ## 13. Jak wznowić pracę po utracie konwersacji
 
 W nowym czacie podaj link do tego dokumentu i napisz: „Kontynuujemy AppEA według START_TUTAJ_ANALITYKA.md; przeczytaj też REJESTR_ZRODEL_BADAWCZYCH.md, sprawdź obecny main, ostatnie Actions i PR, a potem podejmij najbliższy otwarty eksperyment. Nie modyfikuj produkcji bez testów”.
