@@ -91,7 +91,20 @@ Próba offline z rzeczywistego `historia-kart.json`, stan archiwum `2026-11-06T2
 
 **Decyzja:** retencja wyłącznie godzinnych pełnych przekrojów + sygnałów jest **odrzucona jako niewystarczająca do analizy rotacji**. Do następnego pilota wybieramy **pełne prawdziwe sygnały + outcome windows + rzadsze pełne przekroje + kompaktowe reentry**, z opcjonalną niezależną próbą kontroli o znanym p. **Nie dodajemy archiwum do main.** Zagadnienie 10: bezpieczna, idempotentna retencja stanów watchlisty między uruchomieniami fast i odporność na retry/awarie, wyłącznie w izolacji.
 
-## 10. Jak wznowić pracę po utracie konwersacji
+
+## 10. Zagadnienie 10 — trwałość i idempotencja HOT watchlisty (07.11, testy lokalne PASS)
+
+**Szczegółowy audyt:** [AUDYT_MAGAZYN_WATCHLIST_ETAP10_20261107.md](AUDYT_MAGAZYN_WATCHLIST_ETAP10_20261107.md). Test na **syntetycznych, nie rzeczywistych cenach FUT.GG**, bez nowych zapytań. Repozytorium `main` zawiera wyłącznie dokumentację. Prototyp JS z testami i logami przekazano użytkownikowi w **`AppEA_etap10_prototyp_i_testy.zip`** (lokalny sandbox tego czatu, SHA256 `f78ba9c3c878db9ece6e9588127a393bc2a94eb17a5a7679a06e0151a9964ad3`); **kod ZIP nie jest zamieszczony na GitHubie**. Trzymać jego kopię do kolejnej rozmowy.
+
+**Cel:** przepływ aktywnych watches `+2h±15min` i `+12h±15min`, brak duplikatów przy retry, odporność na błędny batch i na utracone ACK, oznaczanie `unobserved` zamiast sprzedaży. Testy: **25/25 JSON i 11/11 SQLite = 36/36 PASS**, w tym test prawdziwego restartu procesu Node, błędy przed i po zatwierdzeniu, zmiana danych przy tym samym `t`, korupcja/checksum, lock, limit bajtów i test SQLite `PRAGMA integrity_check=ok`.
+
+**Stres:** 203 wsady × 154 sztuczne karty = **31 262 sztuczne obserwacje** (wielkość identyczna jak etap 9, ale innym pochodzeniu). Monolit JSON: **1 231 152 B** i przebicie 1 MiB już przy 171. wsadzie; ~18,96 ms/wsad na lokalnym Node22. SQLite jako **jeden lokalny transakcyjny plik** z osobnym `hot` i `events`: stan hot **14 515 B**, cała baza **2 125 824 B**, ~3,33 ms/wsad w tym samym izolowanym teście. To jeden benchmark, nie miarodajne porównanie kosztów środowisk produkcyjnych. Oba magazyny zachowują 8 876 zdarzeń i 5 aktywnych watches na koniec. Node `22.16.0` generował ostrzeżenie eksperymentalności `node:sqlite`; brak osobnego testu Node 24 w GitHub Actions.
+
+**Najważniejsza blokada:** lokalny dysk nowej VM GitHub Actions **nie przenosi się automatycznie między jobami**. `fsync` i `COMMIT` rozwiązują lokalny crash/retry, NIE wytrzymałość między runnerami. Wciąż brak zewnętrznego storage i bezpiecznego CAS/revision/fencing. Nie używać samego artefaktu Actions jako stałego magazynu i nie uruchamiać instrumentacji w `refresh.yml`. Krytyczne regresje sprzętowe i wielohostowe nie były testowane.
+
+**Decyzja:** moduł monolityczny JSON — niewłaściwy do produkcji; SQLite HOT + ledger — **kandydat do dalszej izolowanej próby, nie wdrożony**. Wszystkie progi EMA, logika okazji, indeks i źródła pozostają nietknięte. **Kolejny etap 11:** wybór i audyt faktycznie trwałego zapisu z kontrolą generacji/ETag/CAS między uruchomieniami, koszt, retencja i retry po utracie potwierdzenia; dopiero wtedy możliwy świadomy pilot. Każdy eksperymentalny zapis w repo wymaga sprawdzenia `main` po stronie GitHub.
+
+## 11. Jak wznowić pracę po utracie konwersacji
 
 W nowym czacie podaj link do tego dokumentu i napisz: „Kontynuujemy AppEA według START_TUTAJ_ANALITYKA.md; przeczytaj też REJESTR_ZRODEL_BADAWCZYCH.md, sprawdź obecny main, ostatnie Actions i PR, a potem podejmij najbliższy otwarty eksperyment. Nie modyfikuj produkcji bez testów”.
 
