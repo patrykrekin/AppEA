@@ -56,7 +56,17 @@ Próba offline z rzeczywistego `historia-kart.json`, stan archiwum `2026-11-06T2
 
 **NOWE krytyczne ustalenie:** EMA badawcza (resetowana do pierwszej ceny w oknie) nie odtwarza produkcyjnego `aktualizujPoziomyD`, gdzie występuje zasiew z szybkiej EMA i reset po >2h. Zatem testy MAPE nie walidują algorytmu inwestycyjnego. Nie zmieniać EMA ani rekomendacji na podstawie samej predykcji przyszłych ofert. Prawidłowy następny krok: projekt niewpływającej na rekomendacje **instrumentacji stanu przed sygnałem** (t, ID, platforma, cena, EMA szybka/dobowa, wersja definicji i pokrycie), wyłącznie z już pobranych danych; ocena ryzyka i regresji zanim cokolwiek trafi na main.
 
-## 7. Jak wznowić pracę po utracie konwersacji
+## 7. Zagadnienie 7 — schemat pasywnego rejestrowania rzeczywistych decyzji (07.11)
+
+**Audyt:** [AUDYT_SHADOW_DECYZJI_20261107.md](AUDYT_SHADOW_DECYZJI_20261107.md). Na [niescalonej gałęzi badawczej](https://github.com/patrykrekin/AppEA/tree/research/shadow-predecision-20261107) istnieje czysta funkcja zapisu kontekstu pre-decision i testy; [Actions #42407791946](https://github.com/patrykrekin/AppEA/actions/runs/42407791946): **13/13 PASS offline**, zero dodatkowych FUT.GG. Nie ma integracji z produkcją, nie zebrano jeszcze realnych migawek decyzji.
+
+**Istotne:** produkcja porównuje obecne p(t) z EMA **sprzed aktualizacji**, ale trwałość jest wyliczona już **po** p(t); końcowe inwestycje mają limit TOP12. ID profilu FUT.GG nie gwarantuje tożsamości wersji karty; wymagany kontekst platforma+OVR+ID+nazwa, nadal możliwa niejednoznaczność edycji. Nie twórz fałszywych dowodów transakcji z braków w wycinku rankingu.
+
+**Koszt:** próbka dla 249 widocznych kart z syntetycznymi stanami EMA: 22 217 B; ekstrapolacja 48h co 10min = 6,10 MiB; co godzinę = 1,02 MiB, bez rewizji Git. Istniejące archiwum v2 przekroczyło 1 MB. **Nie dodawać pełnego archiwum do main.** Najbardziej obiecująca architektura do sprawdzenia: pełne zdarzenia rekomendacji + rzadsze kompletne przekroje grupy kontrolnej, w osobnym, ograniczonym czasowo magazynie/artefaktach.
+
+**Kolejny etap 8:** jedna izolowana próba integracyjna funkcji na rzeczywistych `preFast/preSlow/trwaloscPo` i aktualnym wyniku istniejących rekomendacji, bez zmiany harmonogramu i dodatkowych indywidualnych requestów. Sprawdź zgodność z produkcją, rozmiar, czas, ID i niezmienność wyników przed jakimkolwiek wdrożeniem.
+
+## 8. Jak wznowić pracę po utracie konwersacji
 
 W nowym czacie podaj link do tego dokumentu i napisz: „Kontynuujemy AppEA według START_TUTAJ_ANALITYKA.md; przeczytaj też REJESTR_ZRODEL_BADAWCZYCH.md, sprawdź obecny main, ostatnie Actions i PR, a potem podejmij najbliższy otwarty eksperyment. Nie modyfikuj produkcji bez testów”.
 
