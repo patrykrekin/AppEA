@@ -39,6 +39,7 @@ check("stan faktycznej decyzji, t oraz niezależność PC/PS",()=>{
  assert.equal(JSON.stringify(v),before,"funkcja nie moze zmieniac danych produkcyjnych");
  assert.equal(migawka.schemat,SHADOW_SCHEMA);
  assert.equal(KOLUMNY.length,migawka.ps[0].length);
+ assert.equal(migawka.ps[0][17],"A","nazwa jest czescia identyfikacji obserwacji");
  assert.equal(migawka.ps.length,2);
  assert.equal(migawka.pc.length,1);
  assert.deepEqual(migawka.ps[0].slice(0,3),[85,"111",1000]);
