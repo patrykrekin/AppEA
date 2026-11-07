@@ -202,3 +202,27 @@ Wszystkie obserwowane rozliczenia dotyczą powracających, wysoko ocenionych kar
 ### Korekta izolacji po etapie 8 (07.11.2026)
 
 Wbrew początkowemu założeniu izolacji końcowa kontrola wykazała, że **hook badawczy i sześć plików eksperymentalnych znalazły się przejściowo na `main`**. Hook w normalnym przebiegu był aktywny tylko przy jawnej zmiennej środowiskowej, ale sama obecność kodu naruszyła uzgodniony proces. Przywrócono oryginalny `scraper/scrape.mjs` (blob `88912b6f7b8cdc679d1a94ba62510e465d7adac6`, rollback commit `67241e08a761e4bb3f5c69d20225aa472fa47187`) oraz usunięto sześć eksperymentalnych plików z `main`. Przebieg badawczy i kod zachowano na osobnej gałęzi. Szczegóły w [audycie etapu 8](AUDYT_SHADOW_INTEGRACJA_20261107.md). **Zasada na przyszłość:** przy każdej edycji w research potwierdzić hash i zawartość `main`; nie polegać wyłącznie na wybranym argumencie `branch` w narzędziu. Stanu zdrowia produkcji nie wolno zakładać na podstawie jednego wcześniejszego crona — sprawdzić go ponownie.
+
+
+## Zagadnienie 9 — analiza kosztu i utraty informacji w historii hybrydowej (2026-11-07)
+
+**Raport z pełną metodyką:** [AUDYT_RETENCJA_HYBRYDOWA_20261107.md](AUDYT_RETENCJA_HYBRYDOWA_20261107.md). Materiał: **31 262 realne wiersze** rankingu 83–89, po 203 rzeczywistych migawkach obu platform (37,43h), `historia-kart.json` blob SHA `aaddc7056f8fdd04766124751ffbd4e84fac7bbd`. To **nie** pełny rynek, nie dane o transakcjach, nie prawdziwe historyczne sygnały produkcyjnej EMA.
+
+**Źródła i transfer:** [OpenTelemetry Sampling](https://opentelemetry.io/docs/concepts/sampling/) — zachowanie zdarzeń wartościowych/nieodtwarzalnych i rozróżnienie od próby losowej; [Penn State STAT 506 — Unequal Probability Sampling](https://online.stat.psu.edu/stat506/Lesson03) — wnioskowanie projektowe wymaga dodatnich znanych prawdopodobieństw włączenia, nie niejawnie selektywnego rankingu; [GitHub Repository Limits](https://docs.github.com/en/repositories/creating-and-managing-repositories/repository-limits), [Workflow Artifacts](https://docs.github.com/en/actions/tutorials/store-and-share-data) — koszty i ograniczenia stale nadpisywanych plików, nietrwałość artefaktów bez strategii eksportu. Wykorzystane jako zasady inżyniersko-statystyczne, **nie jako źródło progów EA**.
+
+**Zastępczy sygnał do testu stresowego, z użyciem wyłącznie wcześniejszych cen tej samej karty:** `p(t) <= 0,95*median(max12 wcześniejszych obserwowanych cen)`, >=6 wcześniejszych punktów, >=1h rozpiętości, wszystkie przerwy <=20min. Zdarzenia proxy: PS **158**, PC **437**, łącznie **595**. Luźniejszy warunek bez wszystkich ciągłych luk daje 1 850 zdarzeń — wrażliwość kosztu; nie jest to `policzInwestycje`.
+
+**Warianty:**
+| Wariant | Zachowane wiersze z pełnych 31 262 | Koszt informacyjny |
+|---|---:|---|
+| Full | 31 262 (100%) | Baseline |
+| H0: wszystkie proxy-sygnały + godzinny przekrój | 6 465 (20,68%) | Zachowuje tylko 349/556 obserwowalnych rezultatów 2h i 226/352 12h |
+| H1: H0 + obserwacje tylko w oknach 2/12h ±15min | 7 716 (24,68%) po zamknięciu okien; **7 722 (24,70%)** przy strumieniu online | Zachowuje 556/556 i 352/352 **wyników obecnych w pełnym źródle**, nie tych brakujących |
+| H1 + pełne kontrolne co 30min | 13 048 (41,74%) | Więcej zwykłych kontroli |
+| H1 + pełne kontrolne co 120min | 4 997 (15,98%) | Bardzo ubogie kontrole |
+
+**Negatywne odkrycie:** z 9 818 krótkich epizodów (najwyżej 2 kolejne obserwacje) H1 **nie zawiera żadnego pomiaru dla 7 458 (~75,96%)**. Same godzinna kontrola i sygnały nie wystarczają do analizy rotacji, false negative i kart pojawiających się krótko w rankingu. Wyróżniono 12 153 wejść/ponownych pojawień się po >20min przerwy; 9 729 z nich brakowało w H1. Kompaktowy zapis `[t,platforma,OVR,id,cena,nazwa]` tych 9 729 zdarzeń zajmował **441 381 B** (pomiar UTF‑8 samych tablic). Orientacyjnie H1 + te krótkie eventy ~1,28 MiB vs full ~3,46 MiB (ok. 63% mniej), przy założeniu średniego rozmiaru wiersza z etapu 8 i bez metadanych/storage/rewizji Git. To **szacunek kosztu, nie zmierzony format produkcyjny**.
+
+**Próba Bernoulliego q=10%** na dodatkowych nieskatalogowanych wierszach: 40 ziaren pseudolosowych, średnio 10 064 wiersze (~32,19% F), ale nadal **67,06%** krótkich epizodów bez obserwacji. Do estymacji statystycznej wymagane jawne `p` i oddzielenie prób probabilistycznych od celowo wybranych sygnałów, checkpointów i outcome.
+
+**Wniosek/Status:** *analiza retencji zakończona; brak wdrożenia*. Pełny sygnał co fast + śledzone okna wyników + rzadkie przekroje + kompaktowe wejścia (i ewentualna osobna losowa kontrola) wyglądają obiecująco; **nie jest to jeszcze zatwierdzony projekt magazynu**. Konieczna trwała pamięć watchlisty min. 12h+15min w wielu niezależnych procesach, idempotencja, retry i rozdział od istniejącego `data.json` i `historia-kart.json`. **Etap 10**: testowanie samej mechaniki storage/odtwarzania stanu w izolacji, bez nowych requestów i bez modyfikacji main kodu.
