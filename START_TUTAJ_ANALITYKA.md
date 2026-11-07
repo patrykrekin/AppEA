@@ -66,7 +66,15 @@ Próba offline z rzeczywistego `historia-kart.json`, stan archiwum `2026-11-06T2
 
 **Kolejny etap 8:** jedna izolowana próba integracyjna funkcji na rzeczywistych `preFast/preSlow/trwaloscPo` i aktualnym wyniku istniejących rekomendacji, bez zmiany harmonogramu i dodatkowych indywidualnych requestów. Sprawdź zgodność z produkcją, rozmiar, czas, ID i niezmienność wyników przed jakimkolwiek wdrożeniem.
 
-## 8. Jak wznowić pracę po utracie konwersacji
+## 8. Zagadnienie 8 — zgodność sondy z realnym przebiegiem (07.11 — PASS w izolacji)
+
+**Pełny audyt:** [AUDYT_SHADOW_INTEGRACJA_20261107.md](AUDYT_SHADOW_INTEGRACJA_20261107.md). Dowód [Actions #42408574206](https://github.com/patrykrekin/AppEA/actions/runs/42408574206), izolowany checkout `d27061cdb6d662fad2ff153ac63f19739532dfd1` i spójny zestaw danych głównych z SHA `be0bc1c19b16670e7491b4f22ee4bfd8e1e6d5d2`. Jeden rzeczywisty `fast` na kopii `RUNNER_TEMP`, bez publikacji i bez dodatkowych żądań per-card. Odczyt 07.11.2026 o 19:56:08 UTC. Próba końcowa: **77 kart PS + 77 PC** (cała populacja produkcyjnego koszyka 83–89); **4/4 i 2/2** inwestycji 1:1 zgodnych z izolowaną produkcyjną strukturą `data.json` (platforma, klucz+ID, cena, poziom pre-update, cel, limit kupna). **4/1** szybkich okazji; poziom dobowy pre-update 77/77; różnica pre/post w 66 PS i 67 PC. Sonda nie mutowała wejścia, czas obliczeń **1,596 ms**, migawka **17 890 B**. Testy jednostkowe **13 PASS**, prawdziwe odświeżenie i walidator PASS.
+
+**Ważna korekta:** wcześniejszy [test #42408446461](https://github.com/patrykrekin/AppEA/actions/runs/42408446461) zatrzymał się na ratingu 91 poza zakresem `KOSZYK`. Sonda została zawężona do **całej** faktycznej populacji strategii 83–89; nie odrzucamy żadnych kart z tych ratingów. To nie dowód awarii produkcji, która ich innych ratingów nie przetwarza. ID z profilu FUT.GG nie gwarantuje unikalnej edycji karty.
+
+**Decyzja:** integracja potwierdzona tylko w jednym realnym odczycie. **Brak merge kodu badawczego, brak cyklicznej instrumentacji, brak zmian rekomendacji i EMA na main.** Koszt surowego JSON przy zachowaniu stałej próbki: 48h co 10 minut ~4,91 MiB; co 1h ~0,82 MiB, bez historii Git. **Kolejny etap 9:** test hybrydowej retencji: każdy sygnał + rzadsza pełna grupa kontrolna, porównać z kompletnymi migawkami pod względem obserwowalności i kosztu, przed jakimkolwiek wdrożeniem.
+
+## 9. Jak wznowić pracę po utracie konwersacji
 
 W nowym czacie podaj link do tego dokumentu i napisz: „Kontynuujemy AppEA według START_TUTAJ_ANALITYKA.md; przeczytaj też REJESTR_ZRODEL_BADAWCZYCH.md, sprawdź obecny main, ostatnie Actions i PR, a potem podejmij najbliższy otwarty eksperyment. Nie modyfikuj produkcji bez testów”.
 
