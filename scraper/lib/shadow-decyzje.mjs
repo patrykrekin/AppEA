@@ -49,9 +49,13 @@ function poprawnaTrwalosc(tr, id, at) {
  */
 export function zbudujMigawkeDecyzji({
   at, bands, preFast, preSlow, trwaloscPo, okazje, inwestycje,
-  limitBajtow = LIMIT_BAJTOW_MIGAWKI
+  definicje, limitBajtow = LIMIT_BAJTOW_MIGAWKI
 }) {
   if (!goodTime(at)) throw new Error("shadow: nieprawidlowy czas odczytu");
+  if (!isObj(definicje) || typeof definicje.szybka !== "string" || !definicje.szybka
+    || typeof definicje.inwestycja !== "string" || !definicje.inwestycja
+    || typeof definicje.commit !== "string" || !/^[a-f0-9]{7,40}$/.test(definicje.commit))
+    throw new Error("shadow: brak podpisu definicji i commitu algorytmu");
   if (!Number.isInteger(limitBajtow) || limitBajtow <= 0)
     throw new Error("shadow: zly limit bajtow");
   const result = {
@@ -59,7 +63,8 @@ export function zbudujMigawkeDecyzji({
     czasOdczytuStart: at,
     co: "wycinek-rankingowy/nie-transakcje",
     faza: "EMA przed p(t); trwalosc po uwzglednieniu p(t)",
-    definicja: "EMA-v3, wynik-produkcji-bez-powtornego-liczenia",
+    definicje: { szybka: definicje.szybka, inwestycja: definicje.inwestycja,
+      commit: definicje.commit },
     ps: [], pc: []
   };
   for (const side of ["ps", "pc"]) {
