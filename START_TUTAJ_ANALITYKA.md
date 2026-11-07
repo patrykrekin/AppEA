@@ -76,7 +76,22 @@ Próba offline z rzeczywistego `historia-kart.json`, stan archiwum `2026-11-06T2
 
 **Decyzja:** integracja potwierdzona tylko w jednym realnym odczycie. **Brak merge kodu badawczego, brak cyklicznej instrumentacji, brak zmian rekomendacji i EMA na main.** Koszt surowego JSON przy zachowaniu stałej próbki: 48h co 10 minut ~4,91 MiB; co 1h ~0,82 MiB, bez historii Git. **Kolejny etap 9:** test hybrydowej retencji: każdy sygnał + rzadsza pełna grupa kontrolna, porównać z kompletnymi migawkami pod względem obserwowalności i kosztu, przed jakimkolwiek wdrożeniem.
 
-## 9. Jak wznowić pracę po utracie konwersacji
+
+## 9. Zagadnienie 9 — porównanie pełnego archiwum i retencji hybrydowej (07.11, analiza zakończona)
+
+**Raport:** [AUDYT_RETENCJA_HYBRYDOWA_20261107.md](AUDYT_RETENCJA_HYBRYDOWA_20261107.md). Zamyka etap analizowania metody retencji **bez wdrożenia żadnego kodu**. Badano **31 262 rzeczywiste obserwacje kart OVR 83–89** (203 migawki/rynek, 77 kart/rynek, 37,43 h). Dane zamrożone: `historia-kart.json`, blob SHA **`aaddc7056f8fdd04766124751ffbd4e84fac7bbd`**.
+
+**Nie ma historycznych prawdziwych decyzji EMA** — oznaczono 595 **ścisłych ZASTĘPCZYCH zdarzeń** ceny względem mediany wcześniejszych notowań tej samej karty, a nie rekomendacji. Bez luk w użytych wcześniejszych 12 punktach >20min, >=6 historycznych punktów i >=1h pokrycia. Test wrażliwości z luźniejszym warunkiem daje 1 850 zdarzeń — koszt mocno zależy od definicji.
+
+**Hybryda H1:** wszystkie proxy-eventy + pierwszy pełny rankingowy przekrój każdej godziny + notowania w przyszłych oknach 2/12h ±15min dla wcześniej oznaczonych zdarzeń (bez nowych zapytań). Retencja **7 716/31 262 = 24,68%** w zamkniętych oknach; w ścisłej symulacji **strumieniowej bez look-ahead** 7 722, czyli 24,70%, zachowanych wierszy (6 dotyczyło otwartych okien). Zachowane wszystkie **przyszłe notowania obecne w pełnym archiwum** dla obserwowanych proxy-zdarzeń: 2h 556/556, 12h 352/352; **to nie jest 100% rynku, a tylko cen widocznych w wycinku rankingu**. Bez outcome tracking H0 zachowywał 349/556 (2h) i 226/352 (12h), więc nie wolno zapisywać samych sygnałów i godzinnych przekrojów.
+
+**Ważny ukryty koszt informacyjny H1:** 7 458 z 9 818 (~75,96%) krótkich epizodów widoczności (1–2 kolejne punkty z przerwami max 20min) zniknęłoby całkowicie ze zredukowanego archiwum. Rozwiązanie do sprawdzenia: **kompaktowe zdarzenie wejścia / ponownej obserwacji po luce >20min** dla każdej karty. Wyodrębniono 12 153 epizodów; 9 729 początków nie było w H1. Można je zapisać jako tabliczki `[t,side,OVR,id,cena,nazwa]` (~441 kB), nie dopisując 9 729 pełnych EMA. Przy szacunkowym koszcie pełnego wiersza z testu 8: H1 ~0,85 MiB, H1+kompaktowe wejścia ~1,28 MiB vs pełna historia ~3,46 MiB za ten *konkretny okres* (potencjalna oszczędność ~63%, **nie produkcyjna gwarancja**).
+
+**Próba losowa i selekcja:** alternatywnie dodatkowe 10% niezależnie losowanych nieobserwowanych w H1 wierszy daje ~32,19% retencji, ale nadal ginie 67,06% krótkich epizodów. Do uczciwego porównywania grup kontrolnych trzeba znać prawdopodobieństwa włączenia (random controls), nie traktować godzinnego checkpointu i zdarzeń triggerowych jako reprezentatywnej populacji. Źródło: Penn State STAT 506 (Horvitz–Thompson) i OpenTelemetry Sampling. Żaden parametr 5%, 10%, 60min nie jest potwierdzonym optimum EA.
+
+**Decyzja:** retencja wyłącznie godzinnych pełnych przekrojów + sygnałów jest **odrzucona jako niewystarczająca do analizy rotacji**. Do następnego pilota wybieramy **pełne prawdziwe sygnały + outcome windows + rzadsze pełne przekroje + kompaktowe reentry**, z opcjonalną niezależną próbą kontroli o znanym p. **Nie dodajemy archiwum do main.** Zagadnienie 10: bezpieczna, idempotentna retencja stanów watchlisty między uruchomieniami fast i odporność na retry/awarie, wyłącznie w izolacji.
+
+## 10. Jak wznowić pracę po utracie konwersacji
 
 W nowym czacie podaj link do tego dokumentu i napisz: „Kontynuujemy AppEA według START_TUTAJ_ANALITYKA.md; przeczytaj też REJESTR_ZRODEL_BADAWCZYCH.md, sprawdź obecny main, ostatnie Actions i PR, a potem podejmij najbliższy otwarty eksperyment. Nie modyfikuj produkcji bez testów”.
 
