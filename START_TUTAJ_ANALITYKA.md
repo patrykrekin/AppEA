@@ -118,7 +118,18 @@ Próba offline z rzeczywistego `historia-kart.json`, stan archiwum `2026-11-06T2
 
 **Decyzja:** architektura jest wiarygodnym kandydatem, etap 11 zakończony jako **remote GitHub PoC + emulator R2**. **NIE** wdrażamy jeszcze R2 ani nie modyfikujemy produkcji. **Etap 12:** dopiero po dostępie do **osobnego, prywatnego bucketa R2** i najmniej uprzywilejowanego tokenu przekazanego przez sekrety, a nie chat, sprawdzić rzeczywiste 412 CAS/ETag i odtworzenie na drugim runnerze, oraz TTL/GC, snapshoty, limity/monitoring. Nowy workflow wyłącznie badawczy; nie dotykać `refresh.yml`.
 
-## 12. Jak wznowić pracę po utracie konwersacji
+
+## 12. Zagadnienie 12 — Node24 S3 PASS, LIVE R2 nadal wymaga autoryzacji (07.11)
+
+**Raport:** [AUDYT_R2_NODE24_ETAP12_20261107.md](AUDYT_R2_NODE24_ETAP12_20261107.md). **CI:** [Actions #42413953288](https://github.com/patrykrekin/AppEA/actions/runs/42413953288), dwa joby na Node **24.22.2**, **9/9 PASS** w `sdk-wire`. Wykorzystano realny AWS S3 SDK v3, ale **LOKALNY SERWER FAKE S3, NIE CLOUDFLARE R2**. Natywne `PutObjectCommand({IfMatch,IfNoneMatch})` poprawnie przekazuje i podpisuje nagłówki; wyścigi, `412`, niezmienność po nieudanym CAS i odczyt po symulowanej utracie odpowiedzi sprawdzone lokalnie. Drugi niezależny job odczytał zdalny **GitHub** state z etapu 11: `revision=3`, 3 zdarzenia — **NIE R2**.
+
+**Kod:** gałąź badawcza [research/stage12-node24-s3-contract-20261107](https://github.com/patrykrekin/AppEA/tree/research/stage12-node24-s3-contract-20261107), m.in. [ręczny skrypt R2](https://github.com/patrykrekin/AppEA/blob/research/stage12-node24-s3-contract-20261107/research/stage12/live-r2-manual.mjs) i [nieaktywny szablon workflow](https://github.com/patrykrekin/AppEA/blob/research/stage12-node24-s3-contract-20261107/research/stage12/live-workflow-template.yml). Brak rzeczywistych `PUT/GET` do R2. Pakiet `AppEA_etap12_Node24_i_pilot_R2.zip` (SHA256 `74ac7b9db2da5dca45ca4e57669d2492a04e2f0a3aaa3d607f50303be21c325e`, link w rozmowie). Nieaktywowany skrypt żąda `APPEA_STAGE12_LIVE_CONSENT=yes`, ma wyłącznie syntetyczne prefiksy i nie usuwa obiektów. **Nie podłączać do cron/refresh**.
+
+**Nowy blocker:** Cloudflare R2 dopuszcza **1 zapis/sekundę na ten sam klucz**, więc przy współbieżności może pojawić się **`429`**, nie tylko `412`; nie wolno ich mylić. Po zagubionym potwierdzeniu `GET 404` może poprzedzać późniejsze zatwierdzenie wciąż trwającego PUT. Źródła i interpretacja w raporcie. W skrypcie pilota próby zostały rozstawione o około 1,2 s; faktyczny concurrent CAS na **żywym R2** nadal niewykonany.
+
+**Status i następne działanie:** ETAP 12 **CZĘŚCIOWO WYKONANY i OTWARTY**, nie zamykać jako pełnej integracji R2. Użytkownik musi przygotować prywatny osobny bucket R2 Standard, bucket-scoped Object Read & Write token i GitHub Environment `r2-stage12-pilot` z sekretami `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` (opcjonalna zmienna `R2_ENDPOINT`). **Sekretów nie przekazywać w czacie.** Po wyraźnej zgodzie dodać osobny manualny workflow na default `main` i uruchomić dwa niezależne joby R2; następnie sprawdzić TTL/GC, checkpointy, backupy i koszty. `scrape.mjs`, `refresh.yml`, EMA i rekomendacje zostały nienaruszone.
+
+## 13. Jak wznowić pracę po utracie konwersacji
 
 W nowym czacie podaj link do tego dokumentu i napisz: „Kontynuujemy AppEA według START_TUTAJ_ANALITYKA.md; przeczytaj też REJESTR_ZRODEL_BADAWCZYCH.md, sprawdź obecny main, ostatnie Actions i PR, a potem podejmij najbliższy otwarty eksperyment. Nie modyfikuj produkcji bez testów”.
 
