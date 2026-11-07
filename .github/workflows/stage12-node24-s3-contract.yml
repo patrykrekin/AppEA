@@ -21,6 +21,8 @@ jobs:
           node-version: 24
       - name: Install official AWS JavaScript S3 SDK for protocol test only
         run: npm install --no-save --no-audit --no-fund --no-package-lock @aws-sdk/client-s3
+      - name: Parse manual-only live harness without accessing R2
+        run: node --check research/stage12/live-r2-manual.mjs
       - name: Verify native conditional headers against localhost fake S3 only
         run: node research/stage12/node24-s3-contract.mjs
   remote-restart-read:
