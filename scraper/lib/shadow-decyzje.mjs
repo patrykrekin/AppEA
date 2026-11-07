@@ -4,7 +4,7 @@
  * Wołający musi przekazać poziomy sprzed aktualizacji p(t), faktyczne wyniki
  * policzOkazje/policzInwestycje oraz trwalosc juz odswiezona w tym przebiegu.
  *
- * Klucz obserwacji: platforma + rating + itemId (ID moze wystapic w roznych OVR).
+ * Klucz wycinka: platforma + rating + ID profilu FUT.GG + nazwa.\n * To NIE dowodzi jednoznacznej wersji promocyjnej (ten sam ID bywa przy dwoch OVR).
  * Wiersz jest opisem odczytanego wycinka FUT.GG, nie transakcja.
  * Brak karty w kolejnym odczycie nie rozstrzyga ceny ani sprzedazy.
  */
@@ -14,11 +14,11 @@ import { onGrid } from "./grid.mjs";
 export const SHADOW_SCHEMA = 1;
 export const LIMIT_BAJTOW_MIGAWKI = 65536;
 export const KOLUMNY = Object.freeze([
-  "rating", "itemId", "cena", "emaSzybkaPrzed", "nSzybkaPrzed",
+  "rating", "idProfiluFutGG", "cena", "emaSzybkaPrzed", "nSzybkaPrzed",
   "wiekPomiaruSzybkaSek", "wiekModeluSzybkaSek", "emaDobowaPrzed",
   "nDobowaPrzed", "wiekPomiaruDobowaSek", "wiekModeluDobowaSek",
   "trwaloscPoBiezacymN", "trwaloscPoBiezacymSek",
-  "okazjaSzybkaWynik", "inwestycjaWTop12", "celTop12", "kupnoDoTop12"
+  "okazjaSzybkaWynik", "inwestycjaWTop12", "celTop12", "kupnoDoTop12", "nazwaZListy"
 ]);
 
 const isObj = x => x !== null && typeof x === "object" && !Array.isArray(x);
@@ -105,7 +105,8 @@ export function zbudujMigawkeDecyzji({
           fastNames.has(key) ? 1 : 0,
           inv ? 1 : 0,
           inv ? inv.cel : null,
-          inv ? inv.kupnoDo : null
+          inv ? inv.kupnoDo : null,
+          c.name
         ]);
       }
     }
