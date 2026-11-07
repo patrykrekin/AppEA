@@ -1,0 +1,51 @@
+name: Stage 12 - Node24 native S3 conditional contract (research only)
+on:
+  push:
+    branches:
+      - research/stage12-node24-s3-contract-20261107
+    paths:
+      - '.github/workflows/stage12-node24-s3-contract.yml'
+      - 'research/stage12/node24-s3-contract.mjs'
+permissions:
+  contents: read
+jobs:
+  sdk-wire:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install official AWS JavaScript S3 SDK for protocol test only
+        run: npm install --no-save --no-audit --no-fund --no-package-lock @aws-sdk/client-s3
+      - name: Verify native conditional headers against localhost fake S3 only
+        run: node research/stage12/node24-s3-contract.mjs
+  remote-restart-read:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Independent runner reads stage11 remote GitHub revision (NOT R2)
+        run: |
+          git fetch --no-tags --depth=1 origin refs/heads/research/remote-cas-stage11-20261107
+          git show FETCH_HEAD:stage11/state.json > "$RUNNER_TEMP/remote-state.json"
+          node --input-type=module -e '
+            import {readFileSync} from "node:fs";
+            import assert from "node:assert/strict";
+            const d=JSON.parse(readFileSync(process.env.RUNNER_TEMP+"/remote-state.json","utf8"));
+            assert.equal(d.schema,11);
+            assert.equal(d.revision,3);
+            assert.equal(d.runId,"etap11-fixture-r3");
+            assert.equal(d.digest,"fixture:c3");
+            assert.equal(d.events.length,3);
+            console.log("STAGE12_INDEPENDENT_GITHUB_REMOTE_READ "+JSON.stringify({node:process.version,revision:d.revision,events:d.events.length,realR2:false}));
+          '
