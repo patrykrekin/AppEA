@@ -197,3 +197,8 @@ Wszystkie obserwowane rozliczenia dotyczą powracających, wysoko ocenionych kar
 **Decyzja:** etap 8 integracyjnie zakończony, ale **instrumentacja nie została wdrożona na main**. Nie modyfikować EMA, rekomendacji ani historii na podstawie jednego przebiegu. Dalsze badanie (etap 9): ocena hybrydowego zapisu wszystkich sygnałów i rzadszych pełnych kontroli, z kontrolą biasu, kosztów retencji i workflow.
 
 **Źródła metodyczne do dalszej pracy:** [OpenTelemetry Logs Data Model](https://opentelemetry.io/docs/specs/otel/logs/data-model/), [Fowler, Event Sourcing](https://martinfowler.com/eaaDev/EventSourcing.html), [GitHub Repository Limits](https://docs.github.com/en/repositories/creating-and-managing-repositories/repository-limits). Żadne nie uprawnia do uznania trafności transakcji z samego zniknięcia oferty z rankingu.
+
+
+### Korekta izolacji po etapie 8 (07.11.2026)
+
+Wbrew początkowemu założeniu izolacji końcowa kontrola wykazała, że **hook badawczy i sześć plików eksperymentalnych znalazły się przejściowo na `main`**. Hook w normalnym przebiegu był aktywny tylko przy jawnej zmiennej środowiskowej, ale sama obecność kodu naruszyła uzgodniony proces. Przywrócono oryginalny `scraper/scrape.mjs` (blob `88912b6f7b8cdc679d1a94ba62510e465d7adac6`, rollback commit `67241e08a761e4bb3f5c69d20225aa472fa47187`) oraz usunięto sześć eksperymentalnych plików z `main`. Przebieg badawczy i kod zachowano na osobnej gałęzi. Szczegóły w [audycie etapu 8](AUDYT_SHADOW_INTEGRACJA_20261107.md). **Zasada na przyszłość:** przy każdej edycji w research potwierdzić hash i zawartość `main`; nie polegać wyłącznie na wybranym argumencie `branch` w narzędziu. Stanu zdrowia produkcji nie wolno zakładać na podstawie jednego wcześniejszego crona — sprawdzić go ponownie.
