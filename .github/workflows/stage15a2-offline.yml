@@ -21,6 +21,8 @@ jobs:
           node-version: 24
       - name: Replay 16,384 synthetic records across 1,024 pages and reader-pin CAS safety
         run: node research/stage15a2/test.mjs
+      - name: Validate guarded live R2 test syntax without network calls
+        run: node --check research/stage15a2/live-r2.mjs
       - name: Assert production scraper and refresh unchanged
         run: |
           test "$(git hash-object scraper/scrape.mjs)" = "88912b6f7b8cdc679d1a94ba62510e465d7adac6"
