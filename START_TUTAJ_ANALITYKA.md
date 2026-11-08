@@ -139,7 +139,19 @@ Próba offline z rzeczywistego `historia-kart.json`, stan archiwum `2026-11-06T2
 
 **Status: etap 12 zamknięty jako udana pojedyncza próba LIVE CAS i odczyt z drugiego runnera.** Nie oznacza gotowości kolektora HOT/COLD do produkcji: nie testowano na żywym R2 dwóch **równoczesnych** writerów, fizycznego zerwania in-flight PUT ani GC/TTL/backupów, statusu 429 pod obciążeniem i polityki kosztowej. **Kolejny etap 13:** pełne immutowalne delty + HEAD CAS, kontrola osieroconych obiektów, retencja i rzeczywiste współbieżności na osobnym buckecie, a dopiero potem pasywna instrumentacja rynku.
 
-## 13. Jak wznowić pracę po utracie konwersacji
+## 13. Zagadnienie 13 — RZECZYWISTE R2: immutable DELTA → HEAD CAS, 2 piszących i GC dry-run (08.11 — PASS)
+
+**Rozstrzygający audyt:** [AUDYT_R2_HEAD_DELTA_CAS_ETAP13_20261108.md](AUDYT_R2_HEAD_DELTA_CAS_ETAP13_20261108.md), **[GitHub Actions #42501699777](https://github.com/patrykrekin/AppEA/actions/runs/42501699777)** (**6/6 jobów PASS**) i [offline #42501564803](https://github.com/patrykrekin/AppEA/actions/runs/42501564803) (**24/24 PASS** Node24).
+
+**Wszystko izolowane:** rzeczywiste połączenie do prywatnego R2 przez GitHub Environment `r2-stage12-pilot`, wyłącznie **syntetyczne** dane w nowym prefixie `appea-research/stage13/stage13-42501699777/`. Kod na [research/stage13-r2-immutable-cas-20261108](https://github.com/patrykrekin/AppEA/tree/research/stage13-r2-immutable-cas-20261108), nie scalony do main. Workflow `.github/workflows/stage13-live-r2-one-shot.yml` uruchomiony z jednorazowego znacznika, potem natychmiast usunięto trigger push w commicie `4a77383a0f7f7617904f6bee51cf606f86d1f8fd`; pozostał **tylko manualny `workflow_dispatch`** z hasłem `RUN_STAGE13_R2`. Brak kolejnych automatycznych prób.
+
+**Twarde wyniki R2:** obie niezależne gałęzie wykonania startowały z **tym samym gen0 ETag** i każda poprawnie zapisała niezmienny `deltas/<sha256>.json`; **B wygrał HEAD `If-Match` i gen1**, **A dostał rzeczywiste `412`**, jego delta pozostała niezatwierdzona. Trzeci job stworzył celową orphan bez aktualizacji manifestu. Następny job odczytał 3 delty: **1 wskazana HEAD / 2 orphan**, wszystkie orphan młodsze od 72h chronione, **zero delete**. Potem inny runner dopisał gen2 i deltę; potwierdził hashe **2 zatwierdzonych delt**, odzyskał `receipt` po **symulowanej** utracie ACK, odrzucił stare `If-Match` z 412. Stan finalny: **1 HEAD + 4 delty** = 5 małych obiektów, **2 wskazane + 2 orphan**. Ciągłość i odporność na samą stratę *otrzymanego* potwierdzenia są potwierdzone. Brak dowodu fizycznego in-flight connection loss.
+
+**Kontrola kosztu:** ścieżka skryptu miała **9 prób PUT (7 sukces, 2 odmowy 412), ok. 15 GET, 2 listowania**, bez prawdziwych cen, bez delete i bez zmian bucketa. Dane billingowe nie były dostępne, więc **nie deklarować rachunku $0**. Max 3 PUT/job, `maxAttempts:1`, limit HEAD 64KiB/delta 8KiB. Jeden run, brak crona. **Źródła:** Cloudflare R2 conditional PUT/consistency, limits (1 write/s/key), lifecycle (nie włączać expiry bez checkpointu).
+
+**Decyzja:** **etap 13 PASS jako pilot zdalnego protokołu commit, konkurencji i dry-run GC**. **GC fizyczny, 72h retencja, TTL, checkpoint/restore i zabezpieczenia billingowe NIE SĄ jeszcze przetestowanym wdrożeniem** — pełny collector nie może zostać uruchomiony. **Zagadnienie 14:** bezpieczny backup/checkpoint, odtwarzanie z częściowych delt i pilotaż ograniczonego cleanup wyłącznie testowych orphan po kontroli aktualnego manifestu, z limitem operacji; dopiero po pozytywnych testach można rozważyć niezależną pasywną instrumentację. Trzymać `scrape.mjs` i `refresh.yml` bez zmian.
+
+## 14. Jak wznowić pracę po utracie konwersacji
 
 W nowym czacie podaj link do tego dokumentu i napisz: „Kontynuujemy AppEA według START_TUTAJ_ANALITYKA.md; przeczytaj też REJESTR_ZRODEL_BADAWCZYCH.md, sprawdź obecny main, ostatnie Actions i PR, a potem podejmij najbliższy otwarty eksperyment. Nie modyfikuj produkcji bez testów”.
 
