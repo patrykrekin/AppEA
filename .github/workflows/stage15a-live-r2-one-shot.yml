@@ -1,0 +1,184 @@
+name: Stage15A LIVE R2 maintenance fencing and temporary off-bucket backup
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/stage15a-live-r2-one-shot.yml'
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Type RUN_STAGE15A_R2 to authorize one synthetic R2 test'
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: appea-stage15a-live-r2
+  cancel-in-progress: false
+jobs:
+  seed:
+    if: >-
+      (github.event_name == 'push' && contains(github.event.head_commit.message, '[stage15a-authorized-live-once]'))
+      || (github.event_name == 'workflow_dispatch' && inputs.confirmation == 'RUN_STAGE15A_R2')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    environment: r2-stage12-pilot
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: b0c9c559b27a07b2348682ef08494ac44f6ea669
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install R2 S3 client
+        run: npm install --no-save --no-audit --no-fund --no-package-lock @aws-sdk/client-s3
+      - name: 'Seed synthetic run with two immutable deltas'
+        id: seed
+        run: node research/stage15a/live-pilot.mjs seed
+        env:
+          STAGE15A_LIVE_CONSENT: 'yes'
+          STAGE15A_RUN_ID: stage15a-${{ github.run_id }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT: ${{ vars.R2_ENDPOINT }}
+  lock:
+    needs: seed
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    environment: r2-stage12-pilot
+    outputs:
+      base_etag: ${{ steps.lock.outputs.base_etag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: b0c9c559b27a07b2348682ef08494ac44f6ea669
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install R2 S3 client
+        run: npm install --no-save --no-audit --no-fund --no-package-lock @aws-sdk/client-s3
+      - name: 'Freeze HEAD and output previous ETag'
+        id: lock
+        run: node research/stage15a/live-pilot.mjs lock
+        env:
+          STAGE15A_LIVE_CONSENT: 'yes'
+          STAGE15A_RUN_ID: stage15a-${{ github.run_id }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT: ${{ vars.R2_ENDPOINT }}
+  stale:
+    needs: lock
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    environment: r2-stage12-pilot
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: b0c9c559b27a07b2348682ef08494ac44f6ea669
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install R2 S3 client
+        run: npm install --no-save --no-audit --no-fund --no-package-lock @aws-sdk/client-s3
+      - name: 'Ensure stale writer gets real 412 and cannot override maintenance'
+        id: stale
+        run: node research/stage15a/live-pilot.mjs stale
+        env:
+          STAGE15A_LIVE_CONSENT: 'yes'
+          STAGE15A_RUN_ID: stage15a-${{ github.run_id }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT: ${{ vars.R2_ENDPOINT }}
+          STAGE15A_BASE_ETAG: ${{ needs.lock.outputs.base_etag }}
+  rotate:
+    needs: stale
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    environment: r2-stage12-pilot
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: b0c9c559b27a07b2348682ef08494ac44f6ea669
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install R2 S3 client
+        run: npm install --no-save --no-audit --no-fund --no-package-lock @aws-sdk/client-s3
+      - name: 'Commit immutable page and backup under maintenance, then release'
+        id: rotate
+        run: node research/stage15a/live-pilot.mjs rotate
+        env:
+          STAGE15A_LIVE_CONSENT: 'yes'
+          STAGE15A_RUN_ID: stage15a-${{ github.run_id }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT: ${{ vars.R2_ENDPOINT }}
+  export:
+    needs: rotate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    environment: r2-stage12-pilot
+    outputs:
+      expected_sha: ${{ steps.export.outputs.expected_sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: b0c9c559b27a07b2348682ef08494ac44f6ea669
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install R2 S3 client
+        run: npm install --no-save --no-audit --no-fund --no-package-lock @aws-sdk/client-s3
+      - name: 'Read synthetic backup from R2 for temporary independent storage'
+        id: export
+        run: node research/stage15a/live-pilot.mjs export
+        env:
+          STAGE15A_LIVE_CONSENT: 'yes'
+          STAGE15A_RUN_ID: stage15a-${{ github.run_id }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT: ${{ vars.R2_ENDPOINT }}
+      - name: Publish synthetic checkpoint to temporary GitHub artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage15a-temporary-offbucket
+          path: ${{ runner.temp }}/stage15a-page.json
+          if-no-files-found: error
+          retention-days: 7
+  offsite-verify:
+    needs: export
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: b0c9c559b27a07b2348682ef08494ac44f6ea669
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Retrieve checkpoint from GitHub artifact without R2 secrets
+        uses: actions/download-artifact@v4
+        with:
+          name: stage15a-temporary-offbucket
+          path: ${{ runner.temp }}/offsite
+      - name: Verify SHA and restore synthetic events without accessing R2
+        run: node research/stage15a/verify-offsite.mjs
+        env:
+          STAGE15A_RUN_ID: stage15a-${{ github.run_id }}
+          STAGE15A_EXPECTED_SHA: ${{ needs.export.outputs.expected_sha }}
