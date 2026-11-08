@@ -1,0 +1,120 @@
+name: Stage14 LIVE R2 — checkpoint backup restore, one disposable delete
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/stage14-live-r2-one-shot.yml'
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Type RUN_STAGE14_R2 to authorize a new bounded synthetic test'
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: appea-stage14-live-r2
+  cancel-in-progress: false
+jobs:
+  seed:
+    if: >-
+      (github.event_name == 'push' && contains(github.event.head_commit.message, '[stage14-authorized-live-once]'))
+      || (github.event_name == 'workflow_dispatch' && inputs.confirmation == 'RUN_STAGE14_R2')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    environment: r2-stage12-pilot
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 13f65465f6d5f5307ddf69bb8506cc148bca9770
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install AWS S3 SDK for isolated R2 test
+        run: npm install --no-save --no-audit --no-fund --no-package-lock @aws-sdk/client-s3
+      - name: Initialize bounded synthetic history with two deltas and one protected orphan
+        run: node research/stage14/live-pilot.mjs seed
+        env:
+          APPEA_STAGE14_LIVE_CONSENT: 'yes'
+          R2_PILOT_ID: stage14-${{ github.run_id }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT: ${{ vars.R2_ENDPOINT }}
+  checkpoint:
+    needs: seed
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    environment: r2-stage12-pilot
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 13f65465f6d5f5307ddf69bb8506cc148bca9770
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install AWS S3 SDK for isolated R2 test
+        run: npm install --no-save --no-audit --no-fund --no-package-lock @aws-sdk/client-s3
+      - name: Create independent immutable checkpoint and backup, commit HEAD by ETag
+        run: node research/stage14/live-pilot.mjs checkpoint
+        env:
+          APPEA_STAGE14_LIVE_CONSENT: 'yes'
+          R2_PILOT_ID: stage14-${{ github.run_id }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT: ${{ vars.R2_ENDPOINT }}
+  restore:
+    needs: checkpoint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    environment: r2-stage12-pilot
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 13f65465f6d5f5307ddf69bb8506cc148bca9770
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install AWS S3 SDK for isolated R2 test
+        run: npm install --no-save --no-audit --no-fund --no-package-lock @aws-sdk/client-s3
+      - name: Restore state from backup on independent runner and append third delta
+        run: node research/stage14/live-pilot.mjs restore
+        env:
+          APPEA_STAGE14_LIVE_CONSENT: 'yes'
+          R2_PILOT_ID: stage14-${{ github.run_id }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT: ${{ vars.R2_ENDPOINT }}
+  trash:
+    needs: restore
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    environment: r2-stage12-pilot
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 13f65465f6d5f5307ddf69bb8506cc148bca9770
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install AWS S3 SDK for isolated R2 test
+        run: npm install --no-save --no-audit --no-fund --no-package-lock @aws-sdk/client-s3
+      - name: GC dry-run: protect all history; physically delete only synthetic disposable object
+        run: node research/stage14/live-pilot.mjs trash
+        env:
+          APPEA_STAGE14_LIVE_CONSENT: 'yes'
+          R2_PILOT_ID: stage14-${{ github.run_id }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT: ${{ vars.R2_ENDPOINT }}
