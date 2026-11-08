@@ -1,0 +1,169 @@
+name: Stage13 LIVE R2 — immutable deltas, competing writers, GC dry-run
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/stage13-live-r2-one-shot.yml'
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Type RUN_STAGE13_R2 to authorize one bounded synthetic test"
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: appea-stage13-r2-live-pilot
+  cancel-in-progress: false
+jobs:
+  init:
+    if: >-
+      (github.event_name == 'push' && contains(github.event.head_commit.message, '[stage13-authorized-live-once]'))
+      || (github.event_name == 'workflow_dispatch' && inputs.confirmation == 'RUN_STAGE13_R2')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    environment: r2-stage12-pilot
+    outputs:
+      base_etag: ${{ steps.init.outputs.base_etag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ea6e6f9deca14dcd98dc31a4bcbd9e8e98b85139
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm install --no-save --no-audit --no-fund --no-package-lock @aws-sdk/client-s3
+      - name: Create synthetic HEAD generation zero with create-only condition
+        id: init
+        run: node research/stage13/live-pilot.mjs init
+        env:
+          APPEA_STAGE13_LIVE_CONSENT: 'yes'
+          R2_PILOT_ID: stage13-${{ github.run_id }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT: ${{ vars.R2_ENDPOINT }}
+  candidate_A:
+    needs: init
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    environment: r2-stage12-pilot
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ea6e6f9deca14dcd98dc31a4bcbd9e8e98b85139
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm install --no-save --no-audit --no-fund --no-package-lock @aws-sdk/client-s3
+      - name: Candidate A writes immutable delta and conditionally attempts HEAD CAS
+        run: node research/stage13/live-pilot.mjs candidate A
+        env:
+          STAGE13_BASE_ETAG: ${{ needs.init.outputs.base_etag }}
+          APPEA_STAGE13_LIVE_CONSENT: 'yes'
+          R2_PILOT_ID: stage13-${{ github.run_id }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT: ${{ vars.R2_ENDPOINT }}
+  candidate_B:
+    needs: init
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    environment: r2-stage12-pilot
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ea6e6f9deca14dcd98dc31a4bcbd9e8e98b85139
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm install --no-save --no-audit --no-fund --no-package-lock @aws-sdk/client-s3
+      - name: Candidate B competes against same base ETag, distinct immutable delta
+        run: node research/stage13/live-pilot.mjs candidate B
+        env:
+          STAGE13_BASE_ETAG: ${{ needs.init.outputs.base_etag }}
+          APPEA_STAGE13_LIVE_CONSENT: 'yes'
+          R2_PILOT_ID: stage13-${{ github.run_id }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT: ${{ vars.R2_ENDPOINT }}
+  orphan:
+    needs: init
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    environment: r2-stage12-pilot
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ea6e6f9deca14dcd98dc31a4bcbd9e8e98b85139
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm install --no-save --no-audit --no-fund --no-package-lock @aws-sdk/client-s3
+      - name: Persist one deliberate orphan delta (never publish or delete)
+        run: node research/stage13/live-pilot.mjs orphan
+        env:
+          APPEA_STAGE13_LIVE_CONSENT: 'yes'
+          R2_PILOT_ID: stage13-${{ github.run_id }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT: ${{ vars.R2_ENDPOINT }}
+  inspect:
+    needs: [candidate_A,candidate_B,orphan]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    environment: r2-stage12-pilot
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ea6e6f9deca14dcd98dc31a4bcbd9e8e98b85139
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm install --no-save --no-audit --no-fund --no-package-lock @aws-sdk/client-s3
+      - name: Verify real HEAD winner, orphan isolation and zero-delete GC preview
+        run: node research/stage13/live-pilot.mjs inspect
+        env:
+          APPEA_STAGE13_LIVE_CONSENT: 'yes'
+          R2_PILOT_ID: stage13-${{ github.run_id }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT: ${{ vars.R2_ENDPOINT }}
+  advance:
+    needs: inspect
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    environment: r2-stage12-pilot
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ea6e6f9deca14dcd98dc31a4bcbd9e8e98b85139
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm install --no-save --no-audit --no-fund --no-package-lock @aws-sdk/client-s3
+      - name: Commit generation 2, recover simulated lost ACK, reject stale CAS, dry-run GC
+        run: node research/stage13/live-pilot.mjs advance
+        env:
+          APPEA_STAGE13_LIVE_CONSENT: 'yes'
+          R2_PILOT_ID: stage13-${{ github.run_id }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT: ${{ vars.R2_ENDPOINT }}
