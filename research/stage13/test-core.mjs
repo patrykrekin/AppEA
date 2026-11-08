@@ -1,0 +1,34 @@
+import assert from 'node:assert/strict';
+import {digest,encode,prefixOf,deltaSpec,inspectHead,nextHead,dryRunGc,assertDelta,ackStatus,GRACE_MS} from './core.mjs';
+const run='stage13-12345678',prefix=prefixOf(run),h0={schema:13,runId:run,generation:0,chain:[],receipt:'init'};
+const rec={schema:13,synthetic:true,runId:run,writer:'A',batch:'a'};
+const spec=deltaSpec(prefix,rec),h1=nextHead(h0,run,spec,'a'),h2=nextHead(h1,run,deltaSpec(prefix,{...rec,writer:'B'}),'b');
+let n=0;function check(name,fn){fn();n++;console.log('PASS '+n+' '+name)}
+check('canonical deterministic delta',()=>assert.equal(deltaSpec(prefix,rec).sha,spec.sha));
+check('digest is sha256',()=>assert.match(digest(encode(rec)),/^[a-f0-9]{64}$/));
+check('initial manifest',()=>assert.equal(inspectHead(h0,run).reachable.size,0));
+check('chain generation increments',()=>assert.equal(h1.generation,1));
+check('chain lineage',()=>assert.equal(h2.generation,2));
+check('immutable delta bytes verify',()=>assert.equal(assertDelta(spec,spec.body).batch,'a'));
+check('corrupt bytes refused',()=>assert.throws(()=>assertDelta(spec,spec.body+'evil')));
+check('invalid run refused',()=>assert.throws(()=>prefixOf('stage13-../../main')));
+check('cross-run pointer refused',()=>assert.throws(()=>nextHead(h0,run,{...spec,key:'unsafe'},'x')));
+check('replay duplicate receipt refused',()=>assert.throws(()=>nextHead(h1,run,spec,'a')));
+check('replay key refused',()=>assert.throws(()=>nextHead(h1,run,spec,'new')));
+check('same receipt twice refused',()=>assert.throws(()=>inspectHead({...h2,chain:[h2.chain[0],{...h2.chain[1],receipt:'a'}],receipt:'a'},run)));
+check('invalid manifest generation refused',()=>assert.throws(()=>inspectHead({...h1,generation:88},run)));
+check('other run refused',()=>assert.throws(()=>inspectHead(h1,'stage13-22222222')));
+check('receipts recognized',()=>assert.equal(ackStatus(h2,run,'a'),'already_committed'));
+check('unknown receipts fail closed',()=>assert.equal(ackStatus(h2,run,'z'),'not_in_current_chain_fail_closed'));
+const now=Date.UTC(2026,10,8,17),orphan=deltaSpec(prefix,{schema:13,synthetic:true,runId:run,writer:'orphan'});
+const listed=[{Key:spec.key,LastModified:new Date(now-100*3600*1000)},
+ {Key:orphan.key,LastModified:new Date(now-1000)}];
+check('referenced older than grace kept',()=>assert.equal(dryRunGc(h1,run,listed,now).reachable,1));
+check('recent orphan protected by grace',()=>assert.equal(dryRunGc(h1,run,listed,now).orphanRecent,1));
+check('aged orphan dry-run eligible only',()=>assert.equal(dryRunGc(h1,run,[{Key:orphan.key,LastModified:new Date(now-GRACE_MS-1)}],now).eligibleDryRun,1));
+check('no delete under any GC selection',()=>assert.equal(dryRunGc(h1,run,listed,now).deleteOperations,0));
+check('unsafe too short grace refused',()=>assert.throws(()=>dryRunGc(h1,run,listed,now,1000)));
+check('future object timestamp refused',()=>assert.throws(()=>dryRunGc(h1,run,[{Key:orphan.key,LastModified:new Date(now+1000)}],now)));
+check('duplicate remote list record refused',()=>assert.throws(()=>dryRunGc(h1,run,[listed[0],listed[0]],now)));
+check('head unchanged by read validation',()=>{const copy=encode(h2);inspectHead(h2,run);assert.equal(encode(h2),copy)});
+console.log('STAGE13_CORE_TESTS '+JSON.stringify({tests:n,pass:true,realR2:false}));
