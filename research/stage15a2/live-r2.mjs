@@ -5,7 +5,7 @@ import {S3Client,GetObjectCommand,PutObjectCommand,ListObjectsV2Command} from '@
 import {generate,initHead,validateHead,pin,unpin,freeze,release,planGC,replay,object,runPrefix,j} from './core.mjs';
 if(process.env.APPEA_15A2_LIVE_CONSENT!=='yes')throw Error('LIVE_CONSENT_REQUIRED');
 const phase=process.argv[2];
-if(!['seed','pin','stale','maintenance','inspect','release'].includes(phase))throw Error('BAD_PHASE');
+if(!['seed','pin','stale','maintenance','inspect','release','recover'].includes(phase))throw Error('BAD_PHASE');
 const runId=process.env.R2_PILOT_ID,prefix=runPrefix(runId),headKey=prefix+'hot/head.json';
 for(const k of ['R2_ACCOUNT_ID','R2_ACCESS_KEY_ID','R2_SECRET_ACCESS_KEY','R2_BUCKET'])if(!process.env[k])throw Error('MISSING_'+k);
 const account=process.env.R2_ACCOUNT_ID,endpoint=process.env.R2_ENDPOINT||('https://'+account+'.r2.cloudflarestorage.com');
@@ -89,16 +89,41 @@ try{
  if(phase==='inspect'){
   const h=await readHead();assert.equal(h.value.mode,'maintenance');
   const listing=await inventory();assert.equal(listing.length,8);
+  assert.equal(listing.filter(x=>x.Key===headKey).length,1,'HEAD_NOT_UNIQUE');
+  const archiveListing=listing.filter(x=>x.Key!==headKey);
+  assert.equal(archiveListing.length,7);
   const contents=new Map();
-  for(const item of listing){const r=await get(item.Key);assert.ok(r);contents.set(item.Key,r.body);}
+  for(const item of archiveListing){const r=await get(item.Key);assert.ok(r);contents.set(item.Key,r.body);}
   const read=key=>contents.get(key)??null;
   const result=replay(runId,h.value.root,read);
   assert.equal(result.records.length,32);
   assert.equal(result.reachable.size,7);
-  const gc=planGC(runId,h.value,read,listing,Date.now(),h.etag,h.etag);
+  const gc=planGC(runId,h.value,read,archiveListing,Date.now(),h.etag,h.etag);
   assert.equal(gc.reachable,7);assert.equal(gc.grace,0);
   assert.equal(gc.eligible,0);assert.equal(gc.deleteOperations,0);
   report('INSPECT',{rootRecords:32,referenced:gc.reachable,deleteOperations:gc.deleteOperations});
+ }
+ if(phase==='recover'){
+  // Fail-closed repair of the *existing* run that was left in maintenance after a CI assertion.
+  // Never deletes. Verifies every immutable archive object before releasing HEAD via CAS.
+  const h=await readHead();assert.equal(h?.value?.mode,'maintenance');
+  assert.equal(h.value.readers.length,0);
+  const listing=await inventory();assert.equal(listing.length,8);
+  assert.equal(listing.filter(x=>x.Key===headKey).length,1);
+  const archiveListing=listing.filter(x=>x.Key!==headKey);
+  assert.equal(archiveListing.length,7);
+  const contents=new Map();
+  for(const item of archiveListing){const r=await get(item.Key);assert.ok(r);contents.set(item.Key,r.body);}
+  const checked=replay(runId,h.value.root,k=>contents.get(k)??null);
+  assert.equal(checked.records.length,32);
+  assert.equal(checked.reachable.size,7);
+  const gc=planGC(runId,h.value,k=>contents.get(k)??null,archiveListing,Date.now(),h.etag,h.etag);
+  assert.equal(gc.reachable,7);assert.equal(gc.eligible,0);
+  await wait(1350);
+  await put(headKey,j(release(runId,h.value)),{IfMatch:h.etag});
+  const final=await readHead();assert.equal(final.value.mode,'active');
+  report('RECOVER',{recoveredFromMaintenance:true,recordsVerified:32,epoch:final.value.epoch,
+    immutableObjectsChecked:7,deletes:0});
  }
  if(phase==='release'){
   const h=await readHead();assert.equal(h.value.mode,'maintenance');
