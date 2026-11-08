@@ -1,0 +1,29 @@
+name: Stage13 isolated offline invariants Node24
+on:
+  push:
+    branches:
+      - research/stage13-r2-immutable-cas-20261108
+    paths:
+      - 'research/stage13/**'
+      - '.github/workflows/stage13-offline-ci.yml'
+permissions:
+  contents: read
+jobs:
+  offline-only:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Test deterministic hash, manifest, and zero-delete GC invariants
+        run: node research/stage13/test-core.mjs
+      - name: Validate live runner source syntax without R2 calls
+        run: node --check research/stage13/live-pilot.mjs
+      - name: Assert main production scraper not altered in this checkout
+        shell: bash
+        run: |
+          test "$(git hash-object scraper/scrape.mjs)" = "88912b6f7b8cdc679d1a94ba62510e465d7adac6"
