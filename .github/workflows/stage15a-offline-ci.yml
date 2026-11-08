@@ -1,0 +1,29 @@
+name: Stage15A isolated rotation/fencing Node24
+on:
+  push:
+    branches:
+      - research/stage15a-rotation-fencing-20261108
+    paths:
+      - 'research/stage15a/**'
+      - '.github/workflows/stage15a-offline-ci.yml'
+permissions:
+  contents: read
+jobs:
+  bounded-replay:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Test 1024 events, 63 pages, CAS fencing and GC dry-run
+        run: node research/stage15a/test.mjs
+      - name: Assert production scraper unchanged
+        run: |
+          test "$(git hash-object scraper/scrape.mjs)" = "88912b6f7b8cdc679d1a94ba62510e465d7adac6"
+      - name: Assert production workflow unchanged
+        run: |
+          test "$(git hash-object .github/workflows/refresh.yml)" = "05b3f109a0f17b21073628b60e52ac218be33d2d"
