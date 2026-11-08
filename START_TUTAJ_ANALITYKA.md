@@ -169,7 +169,22 @@ Próba offline z rzeczywistego `historia-kart.json`, stan archiwum `2026-11-06T2
 
 **Wniosek:** etap 14 PASS dla **checkpoint/backup/restore i pojedynczego, ściśle ograniczonego disposable DELETE**, ale **NIE pełny produkcyjny GC/DR**: starsze 72h orphan nie były kasowane, kopiowanie odbywało się w obrębie jednego bucketa, brak fencing przeciw aktywnym writerom, brak restore po utracie bucketa, brak rzeczywistego budżetu i retencji długiego ledgeru. **Następny etap 15A (zanim zbierzemy prawdziwe decyzje)**: skalowanie i rotacja checkpointu z protokołem blokady/fencing, ochrona historycznych danych i backup poza jednym bucketem; bez scalania collectora do `refresh.yml`. Jeśli dopiero wtedy PASS, etap 15B: krótkotrwały, osobny pasywny collector decyzji na rynku, bez ingerencji w logikę rekomendacji.
 
-## 15. Jak wznowić pracę po utracie konwersacji
+
+## 15. Zagadnienie 15A — rotacja 1024 zdarzeń, fencing na żywym R2, tymczasowy backup poza R2 (08.11)
+
+**Pełny raport:** [AUDYT_R2_ROTACJA_FENCING_BACKUP_ETAP15A_20261108.md](AUDYT_R2_ROTACJA_FENCING_BACKUP_ETAP15A_20261108.md). **Źródła i testy:** [research/stage15a-rotation-fencing-20261108](https://github.com/patrykrekin/AppEA/tree/research/stage15a-rotation-fencing-20261108) (kod wyłącznie na gałęzi badawczej, bez scalenia do `main`), [CI offline Node24 #42505548172](https://github.com/patrykrekin/AppEA/actions/runs/42505548172) **37/37 PASS**, [R2 LIVE #42505631775](https://github.com/patrykrekin/AppEA/actions/runs/42505631775) **6/6 jobów PASS**, w tym rzeczywisty R2 GET/PUT/`412` i potwierdzenie odtworzenia kopii w osobnym jobie GitHub Actions.
+
+**Offline (tylko syntetyczna próba):** 1024 zdarzenia; 63 niezmienne strony po 16 rekordów plus `tail=16`, odtworzenie 1024/1024, aktywny HEAD **6756 B** przy limicie 8192 B, 1150 obiektów mock (~636 586 B payload), 64 ostatnie `receipts`. `freeze`/`release` zwiększają `epoch`; `maintenance` odrzuca append, a starego CAS nie da się zatwierdzić. W GC dry-run: **142 wskazane** (63 strony +63 backupy+16 aktywnych delt) i **1008 starych surowych delt** objętych grace. Po syntetycznym postarzeniu 1008 kandydatów **wyłącznie do DRY-RUN**, brak `DeleteObject`. `maxPages=128` oznacza ograniczoną pojemność pojedynczego replay, nie wystarcza na wielotygodniowe działanie.
+
+**Żywe R2:** nowy prefiks `appea-research/stage15a/stage15a-42505631775/`, **wyłącznie sztuczne dane**. Seed = 2 zatwierdzone delty, lock = `maintenance epoch1`; osobny stale writer próbował HEAD `If-Match` starym ETag i dostał **prawdziwe HTTP 412**. Rotate = 1 immutable page + 1 niezależny klucz backupu w R2, HEAD `generation=2,epoch=2,mode=active`, GC: **2 wskazane strony + 3 młode delty, 0 do delete**. Finalnie **6 obiektów** w nowym prefixie (1 HEAD, 3 raw deltas, 1 page i 1 backup), bez delete i bez nowych żądań FUT.GG. W sumie około 12 prób PUT (jeden odrzucony 412), 17 GET, 1 LIST. Rachunku Cloudflare nie odczytano.
+
+**Poza R2, ale NIE docelowy offsite:** backup ze sztucznymi 2 rekordami (466 B, SHA256 `5796e6cc7e7e51a87b15ef1399b3c0c24893b41ba371a207c4b709c04d580889`) skopiowano do artefaktu GitHub (`stage15a-temporary-offbucket`, ID `13626369715`), a drugi runner bez sekretów R2 odtworzył **2/2** zdarzenia po porównaniu SHA256. **Artefakt wygasa 15.11.2026 17:35:33 UTC (7 dni)**, repo jest publiczne, więc **NIGDY nie eksportować tam prawdziwych tajnych danych**. To dowód przepływu między dostawcami, NIE trwały backup.
+
+**Zamknięcie bezpieczeństwa:** po sukcesie wyłączono wyzwalanie automatyczne w [`stage15a-live-r2-one-shot.yml`](https://github.com/patrykrekin/AppEA/blob/main/.github/workflows/stage15a-live-r2-one-shot.yml) (commit `a5d15668873e14b20581077f0aca0002f3eec85c`). Tylko manual `workflow_dispatch` z `RUN_STAGE15A_R2`; `scrape.mjs`, `refresh.yml`, EMA, inwestycje i publikacja bez zmian.
+
+**Status:** etap 15A jako **wąski PoC: PASS**. **NIE zamknięto** trwałego backupu poza bucketem, index/replay >128 stron, blokady utrwalonej po awarii konserwatora, fizycznego GC/wyścigu z aktywnymi czytelnikami, billing alertów. **Następny cel 15A.2**: trwały prywatny offsite + wielopoziomowe stronicowanie + fencing/GC na długiej historii. Ewentualny **krótki, osobny etap 15B read-only** z prawdziwymi sygnałami może być rozważony wyłącznie z twardym limitem czasu/liczby przebiegów/bajtów i **bez GC** oraz bez zmian `refresh.yml`; NIE jest pełnym wdrożeniem kolektora.
+
+## 16. Jak wznowić pracę po utracie konwersacji
 
 W nowym czacie podaj link do tego dokumentu i napisz: „Kontynuujemy AppEA według START_TUTAJ_ANALITYKA.md; przeczytaj też REJESTR_ZRODEL_BADAWCZYCH.md, sprawdź obecny main, ostatnie Actions i PR, a potem podejmij najbliższy otwarty eksperyment. Nie modyfikuj produkcji bez testów”.
 
