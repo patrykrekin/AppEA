@@ -1,0 +1,26 @@
+name: Stage14 isolated checkpoint and backup invariants Node24
+on:
+  push:
+    branches:
+      - research/stage14-r2-checkpoint-restore-gc-20261108
+    paths:
+      - 'research/stage14/**'
+      - '.github/workflows/stage14-offline-ci.yml'
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Deterministic backup, restore, retention and deletion guards
+        run: node research/stage14/test-core.mjs
+      - name: Verify production scraper unchanged
+        run: |
+          test "$(git hash-object scraper/scrape.mjs)" = "88912b6f7b8cdc679d1a94ba62510e465d7adac6"
