@@ -108,7 +108,7 @@ jobs:
           node-version: 24
       - name: Install AWS S3 SDK for isolated R2 test
         run: npm install --no-save --no-audit --no-fund --no-package-lock @aws-sdk/client-s3
-      - name: GC dry-run: protect all history; physically delete only synthetic disposable object
+      - name: 'GC dry-run: protect all history; physically delete only synthetic disposable object'
         run: node research/stage14/live-pilot.mjs trash
         env:
           APPEA_STAGE14_LIVE_CONSENT: 'yes'
