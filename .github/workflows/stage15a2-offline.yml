@@ -1,0 +1,27 @@
+name: Stage 15A.2 isolated hierarchy and reader fencing Node24
+on:
+  push:
+    branches:
+      - research/stage15a2-index-reader-gc-20261108
+    paths:
+      - 'research/stage15a2/**'
+      - '.github/workflows/stage15a2-offline.yml'
+permissions:
+  contents: read
+jobs:
+  index-and-pins:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Replay 16,384 synthetic records across 1,024 pages and reader-pin CAS safety
+        run: node research/stage15a2/test.mjs
+      - name: Assert production scraper and refresh unchanged
+        run: |
+          test "$(git hash-object scraper/scrape.mjs)" = "88912b6f7b8cdc679d1a94ba62510e465d7adac6"
+          test "$(git hash-object .github/workflows/refresh.yml)" = "05b3f109a0f17b21073628b60e52ac218be33d2d"
