@@ -1,0 +1,42 @@
+name: Stage15A.2 recover prior synthetic maintenance run (single use)
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/stage15a2-recover-one-shot.yml'
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Type RECOVER_STAGE15A2 to recover the fixed previous synthetic test'
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  recover-old-synthetic:
+    if: >-
+      (github.event_name == 'push' && contains(github.event.head_commit.message, '[stage15a2-recover-authorized-once]'))
+      || (github.event_name == 'workflow_dispatch' && inputs.confirmation == 'RECOVER_STAGE15A2')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    environment: r2-stage12-pilot
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 093ff3b4a672d42be1ce88467063c1c1880b9e4c
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install S3 client
+        run: npm install --no-save --no-audit --no-fund --no-package-lock @aws-sdk/client-s3
+      - name: 'Recover exactly prior synthetic run, verify all archive references, no delete'
+        run: node research/stage15a2/live-r2.mjs recover
+        env:
+          APPEA_15A2_LIVE_CONSENT: 'yes'
+          R2_PILOT_ID: stage15a2-42506908561
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT: ${{ vars.R2_ENDPOINT }}
