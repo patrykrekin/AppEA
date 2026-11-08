@@ -1,0 +1,179 @@
+name: Stage15A.2 LIVE R2 synthetic reader pins and GC fencing
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/stage15a2-live-one-shot.yml'
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Type RUN_STAGE15A2_R2 to approve synthetic live test'
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: appea-stage15a2-synthetic
+  cancel-in-progress: false
+jobs:
+  seed:
+    if: >-
+      (github.event_name == 'push' && contains(github.event.head_commit.message, '[stage15a2-authorized-live-once]'))
+      || (github.event_name == 'workflow_dispatch' && inputs.confirmation == 'RUN_STAGE15A2_R2')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    environment: r2-stage12-pilot
+    outputs:
+      base_etag: ${{ steps.seed.outputs.base_etag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 3572fbe733943aaf153140b87783ed805a875bcd
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install S3 client on isolated runner
+        run: npm install --no-save --no-audit --no-fund --no-package-lock @aws-sdk/client-s3
+      - name: 'Create 32 synthetic records and immutable mirrored index'
+        id: seed
+        run: node research/stage15a2/live-r2.mjs seed
+        env:
+          APPEA_15A2_LIVE_CONSENT: 'yes'
+          R2_PILOT_ID: stage15a2-${{ github.run_id }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT: ${{ vars.R2_ENDPOINT }}
+  pin:
+    needs: seed
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    environment: r2-stage12-pilot
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 3572fbe733943aaf153140b87783ed805a875bcd
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install S3 client on isolated runner
+        run: npm install --no-save --no-audit --no-fund --no-package-lock @aws-sdk/client-s3
+      - name: 'CAS register active reader in HEAD'
+        id: pin
+        run: node research/stage15a2/live-r2.mjs pin
+        env:
+          APPEA_15A2_LIVE_CONSENT: 'yes'
+          R2_PILOT_ID: stage15a2-${{ github.run_id }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT: ${{ vars.R2_ENDPOINT }}
+  stale:
+    needs: [seed, pin]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    environment: r2-stage12-pilot
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 3572fbe733943aaf153140b87783ed805a875bcd
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install S3 client on isolated runner
+        run: npm install --no-save --no-audit --no-fund --no-package-lock @aws-sdk/client-s3
+      - name: 'Old HEAD ETag rejected with real 412 while reader remains pinned'
+        id: stale
+        run: node research/stage15a2/live-r2.mjs stale
+        env:
+          APPEA_15A2_LIVE_CONSENT: 'yes'
+          R2_PILOT_ID: stage15a2-${{ github.run_id }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT: ${{ vars.R2_ENDPOINT }}
+          STAGE15A2_BASE_ETAG: ${{ needs.seed.outputs.base_etag }}
+  maintenance:
+    needs: stale
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    environment: r2-stage12-pilot
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 3572fbe733943aaf153140b87783ed805a875bcd
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install S3 client on isolated runner
+        run: npm install --no-save --no-audit --no-fund --no-package-lock @aws-sdk/client-s3
+      - name: 'Release pinned reader and freeze HEAD for exclusive maintenance'
+        id: maintenance
+        run: node research/stage15a2/live-r2.mjs maintenance
+        env:
+          APPEA_15A2_LIVE_CONSENT: 'yes'
+          R2_PILOT_ID: stage15a2-${{ github.run_id }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT: ${{ vars.R2_ENDPOINT }}
+  inspect:
+    needs: maintenance
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    environment: r2-stage12-pilot
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 3572fbe733943aaf153140b87783ed805a875bcd
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install S3 client on isolated runner
+        run: npm install --no-save --no-audit --no-fund --no-package-lock @aws-sdk/client-s3
+      - name: 'Verify all 32 synthetic records and no-delete GC fencing'
+        id: inspect
+        run: node research/stage15a2/live-r2.mjs inspect
+        env:
+          APPEA_15A2_LIVE_CONSENT: 'yes'
+          R2_PILOT_ID: stage15a2-${{ github.run_id }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT: ${{ vars.R2_ENDPOINT }}
+  release:
+    needs: inspect
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    environment: r2-stage12-pilot
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 3572fbe733943aaf153140b87783ed805a875bcd
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install S3 client on isolated runner
+        run: npm install --no-save --no-audit --no-fund --no-package-lock @aws-sdk/client-s3
+      - name: 'CAS release maintenance and reopen read access'
+        id: release
+        run: node research/stage15a2/live-r2.mjs release
+        env:
+          APPEA_15A2_LIVE_CONSENT: 'yes'
+          R2_PILOT_ID: stage15a2-${{ github.run_id }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT: ${{ vars.R2_ENDPOINT }}
