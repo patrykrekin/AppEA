@@ -21,6 +21,10 @@ jobs:
           node-version: 24
       - name: Test 1024 events, 63 pages, CAS fencing and GC dry-run
         run: node research/stage15a/test.mjs
+      - name: Validate live harness and off-bucket recovery syntax without contacting R2
+        run: |
+          node --check research/stage15a/live-pilot.mjs
+          node --check research/stage15a/verify-offsite.mjs
       - name: Assert production scraper unchanged
         run: |
           test "$(git hash-object scraper/scrape.mjs)" = "88912b6f7b8cdc679d1a94ba62510e465d7adac6"
