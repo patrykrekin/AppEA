@@ -184,7 +184,21 @@ Próba offline z rzeczywistego `historia-kart.json`, stan archiwum `2026-11-06T2
 
 **Status:** etap 15A jako **wąski PoC: PASS**. **NIE zamknięto** trwałego backupu poza bucketem, index/replay >128 stron, blokady utrwalonej po awarii konserwatora, fizycznego GC/wyścigu z aktywnymi czytelnikami, billing alertów. **Następny cel 15A.2**: trwały prywatny offsite + wielopoziomowe stronicowanie + fencing/GC na długiej historii. Ewentualny **krótki, osobny etap 15B read-only** z prawdziwymi sygnałami może być rozważony wyłącznie z twardym limitem czasu/liczby przebiegów/bajtów i **bez GC** oraz bez zmian `refresh.yml`; NIE jest pełnym wdrożeniem kolektora.
 
-## 16. Jak wznowić pracę po utracie konwersacji
+## 16. Zagadnienie 15A.2 — długi indeks i ochrona aktywnych czytelników (08.11; LIVE R2 PASS, offsite otwarty)
+
+**Pełny raport:** [AUDYT_INDEKS_CZYTELNICY_GC_ETAP15A2_20261108.md](AUDYT_INDEKS_CZYTELNICY_GC_ETAP15A2_20261108.md). **Badawczy kod bez scalenia do produkcji:** [research/stage15a2-index-reader-gc-20261108](https://github.com/patrykrekin/AppEA/tree/research/stage15a2-index-reader-gc-20261108).
+
+**CI Node24:** [#42507150529](https://github.com/patrykrekin/AppEA/actions/runs/42507150529) **44/44 PASS**, sztuczny odczyt **16 384/16 384** obserwacji z **1024 stron, 16 grup**, **2081 immutable obiektów** (z kopiami), ~**3 786 846 B** payload; root **7652 B**. Łańcuch z SHA256, sprawdzanie luki, fallback na mirror tylko przy braku primary, fail-closed przy zepsutym primary. Jest to lokalny mock, NIE pomiar prawdziwego kosztu R2 ani produkcyjnej jakości rynku. Obecny eksperymentalny sufit: 128 grup ×64 stron×16 =131072 zdarzeń; nie jest to ciągły nieograniczony collector.
+
+**R2 LIVE:** [poprawiony run #42507330286](https://github.com/patrykrekin/AppEA/actions/runs/42507330286) **6/6 jobów PASS** na niezależnych runnerach. Nowy prefix `appea-research/stage15a2/stage15a2-42507330286/`, tylko **32 syntetyczne zdarzenia**/2 strony/1 grupa; 7 immutable obiektów + HEAD. `pin` zarejestrował czytelnika w HEAD przez CAS, stale writer z poprzednim ETag dostał realne **412**, GC przy aktywnym czytelniku było blokowane. Dopiero po unpin i `maintenance epoch1` inny runner zweryfikował 32/32 rekordy i 7 referencji, **0 DeleteObject**, potem bezpiecznie wrócił do `mode=active epoch2 readers=0`. Około **13 prób PUT,19 GET,1 LIST,0 DELETE** w finalnym przebiegu; billing niezweryfikowany. Test nie dowodzi realnej równoległości wielu tysięcy czytelników.
+
+**Ważne zdarzenie awaryjne:** pierwszy live [#42506908561](https://github.com/patrykrekin/AppEA/actions/runs/42506908561) skończył się błędem kontrolera `GC_UNSAFE_LISTING` (do listy archive trafiał też `hot/head.json`), więc pozostawił testowy HEAD w maintenance. Żadnych DELETE. Osobny [recovery #42507203051](https://github.com/patrykrekin/AppEA/actions/runs/42507203051) po walidacji 7 obiektów i 32 rekordów przywrócił HEAD do `active epoch2`, zero usunięć. Poprawiono filtr i `release` działa nawet po porażce inspekcji, jeśli maintenance wcześniej rzeczywiście się udało. Obydwa automatyczne triggery po sukcesie **WYŁĄCZONE**; obecnie tylko manualne workflow z potwierdzeniem.
+
+**Blokery przed stałym collecting/GC:** w prototypie pin aktualizuje HEAD (Cloudflare limit **1 zapis/s/klucz**); maks. 16 pinów, brak automatycznego odzysku pinów po crash, brak realnego testu aktywnego readera i fizycznego delete, brak bezpiecznej obsługi wszystkich dawnych receipt/rozległego replay przy długim okresie, brak trwałego prywatnego backupu poza R2. Cloudflare [bucket locks](https://developers.cloudflare.com/r2/buckets/bucket-locks/) mogą ograniczyć przypadkowe delete dla immutable prefixów, ale **NIE WŁĄCZONO** ich i **nigdy** nie obejmować mutowalnego HEAD. Nie dodawać `lifecycle`, `DELETE`, nowych requests do FUT.GG ani collector do produkcyjnego `refresh.yml`.
+
+**Następny możliwy etap: 15B, krótki, osobny pasywny read-only audyt prawdziwych decyzji bez GC i bez stałej archiwizacji**, z limitami liczby przebiegów i bajtów. Dalsze 15A.3 wymaga przygotowania **osobnego prywatnego targetu backupu** i polityki długotrwałych reader pins; to nadal świadoma decyzja użytkownika.
+
+## 17. Jak wznowić pracę po utracie konwersacji
 
 W nowym czacie podaj link do tego dokumentu i napisz: „Kontynuujemy AppEA według START_TUTAJ_ANALITYKA.md; przeczytaj też REJESTR_ZRODEL_BADAWCZYCH.md, sprawdź obecny main, ostatnie Actions i PR, a potem podejmij najbliższy otwarty eksperyment. Nie modyfikuj produkcji bez testów”.
 
