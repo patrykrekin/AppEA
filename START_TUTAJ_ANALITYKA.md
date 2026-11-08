@@ -151,7 +151,25 @@ Próba offline z rzeczywistego `historia-kart.json`, stan archiwum `2026-11-06T2
 
 **Decyzja:** **etap 13 PASS jako pilot zdalnego protokołu commit, konkurencji i dry-run GC**. **GC fizyczny, 72h retencja, TTL, checkpoint/restore i zabezpieczenia billingowe NIE SĄ jeszcze przetestowanym wdrożeniem** — pełny collector nie może zostać uruchomiony. **Zagadnienie 14:** bezpieczny backup/checkpoint, odtwarzanie z częściowych delt i pilotaż ograniczonego cleanup wyłącznie testowych orphan po kontroli aktualnego manifestu, z limitem operacji; dopiero po pozytywnych testach można rozważyć niezależną pasywną instrumentację. Trzymać `scrape.mjs` i `refresh.yml` bez zmian.
 
-## 14. Jak wznowić pracę po utracie konwersacji
+## 14. Zagadnienie 14 — R2 checkpoint, niezależny backup, odzyskanie i kontrolowane usunięcie (08.11, PASS w wąskim zakresie)
+
+**Rozstrzygający raport:** [AUDYT_R2_CHECKPOINT_BACKUP_GC_ETAP14_20261108.md](AUDYT_R2_CHECKPOINT_BACKUP_GC_ETAP14_20261108.md).
+**Dowody:** [prawdziwy R2 #42503579008](https://github.com/patrykrekin/AppEA/actions/runs/42503579008), **4/4 joby PASS** na oddzielnych GitHub Actions runners; [offline Node 24 #42503376666](https://github.com/patrykrekin/AppEA/actions/runs/42503376666), **39/39 PASS** i składnia live-skryptu przetestowana w [#42503394498](https://github.com/patrykrekin/AppEA/actions/runs/42503394498). Pierwsza próba uruchomienia workflow [#42503472554](https://github.com/patrykrekin/AppEA/actions/runs/42503472554) nie przeszła parsowania YAML (nieucieczony dwukropek w nazwie kroku): **0 jobów i 0 R2 requests**; skorygowano, finalny run zakończył się sukcesem.
+
+**Wszystko na prawdziwym, prywatnym R2**, ale TYLKO ze sztucznymi rekordami w jednorazowym `appea-research/stage14/stage14-42503579008/`. Kod poza main, [gałąź research/stage14-r2-checkpoint-restore-gc-20261108](https://github.com/patrykrekin/AppEA/tree/research/stage14-r2-checkpoint-restore-gc-20261108), live checkout SHA `13f65465f6d5f5307ddf69bb8506cc148bca9770`.
+
+**Przebieg i wyniki:**
+- `seed`: syntetyczne `HEAD generation=2 revision=2`, **2 delty zatwierdzone**, jedna deliberately orphan.
+- `checkpoint`: zweryfikowano stare delty SHA256, zapisano **dwie odrębne kopie identycznego 519 B snapshotu** pod `checkpoints/` i `backups/`, a manifest przepięto atomowo `If-Match` na `generation=2, revision=3`.
+- `restore`: na **NOWYM RUNNERZE** odtworzono dwa rekordy z samego backupu (bez pierwotnego checkpointu/surowych delt), dodano kolejną deltę i zatwierdzono `generation=3, revision=4`; komplet **3/3** zdarzeń odtworzony, stale ETag odrzucony **rzeczywistym `412`**.
+- `trash`: skontrolowano R2 manifest i listing **4 delt**: 1 aktywna tail i 3 nieaktywne, ale młodsze niż przyjęte 72h. **Nie usunięto żadnej historycznej delty**. Fizycznie utworzono, zweryfikowano, a następnie usunięto **jedno dokładnie wskazane `trash/disposable.json`**, po czym `GET 404` i potwierdzenie niezmienionego HEAD. Finalnie **7 zachowanych obiektów** (HEAD, checkpoint, backup, 4 delty).
+- Cały pilot ok. **13 PUT attempts, 26 GET, 2 List, 1 DELETE** testowego trash, bez danych produkcyjnych, bez nowych zapytań FUT.GG i bez automatycznych lifecycle/TTL. **Nie odczytano billingu**.
+
+**Zabezpieczenia:** Po teście wyłączono jednorazowy trigger push z [`.github/workflows/stage14-live-r2-one-shot.yml`](https://github.com/patrykrekin/AppEA/blob/main/.github/workflows/stage14-live-r2-one-shot.yml) (commit `744c8f0e7d37ddce33ced6df7b1a19804115868a`); pozostał wyłącznie `workflow_dispatch` z tekstem `RUN_STAGE14_R2`. `scrape.mjs`, `refresh.yml`, EMA, inwestycje, indeks i ceny nietknięte.
+
+**Wniosek:** etap 14 PASS dla **checkpoint/backup/restore i pojedynczego, ściśle ograniczonego disposable DELETE**, ale **NIE pełny produkcyjny GC/DR**: starsze 72h orphan nie były kasowane, kopiowanie odbywało się w obrębie jednego bucketa, brak fencing przeciw aktywnym writerom, brak restore po utracie bucketa, brak rzeczywistego budżetu i retencji długiego ledgeru. **Następny etap 15A (zanim zbierzemy prawdziwe decyzje)**: skalowanie i rotacja checkpointu z protokołem blokady/fencing, ochrona historycznych danych i backup poza jednym bucketem; bez scalania collectora do `refresh.yml`. Jeśli dopiero wtedy PASS, etap 15B: krótkotrwały, osobny pasywny collector decyzji na rynku, bez ingerencji w logikę rekomendacji.
+
+## 15. Jak wznowić pracę po utracie konwersacji
 
 W nowym czacie podaj link do tego dokumentu i napisz: „Kontynuujemy AppEA według START_TUTAJ_ANALITYKA.md; przeczytaj też REJESTR_ZRODEL_BADAWCZYCH.md, sprawdź obecny main, ostatnie Actions i PR, a potem podejmij najbliższy otwarty eksperyment. Nie modyfikuj produkcji bez testów”.
 
