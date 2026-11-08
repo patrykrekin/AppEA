@@ -1,9 +1,5 @@
 name: Stage15A.2 recover prior synthetic maintenance run (single use)
 on:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/stage15a2-recover-one-shot.yml'
   workflow_dispatch:
     inputs:
       confirmation:
@@ -14,9 +10,7 @@ permissions:
   contents: read
 jobs:
   recover-old-synthetic:
-    if: >-
-      (github.event_name == 'push' && contains(github.event.head_commit.message, '[stage15a2-recover-authorized-once]'))
-      || (github.event_name == 'workflow_dispatch' && inputs.confirmation == 'RECOVER_STAGE15A2')
+    if: github.event_name == 'workflow_dispatch' && inputs.confirmation == 'RECOVER_STAGE15A2'
     runs-on: ubuntu-24.04
     timeout-minutes: 4
     environment: r2-stage12-pilot
