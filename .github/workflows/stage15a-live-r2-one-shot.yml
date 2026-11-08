@@ -1,9 +1,5 @@
 name: Stage15A LIVE R2 maintenance fencing and temporary off-bucket backup
 on:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/stage15a-live-r2-one-shot.yml'
   workflow_dispatch:
     inputs:
       confirmation:
@@ -17,9 +13,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   seed:
-    if: >-
-      (github.event_name == 'push' && contains(github.event.head_commit.message, '[stage15a-authorized-live-once]'))
-      || (github.event_name == 'workflow_dispatch' && inputs.confirmation == 'RUN_STAGE15A_R2')
+    if: github.event_name == 'workflow_dispatch' && inputs.confirmation == 'RUN_STAGE15A_R2'
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     environment: r2-stage12-pilot
