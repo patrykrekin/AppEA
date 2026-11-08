@@ -28,7 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 3572fbe733943aaf153140b87783ed805a875bcd
+          ref: 093ff3b4a672d42be1ce88467063c1c1880b9e4c
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
@@ -54,7 +54,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 3572fbe733943aaf153140b87783ed805a875bcd
+          ref: 093ff3b4a672d42be1ce88467063c1c1880b9e4c
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
@@ -80,7 +80,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 3572fbe733943aaf153140b87783ed805a875bcd
+          ref: 093ff3b4a672d42be1ce88467063c1c1880b9e4c
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
@@ -107,7 +107,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 3572fbe733943aaf153140b87783ed805a875bcd
+          ref: 093ff3b4a672d42be1ce88467063c1c1880b9e4c
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
@@ -133,7 +133,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 3572fbe733943aaf153140b87783ed805a875bcd
+          ref: 093ff3b4a672d42be1ce88467063c1c1880b9e4c
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
@@ -152,14 +152,15 @@ jobs:
           R2_BUCKET: ${{ secrets.R2_BUCKET }}
           R2_ENDPOINT: ${{ vars.R2_ENDPOINT }}
   release:
-    needs: inspect
+    needs: [maintenance, inspect]
+    if: always() && needs.maintenance.result == 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 4
     environment: r2-stage12-pilot
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 3572fbe733943aaf153140b87783ed805a875bcd
+          ref: 093ff3b4a672d42be1ce88467063c1c1880b9e4c
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
