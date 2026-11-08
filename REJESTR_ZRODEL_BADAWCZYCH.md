@@ -281,3 +281,20 @@ Wbrew początkowemu założeniu izolacji końcowa kontrola wykazała, że **hook
 **Źródła:** [R2 Conditional Put](https://developers.cloudflare.com/r2/api/s3/extensions/), [R2 Consistency](https://developers.cloudflare.com/r2/reference/consistency/), [R2 Limits](https://developers.cloudflare.com/r2/platform/limits/) 1write/s/key, [R2 Lifecycle](https://developers.cloudflare.com/r2/buckets/object-lifecycles/) — nigdy nie wygaszać klucza wskazanego w HEAD. Rozróżniać 412 (CAS) od 429 (throttle), utrata ACK niepewnego in-flight nie jest potwierdzona.
 
 **Decyzja:** etap 13 pilot commit+wyścig+orphan GC dry-run **PASS**, **pełna retencja + cleanup + checkpoint/backup nadal OPEN**. Kolejny etap 14: test snapshot/checkpoint, przywracania, ochrony referencji i bezpiecznego delete jedynie testowych orphan po grace z limitem, oraz alerty kosztów; bez produkcyjnej instrumentacji przed udowodnieniem tej ścieżki.
+
+
+## Zagadnienie 14 — LIVE checkpoint + backup + restore i bezpieczny disposable DELETE (2026-11-08)
+
+**Raport:** [AUDYT_R2_CHECKPOINT_BACKUP_GC_ETAP14_20261108.md](AUDYT_R2_CHECKPOINT_BACKUP_GC_ETAP14_20261108.md).
+**[R2 Live #42503579008](https://github.com/patrykrekin/AppEA/actions/runs/42503579008)**: 4/4 joby PASS, **[offline Node24 #42503376666](https://github.com/patrykrekin/AppEA/actions/runs/42503376666)** 39/39 PASS; finalny test składni live runnera w #42503394498. Pierwsza nieudana walidacja YAML #42503472554 nie uruchomiła żadnego joba i nie dotknęła R2; poprawiono cytowanie nazwy kroku. Wszystkie dane SYNTHETYCZNE. R2 prefix `appea-research/stage14/stage14-42503579008/`; kod na niezmergowanej [gałęzi stage14](https://github.com/patrykrekin/AppEA/tree/research/stage14-r2-checkpoint-restore-gc-20261108) (live SHA `13f65465f6d5f5307ddf69bb8506cc148bca9770`).
+
+**Dowody:**
+- `seed` stworzył 2 prawdziwe zatwierdzone delty i 1 orphan, `HEAD generation2 revision2`.
+- Nowy runner `checkpoint` odczytał delty, sprawdził SHA256, utrwalił dwa identyczne **519 B** obiekty (checkpoint i backup) pod różnymi kluczami w tym samym buckecie, HEAD CAS do gen2/rev3.
+- Nowy runner `restore` odtworzył z backupu bez pierwotnego checkpointu i starych delt, dodał nową deltę, HEAD do gen3/rev4; **3/3 rekordy** zgodne i stale ETag otrzymał **412**.
+- `trash` sklasyfikował **4 delty**: 1 aktywna + 3 chronione z powodu wieku (<72 h). Fizycznie usunął **tylko jeden osobny disposable trash** (`DeleteObject`, potem `GET 404`), a 4 historie pozostały nienaruszone; finalnie 7 obiektów w prefiksie. To **nie** test dojrzałego GC historycznych delt i nie upoważnia do włączenia lifecycle.
+- Koszt szacowany na **13 PUT attempts/26 GET/2 List/1 Delete**, bez billing API i bez gwarancji opłaty $0.
+
+**Źródła:** [R2 strong consistency](https://developers.cloudflare.com/r2/reference/consistency/) — globalnie widoczne zapisy/odczyty/usunięcia; [R2 lifecycles](https://developers.cloudflare.com/r2/buckets/object-lifecycles/) — automatyczny expiry nie uwzględnia referencji HEAD; [R2 Delete](https://developers.cloudflare.com/r2/objects/delete-objects/) — S3 `DeleteObject`; [R2 limits](https://developers.cloudflare.com/r2/platform/limits/) — 1 write/s/key; [R2 pricing](https://developers.cloudflare.com/r2/pricing/) — koszt operacji i storage. Nie są dowodami skuteczności inwestycyjnej EA.
+
+**Decyzja:** etap14 **PASS w wąskim zakresie**, archiwum wciąż NIE ma zatwierdzonego produkcyjnego GC, backupu poza bucketem, fencing przed równoczesnym GC i writerami, długotrwałej retencji/monitoringu, fizycznego restore po utracie bucketa. Po teście automatyczny push trigger wyłączono w `stage14-live-r2-one-shot.yml`, pozostał manual z `RUN_STAGE14_R2`. Produkcja bez zmian. **Etap 15A:** skalowanie checkpoint/backup i bezpieczny fencing/rotacja zanim wejdzie pasywny zbieracz rzeczywistych sygnałów; dopiero 15B test collectora.
