@@ -1,0 +1,283 @@
+{
+  "protocol": {
+    "stage": "15C",
+    "scope": "retrospective descriptive follow-up, not independent out-of-sample validation",
+    "decisionSnapshot": "../stage15b/input/shadow-stage8.json",
+    "historyCommit": "67837b4a0833ea7f224693cb8fa32cfc9723d06b",
+    "historyPath": "historia-kart.json",
+    "horizonSeconds": 7200,
+    "toleranceSeconds": 900,
+    "parameterSource": "existing stage6 2h protocol and scraper/lib/jakosc-historii-kart.mjs",
+    "cohort": "all 154 rows, split ps/pc and investment flag; inReach separately",
+    "identity": "platform+rating+profileId+exactName",
+    "matching": "closest observation to t+7200 within inclusive +/-900s; tie earlier",
+    "missing": "pending before window closes; absent-in-sampled-slice only if valid rating snapshots exist; otherwise unobserved; never impute prices",
+    "metrics": [
+      "endpoint price change vs observed decision price",
+      "conditional net return after existing 5% tax",
+      "endpoint at or above frozen target for selected investments",
+      "availability of endpoints across all rows"
+    ],
+    "excluded": [
+      "intrawindow target hit inference",
+      "executed sale claims",
+      "parameter tuning",
+      "new collector",
+      "GC",
+      "production edits"
+    ]
+  },
+  "origin": 1794081368,
+  "historyAt": 1794160949,
+  "historyGitBlob": "dab4f4fe62c0ef99bf81aa4cbf36eb3700153cf1",
+  "platforms": {
+    "ps": {
+      "summary": {
+        "all": {
+          "total": 77,
+          "observed": 63,
+          "absent": 14,
+          "unobserved": 0,
+          "pending": 0,
+          "medianPriceChangePct": 0,
+          "medianConditionalNetReturnPct": -5,
+          "positiveConditionalNet": 4,
+          "endpointAtTarget": 0
+        },
+        "investment": {
+          "total": 4,
+          "observed": 4,
+          "absent": 0,
+          "unobserved": 0,
+          "pending": 0,
+          "medianPriceChangePct": -5.6152961472110405,
+          "medianConditionalNetReturnPct": -10.33453133985049,
+          "positiveConditionalNet": 0,
+          "endpointAtTarget": 0
+        },
+        "investmentInReach": {
+          "total": 3,
+          "observed": 3,
+          "absent": 0,
+          "unobserved": 0,
+          "pending": 0,
+          "medianPriceChangePct": -3.7837837837837784,
+          "medianConditionalNetReturnPct": -8.594594594594595,
+          "positiveConditionalNet": 0,
+          "endpointAtTarget": 0
+        },
+        "other": {
+          "total": 73,
+          "observed": 59,
+          "absent": 14,
+          "unobserved": 0,
+          "pending": 0,
+          "medianPriceChangePct": 0,
+          "medianConditionalNetReturnPct": -5,
+          "positiveConditionalNet": 4,
+          "endpointAtTarget": 0
+        },
+        "fast": {
+          "total": 4,
+          "observed": 1,
+          "absent": 3,
+          "unobserved": 0,
+          "pending": 0,
+          "medianPriceChangePct": 11.111111111111116,
+          "medianConditionalNetReturnPct": 5.555555555555555,
+          "positiveConditionalNet": 1,
+          "endpointAtTarget": 0
+        }
+      },
+      "investments": [
+        {
+          "key": "89|237288|Mariona",
+          "name": "Mariona",
+          "rating": 89,
+          "fast": false,
+          "investment": true,
+          "inReach": true,
+          "originPrice": 23500,
+          "target": 28000,
+          "buyLimit": 25250,
+          "status": "observed",
+          "ratingSamples": 3,
+          "endpoint": [
+            1794088596,
+            21750
+          ],
+          "offsetSeconds": 28,
+          "priceChangePct": -7.446808510638303,
+          "conditionalNetReturnPct": -12.074468085106382,
+          "endpointAtTarget": false
+        },
+        {
+          "key": "89|247635|Kvaratskhelia",
+          "name": "Kvaratskhelia",
+          "rating": 89,
+          "fast": false,
+          "investment": true,
+          "inReach": true,
+          "originPrice": 53500,
+          "target": 67000,
+          "buyLimit": 60500,
+          "status": "observed",
+          "ratingSamples": 3,
+          "endpoint": [
+            1794088596,
+            52000
+          ],
+          "offsetSeconds": 28,
+          "priceChangePct": -2.8037383177570097,
+          "conditionalNetReturnPct": -7.663551401869159,
+          "endpointAtTarget": false
+        },
+        {
+          "key": "89|248822|Bühl",
+          "name": "Bühl",
+          "rating": 89,
+          "fast": false,
+          "investment": true,
+          "inReach": true,
+          "originPrice": 92500,
+          "target": 111000,
+          "buyLimit": 100000,
+          "status": "observed",
+          "ratingSamples": 3,
+          "endpoint": [
+            1794088596,
+            89000
+          ],
+          "offsetSeconds": 28,
+          "priceChangePct": -3.7837837837837784,
+          "conditionalNetReturnPct": -8.594594594594595,
+          "endpointAtTarget": false
+        },
+        {
+          "key": "89|241846|Pajor",
+          "name": "Pajor",
+          "rating": 89,
+          "fast": false,
+          "investment": true,
+          "inReach": false,
+          "originPrice": 106000,
+          "target": 113000,
+          "buyLimit": 102000,
+          "status": "observed",
+          "ratingSamples": 3,
+          "endpoint": [
+            1794088596,
+            96000
+          ],
+          "offsetSeconds": 28,
+          "priceChangePct": -9.433962264150942,
+          "conditionalNetReturnPct": -13.962264150943396,
+          "endpointAtTarget": false
+        }
+      ]
+    },
+    "pc": {
+      "summary": {
+        "all": {
+          "total": 77,
+          "observed": 63,
+          "absent": 14,
+          "unobserved": 0,
+          "pending": 0,
+          "medianPriceChangePct": 0,
+          "medianConditionalNetReturnPct": -5,
+          "positiveConditionalNet": 10,
+          "endpointAtTarget": 0
+        },
+        "investment": {
+          "total": 2,
+          "observed": 2,
+          "absent": 0,
+          "unobserved": 0,
+          "pending": 0,
+          "medianPriceChangePct": -5.7840819542947175,
+          "medianConditionalNetReturnPct": -10.494877856579983,
+          "positiveConditionalNet": 0,
+          "endpointAtTarget": 0
+        },
+        "investmentInReach": {
+          "total": 2,
+          "observed": 2,
+          "absent": 0,
+          "unobserved": 0,
+          "pending": 0,
+          "medianPriceChangePct": -5.7840819542947175,
+          "medianConditionalNetReturnPct": -10.494877856579983,
+          "positiveConditionalNet": 0,
+          "endpointAtTarget": 0
+        },
+        "other": {
+          "total": 75,
+          "observed": 61,
+          "absent": 14,
+          "unobserved": 0,
+          "pending": 0,
+          "medianPriceChangePct": 0,
+          "medianConditionalNetReturnPct": -5,
+          "positiveConditionalNet": 10,
+          "endpointAtTarget": 0
+        },
+        "fast": {
+          "total": 1,
+          "observed": 1,
+          "absent": 0,
+          "unobserved": 0,
+          "pending": 0,
+          "medianPriceChangePct": 25,
+          "medianConditionalNetReturnPct": 18.75,
+          "positiveConditionalNet": 1,
+          "endpointAtTarget": 0
+        }
+      },
+      "investments": [
+        {
+          "key": "89|237288|Mariona",
+          "name": "Mariona",
+          "rating": 89,
+          "fast": false,
+          "investment": true,
+          "inReach": true,
+          "originPrice": 23500,
+          "target": 28750,
+          "buyLimit": 26000,
+          "status": "observed",
+          "ratingSamples": 3,
+          "endpoint": [
+            1794088596,
+            22000
+          ],
+          "offsetSeconds": 28,
+          "priceChangePct": -6.382978723404253,
+          "conditionalNetReturnPct": -11.063829787234042,
+          "endpointAtTarget": false
+        },
+        {
+          "key": "89|247635|Kvaratskhelia",
+          "name": "Kvaratskhelia",
+          "rating": 89,
+          "fast": false,
+          "investment": true,
+          "inReach": true,
+          "originPrice": 33750,
+          "target": 42250,
+          "buyLimit": 38000,
+          "status": "observed",
+          "ratingSamples": 3,
+          "endpoint": [
+            1794088596,
+            32000
+          ],
+          "offsetSeconds": 28,
+          "priceChangePct": -5.185185185185182,
+          "conditionalNetReturnPct": -9.925925925925926,
+          "endpointAtTarget": false
+        }
+      ]
+    }
+  }
+}
