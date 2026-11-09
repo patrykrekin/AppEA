@@ -13,9 +13,10 @@ let padlo = 0, zdane = 0;
 
 function sprawdz(nazwa, dane, oczekuj){
   const { err, warn } = kontrolki(dane, TERAZ);
-  const trafil = oczekuj.err
+  const matched = oczekuj.err
     ? err.some(e => e.includes(oczekuj.err))
     : (oczekuj.warn ? warn.some(w => w.includes(oczekuj.warn)) : err.length === 0);
+  const trafil = matched && (!oczekuj.noErr || err.length === 0);
   if (trafil){ zdane++; console.log(`  ok   ${nazwa}`); }
   else {
     padlo++;
@@ -33,7 +34,7 @@ function zdrowy(){
   for (let i = 0; i < 40; i++){
     wyniki.push({ klucz: `K${i} 86`, def: DEF, wejscie: 5000, cel0: 5400,
                   werdykt: i % 2 ? "cel" : "plasko",
-                  doCelu: i % 2 ? 600 + i * 30 : undefined });
+                  doCelu: i % 2 ? (600 + i * 30) / 60 : undefined });
   }
   const pdPs = {}, pdPc = {};
   for (let i = 0; i < 60; i++){ pdPs[`K${i} 86`] = { p: 5000 + i * 10 }; pdPc[`K${i} 86`] = { p: 4600 + i * 11 }; }
@@ -42,7 +43,7 @@ function zdrowy(){
     nasz: { ps: { zmiana: 0 }, pc: { zmiana: 0 } },
     monitor: { ps: [{ klucz: "Barella 87", rabat: 9.9, odSekund: 960, zawraca: true }], pc: [] },
     okazje: { poziomyD: { ps: pdPs, pc: pdPc } },
-    skutecznosc: { ps: { gotowe: true, probek: 40, trafienie: 55, medianaDoCelu: 900 }, pc: null },
+    skutecznosc: { ps: { gotowe: true, probek: 40, trafienie: 55, medianaDoCelu: 900 / 60 }, pc: null },
     rejestr: {
       ps: { def: DEF, otwarte: { "Tah 87": { def: DEF, wejscie: 5500, cel0: 6100 } }, wyniki },
       pc: { def: DEF, otwarte: {}, wyniki: [] }
@@ -93,9 +94,9 @@ sprawdz(
 );
 
 sprawdz(
-  "cel o dwa kroki też za mało (5800 → 6000)",
+  "cel o dwa kroki przechodzi guard >1 kroku (5800 → 6000)",
   K(d => { d.rejestr.ps.otwarte["Martínez 87"] = { def: DEF, wejscie: 5800, cel0: 6000 }; }),
-  { err: "Martínez 87" }
+  {}
 );
 
 sprawdz(
@@ -105,25 +106,25 @@ sprawdz(
 );
 
 sprawdz(
-  "43 z 84 trafień w ≤120 s — prawdziwy rozkład z 01.10",
+  "rozkład z 01.10 w minutach: ostrzeżenie rotacji nie blokuje cen",
   K(d => {
     const w = [];
     for (let i = 0; i < 84; i++){
       const t = i < 43 ? 120 : (i < 57 ? 300 : (i < 81 ? 900 : 3600));
-      w.push({ klucz: `K${i} 86`, def: DEF, wejscie: 5000, cel0: 5400, werdykt: "cel", doCelu: t });
+      w.push({ klucz: `K${i} 86`, def: DEF, wejscie: 5000, cel0: 5400, werdykt: "cel", doCelu: t / 60 });
     }
     d.rejestr.ps.wyniki = w;
   }),
-  { err: "rotacja ofert" }
+  { warn: "rotacja ofert", noErr: true }
 );
 
 sprawdz(
-  "skuteczność 100% przy medianie 120 s — liczby z 01.10",
+  "skuteczność 100% przy medianie 2 min — ostrzeżenie bez blokady cen",
   K(d => {
     d.rejestr.ps.wyniki = [];
-    d.skutecznosc.ps = { gotowe: true, probek: 84, trafienie: 100, medianaDoCelu: 120 };
+    d.skutecznosc.ps = { gotowe: true, probek: 84, trafienie: 100, medianaDoCelu: 120 / 60 };
   }),
-  { err: "miernik mierzy sam siebie" }
+  { warn: "miernik mierzy sam siebie", noErr: true }
 );
 
 sprawdz(

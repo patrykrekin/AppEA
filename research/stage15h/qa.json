@@ -1,0 +1,54 @@
+{
+  "checks": [
+    {
+      "name": "v2",
+      "exitCode": 0,
+      "pass": true
+    },
+    {
+      "name": "adapter",
+      "exitCode": 0,
+      "pass": true
+    },
+    {
+      "name": "archive",
+      "exitCode": 0,
+      "pass": true
+    },
+    {
+      "name": "tkontrolki",
+      "exitCode": 0,
+      "pass": true
+    },
+    {
+      "name": "trefresh",
+      "exitCode": 0,
+      "pass": true
+    },
+    {
+      "name": "tstabilnosc",
+      "exitCode": 0,
+      "pass": true
+    },
+    {
+      "name": "tliczby",
+      "exitCode": 0,
+      "pass": true
+    }
+  ],
+  "v2Cases": 32,
+  "adapterCases": 24,
+  "alignedControlCases": 17,
+  "pinnedDataValidation": {
+    "sourceCommit": "55d3b2e8ca0780448741bf0d5637796ae36c9d8c",
+    "errors": 0,
+    "warnings": 3
+  },
+  "outsideResearchChanges": [
+    "scraper/tkontrolki.mjs"
+  ],
+  "runtimeChanged": false,
+  "mainMerged": false,
+  "liveCaptureProof": false,
+  "remaining": "bounded isolated capture of actual in-memory read receipts; rollout plan for legacy open rows"
+}

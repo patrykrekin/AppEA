@@ -1,0 +1,16 @@
+{
+  "stage": "15H",
+  "date": "2026-11-09",
+  "previousStageCommit": "e197a304ebcb341da98695ea3e478b2a7c137027",
+  "scope": "offline adapter from fast-cycle in-memory inputs to measurement v2, test fixture alignment, no production integration",
+  "frame": "immutable cycleAt/completedAt and per-market observedAt/monotonic read sequence; raw bands, pre-update models, post-update persistence, original decisions and post-update daily model",
+  "clockPolicy": "never infer receipt times from data.json; band read time stays observedAt; validated current-frame derived EMA gets evidence time completedAt with original modelAt retained",
+  "phaseChecks": "recompute unchanged policzInwestycje and aktualizujPoziomyD on copies and require exact parity; do not modify original recommendations or models",
+  "dedup": "atomic per-frame processing, repeat identical frame idempotent, reject changed reused frame/cycle/time or receipt sequence",
+  "legacyPolicy": "existing frozen archive remains separate and excluded from v2; no automatic live migration; open legacy handoff remains explicit deployment decision",
+  "momentum": "no rating inference, remain excluded unless a separate proven enriched source is supplied in a later stage",
+  "testAlignment": "update only tkontrolki.mjs fixture units, historical expectations and warning/no-error assertions to match documented existing controls; no guard or recommendation threshold changes",
+  "realDataCheck": "reconstruct original archived 154-card cohort to exercise shapes and compare six decisions; receipt clocks in that replay are declared synthetic and do not prove live acquisition timing",
+  "validation": ["32 existing v2 regressions", "adapter clock/identity/phase/dedup/restart/atomicity cases", "17 corrected historical controls", "refresh/stability/validator tests", "unchanged production runtime and main"],
+  "exclusions": ["main merge", "scrape or refresh hook", "new FUT.GG requests", "collector or R2 writes", "relabeling historical wins", "claiming live timing proof from reconstructed receipt metadata"]
+}

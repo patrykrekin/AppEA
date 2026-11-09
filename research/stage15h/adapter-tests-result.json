@@ -1,0 +1,101 @@
+{
+  "passed": 24,
+  "tests": [
+    {
+      "name": "adapts both platforms with exact recommendation and post-model parity",
+      "result": "PASS"
+    },
+    {
+      "name": "preserves acquisition time, raw model clock and separate derived frame time",
+      "result": "PASS"
+    },
+    {
+      "name": "correct derived models may update an existing row without moving its frozen target",
+      "result": "PASS"
+    },
+    {
+      "name": "two distinct source receipts confirm correct target with original source time",
+      "result": "PASS"
+    },
+    {
+      "name": "archived or published data without explicit frame receipts is rejected",
+      "result": "PASS"
+    },
+    {
+      "name": "future and pre-cycle receipts are rejected",
+      "result": "PASS"
+    },
+    {
+      "name": "processing completion cannot precede cycle start",
+      "result": "PASS"
+    },
+    {
+      "name": "freshness remains bounded when processing is delayed",
+      "result": "PASS"
+    },
+    {
+      "name": "cached read cannot be restamped into a new sequence-less cycle",
+      "result": "PASS"
+    },
+    {
+      "name": "same source timestamp cannot be presented as a newer read",
+      "result": "PASS"
+    },
+    {
+      "name": "an identical serialized retry is idempotent even with reordered object keys",
+      "result": "PASS"
+    },
+    {
+      "name": "changed payload under reused cycle ID is rejected",
+      "result": "PASS"
+    },
+    {
+      "name": "two different frames cannot silently share the engine processing timestamp",
+      "result": "PASS"
+    },
+    {
+      "name": "backwards cycle is rejected",
+      "result": "PASS"
+    },
+    {
+      "name": "fixture outputs cannot later be mixed with a captured stream",
+      "result": "PASS"
+    },
+    {
+      "name": "cross-platform receipt cannot be relabeled by adapter",
+      "result": "PASS"
+    },
+    {
+      "name": "mutated recommendation fails exact parity rather than adjusting it",
+      "result": "PASS"
+    },
+    {
+      "name": "post-update EMA must match unchanged production function",
+      "result": "PASS"
+    },
+    {
+      "name": "post-update model supplied as pre-update input is rejected",
+      "result": "PASS"
+    },
+    {
+      "name": "unobserved retained models keep raw clock and do not become new model evidence",
+      "result": "PASS"
+    },
+    {
+      "name": "ambiguous name+rating from two IDs is rejected before model routing",
+      "result": "PASS"
+    },
+    {
+      "name": "bad second platform cannot commit first platform or mutate previous state",
+      "result": "PASS"
+    },
+    {
+      "name": "legacy closed and open rows remain unchanged and excluded",
+      "result": "PASS"
+    },
+    {
+      "name": "future legacy snapshot cannot leak into a historical replay",
+      "result": "PASS"
+    }
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "sourceSha256": "b5c5362f9be8da99d9f48de9e2f4aa89c7791f73853a22f4e3ae60a0e16f3b6e",
+  "originalAlgorithmCommit": "d27061cdb6d662fad2ff153ac63f19739532dfd1",
+  "scope": "archived data reconstruction and parity check, not captured timing or efficacy proof",
+  "frameMode": "fixture",
+  "clockEvidence": "synthetic offsets: ps +1s, pc +2s, completed +5s",
+  "persistenceTimeLimitation": "source snapshot lacks last persistence timestamp; t assigned for reconstruction, unused by policzInwestycje",
+  "phaseContextLimitation": "pre-models reconstructed only for captured cohort; no claim of full original in-memory state",
+  "diagnostics": {
+    "ps": {
+      "quotes": 77,
+      "decisions": 4,
+      "derivedLevels": 77,
+      "retainedModelsNotRestamped": 0,
+      "decisionParity": true,
+      "postModelParity": true
+    },
+    "pc": {
+      "quotes": 77,
+      "decisions": 2,
+      "derivedLevels": 77,
+      "retainedModelsNotRestamped": 0,
+      "decisionParity": true,
+      "postModelParity": true
+    }
+  },
+  "statistics": {
+    "ps": {
+      "contract": 2,
+      "def": "p5-k3-a5-ema3-dt300-wiek7200-o24-t6-s1500-c2-measurement2-g600",
+      "platform": "ps",
+      "metric": "conditional-candidate-quoted-target-contact",
+      "closed": 0,
+      "open": 4,
+      "known": 0,
+      "cel": 0,
+      "poziom": 0,
+      "glebiej": 0,
+      "plasko": 0,
+      "urwane": 0,
+      "conditionalPct": null,
+      "scenarioLowerPct": null,
+      "scenarioUpperPct": null,
+      "medianMinutes": null,
+      "ready": false,
+      "minimumKnown": 15,
+      "legacyExcluded": false,
+      "executionsMeasured": false,
+      "rowsWithMissingCycles": 0,
+      "rowsWithLateLastPrice": 0
+    },
+    "pc": {
+      "contract": 2,
+      "def": "p5-k3-a5-ema3-dt300-wiek7200-o24-t6-s1500-c2-measurement2-g600",
+      "platform": "pc",
+      "metric": "conditional-candidate-quoted-target-contact",
+      "closed": 0,
+      "open": 2,
+      "known": 0,
+      "cel": 0,
+      "poziom": 0,
+      "glebiej": 0,
+      "plasko": 0,
+      "urwane": 0,
+      "conditionalPct": null,
+      "scenarioLowerPct": null,
+      "scenarioUpperPct": null,
+      "medianMinutes": null,
+      "ready": false,
+      "minimumKnown": 15,
+      "legacyExcluded": false,
+      "executionsMeasured": false,
+      "rowsWithMissingCycles": 0,
+      "rowsWithLateLastPrice": 0
+    }
+  },
+  "inputUnchanged": true,
+  "originalSixDecisionsMatch": true
+}
