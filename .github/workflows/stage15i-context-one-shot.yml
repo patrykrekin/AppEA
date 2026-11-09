@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   one-cycle:
-    if: github.ref == 'refs/heads/research/stage15i-live-context-20261109' && (github.event_name == 'push' || inputs.confirm == 'RUN_STAGE15I')
+    if: github.ref == 'refs/heads/research/stage15i-live-context-20261109' && inputs.confirm == 'RUN_STAGE15I'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:

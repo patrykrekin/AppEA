@@ -1,0 +1,168 @@
+{
+  "status": "PASS",
+  "sourceCommit": "ff71cf2e962bba9309745421c6f15bf190c542fd",
+  "codeCommit": "6a1d3a132e38272c751d1fea552c3a01f6d375c9",
+  "actualClockEvidence": true,
+  "mode": "captured",
+  "normalFastCycles": 1,
+  "inputUnchanged": true,
+  "isolatedPublicationParity": true,
+  "diagnostics": {
+    "ps": {
+      "quotes": 77,
+      "decisions": 3,
+      "derivedLevels": 77,
+      "retainedModelsNotRestamped": 127,
+      "decisionParity": true,
+      "postModelParity": true
+    },
+    "pc": {
+      "quotes": 77,
+      "decisions": 1,
+      "derivedLevels": 77,
+      "retainedModelsNotRestamped": 149,
+      "decisionParity": true,
+      "postModelParity": true
+    }
+  },
+  "statistics": {
+    "ps": {
+      "contract": 2,
+      "def": "p5-k3-a5-ema3-dt300-wiek7200-o24-t6-s1500-c2-measurement2-g600",
+      "platform": "ps",
+      "metric": "conditional-candidate-quoted-target-contact",
+      "closed": 0,
+      "open": 3,
+      "known": 0,
+      "cel": 0,
+      "poziom": 0,
+      "glebiej": 0,
+      "plasko": 0,
+      "urwane": 0,
+      "conditionalPct": null,
+      "scenarioLowerPct": null,
+      "scenarioUpperPct": null,
+      "medianMinutes": null,
+      "ready": false,
+      "minimumKnown": 15,
+      "legacyExcluded": false,
+      "executionsMeasured": false,
+      "rowsWithMissingCycles": 0,
+      "rowsWithLateLastPrice": 0
+    },
+    "pc": {
+      "contract": 2,
+      "def": "p5-k3-a5-ema3-dt300-wiek7200-o24-t6-s1500-c2-measurement2-g600",
+      "platform": "pc",
+      "metric": "conditional-candidate-quoted-target-contact",
+      "closed": 0,
+      "open": 1,
+      "known": 0,
+      "cel": 0,
+      "poziom": 0,
+      "glebiej": 0,
+      "plasko": 0,
+      "urwane": 0,
+      "conditionalPct": null,
+      "scenarioLowerPct": null,
+      "scenarioUpperPct": null,
+      "medianMinutes": null,
+      "ready": false,
+      "minimumKnown": 15,
+      "legacyExcluded": false,
+      "executionsMeasured": false,
+      "rowsWithMissingCycles": 0,
+      "rowsWithLateLastPrice": 0
+    }
+  },
+  "navigation": {
+    "goAttempts": 5,
+    "attempts": [
+      {
+        "host": "www.fut.gg",
+        "path": "/cheapest-by-rating/"
+      },
+      {
+        "host": "www.fut.gg",
+        "path": "/players/momentum/"
+      },
+      {
+        "host": "www.fut.gg",
+        "path": "/players/momentum/"
+      },
+      {
+        "host": "www.fut.gg",
+        "path": "/players/momentum/"
+      },
+      {
+        "host": "www.fut.gg",
+        "path": "/players/momentum/"
+      }
+    ],
+    "individualCardNavigation": 0
+  },
+  "validationWarnings": [
+    "klucz \"top\" jedzie w pliku, ale nic go nie czyta — wycofana sekcja do usunięcia ze scrape.mjs",
+    "klucz \"record\" jedzie w pliku, ale nic go nie czyta — wycofana sekcja do usunięcia ze scrape.mjs"
+  ],
+  "receipts": {
+    "ps": {
+      "platform": "ps",
+      "sequence": 1,
+      "observedAt": 1794261602,
+      "observedAtMs": 1794261602064,
+      "monotonicNs": "219234422361",
+      "cookie": "ps5",
+      "fullBandsDigest": "833ade63b08e00dc5b4ab3ef4f1d41373c8de83553e1db5122b736b28fcde767",
+      "selectedBandsDigest": "f4bec1839bc265ada04aa9cd1a41b29543ae44762aaba9dbc49be7dd5dc11b43"
+    },
+    "pc": {
+      "platform": "pc",
+      "sequence": 1,
+      "observedAt": 1794261604,
+      "observedAtMs": 1794261604754,
+      "monotonicNs": "221924541146",
+      "cookie": "pc",
+      "fullBandsDigest": "48ac167cc36218df5819f60f70a877a4f0b236861335fc84f1fbb4be4f4c0899",
+      "selectedBandsDigest": "41fabc9f253b5a85b9bcddcf0d9b1835b1746eec2c2f9483a6e80b86c07ce44f"
+    }
+  },
+  "completedAtMs": 1794261607368,
+  "adapterDurationMs": 33.943842,
+  "files": {
+    "capture.json": {
+      "bytes": 2677,
+      "sha256": "56fc83703b25c946c5ab42d2d971bb0250690496a392ce35f700e469032aae28"
+    },
+    "data.json": {
+      "bytes": 347336,
+      "sha256": "47398bf348df772bb6ab14feb474dc6e8a43bc286b05d44a7cff3f15fcba9487"
+    },
+    "frame.json": {
+      "bytes": 245296,
+      "sha256": "7fe020031a89f761e70daa189d2b0a2ce8fc94e5f4244bd419705a1acdb2c38f"
+    },
+    "input-manifest.json": {
+      "bytes": 576,
+      "sha256": "ede621119c63870701641298630ec84049b71c24b00efd78aec35ad407bceebb"
+    },
+    "navigation.json": {
+      "bytes": 457,
+      "sha256": "fa5957cd0e32170351a7e4d7308d62b5cc8ed0620b031e035cbd7c5ce694a4ae"
+    },
+    "shadow.json": {
+      "bytes": 72795,
+      "sha256": "5371f3e25c6981c76e49a2bd36fe1a41e36af4f3266b84375b7ad4f8de2b1e7d"
+    }
+  },
+  "totalBytesBeforeSummary": 669137,
+  "limits": {
+    "frameBytes": 524288,
+    "totalBytes": 2097152
+  },
+  "limitations": [
+    "one frame, not two-read live confirmation or investment efficacy",
+    "one receipt per platform bundle, not individual offer timestamps",
+    "legacy not migrated; no production publication"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "runId": 42707700114,
+  "jobId": 129468792697,
+  "conclusion": "success",
+  "runAttempt": 1,
+  "codeCommit": "6a1d3a132e38272c751d1fea552c3a01f6d375c9",
+  "sourceCommit": "ff71cf2e962bba9309745421c6f15bf190c542fd",
+  "createdAt": "2026-11-09T21:59:46Z",
+  "completedAt": "2026-11-09T22:00:28Z",
+  "liveStepSeconds": 28,
+  "artifactId": 13714925488,
+  "artifactZipBytes": 117959,
+  "artifactZipSha256": "4e42915da5d6d7176326a9f4f11323ae7fbe11a5f1f2bc41f298c186940389c3",
+  "artifactExpiresAt": "2026-11-12T22:00:23Z",
+  "pushTriggerDisabledCommit": "06af2dfd0434782715ecd48059fd7123dbaab4b0"
+}
