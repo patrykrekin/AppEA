@@ -1,0 +1,23 @@
+{
+  "stage": "15G",
+  "date": "2026-11-09",
+  "previousStageCommit": "9c2d9cd431f23c7c8bc8bec49db24988109b689a",
+  "scope": "isolated measurement-v2 prototype, regression fixtures and bounded replay; not connected to production",
+  "alternatives": {
+    "wrapOldIdAliases": "rejected: rating and source time are already lost before confirmation",
+    "editProductionDirectly": "rejected for this stage: cannot establish isolated regression evidence first",
+    "separateResearchModule": "selected: explicit quotes and composite identity; reuse existing time/retention constants and preserve legacy archive"
+  },
+  "identity": "platform+rating+profileId+exactName; no ID-only or name-only fallback; exact edition ambiguity remains",
+  "quoteTime": "explicit source observation time, never generated from a new processing cycle for cached data",
+  "momentum": "reject current legacy momentum without explicit platform/rating/name/time; permit only an explicitly enriched matching quote; report coverage loss",
+  "confirmation": "two distinct increasing source times, >=60s after candidate creation and >=60s apart, same identity, each price >= frozen target; one quote cannot be reused",
+  "continuity": "missing/invalid identity observation resets pending target chain; repeated identical source quote does not count or renew last-seen; next distinct confirmation gap <= existing MAX_ODSTEP_TRWALOSCI=600s",
+  "continuityRationale": "conservative explicit measurement policy reusing existing candidate continuity constant, not empirically tuned or a recommendation filter; alternative LUKA=7200 only remains absence closure threshold",
+  "freshness": "0 <= processTime-observedAt <= existing SWIEZOSC=600s; frozen 24h event horizon and 2h no-view closure remain",
+  "ema": "matching full identity and EMA version, nonfuture source time, age <= existing MAX_PRZERWA_EMA_DOBOWA, no change to frozen initial target",
+  "history": "version2 signature; old closed and open rows copied unchanged to frozen legacy compartment and never counted as v2 evidence; no historical relabeling",
+  "stats": "conditional candidate target-contact statistic, arithmetic even-n median, explicit closed/unknown counts and scenario bounds; never execution success",
+  "checks": ["all five 15F counterexamples", "valid target confirmations and below-target reset", "platform/rating separation", "duplicate/reordered/future/stale timestamps", "missing cycle and maximum continuity gap", "restart/idempotence and late horizon", "legacy preservation and no mixed definitions", "real-data replay only as format/observability test"],
+  "exclusions": ["main merge or refresh integration", "network collection", "R2 or GC", "tuning EMA or recommendation", "claiming efficacy from sparse historical replay"]
+}

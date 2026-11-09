@@ -1,0 +1,21 @@
+{
+  "newRegressionTests": {
+    "passed": 32,
+    "failed": 0
+  },
+  "formatReplay": "PASS",
+  "legacyPreservation": "PASS",
+  "existingRefreshSuite": "PASS",
+  "existingStabilitySuite": "PASS",
+  "existingControlsSuite": {
+    "passed": 14,
+    "failed": 3,
+    "baselineCommit": "67837b4a0833ea7f224693cb8fa32cfc9723d06b",
+    "baselineSameFailures": true,
+    "testAndImplementationBytesIdenticalToBaseline": true,
+    "classification": "pre-existing; unresolved deployment check"
+  },
+  "original15FAudit": "same five counterexamples remain in unchanged production code",
+  "productionDiff": "empty",
+  "deployment": "not attempted"
+}

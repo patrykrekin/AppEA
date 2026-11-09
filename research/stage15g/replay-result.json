@@ -1,0 +1,152 @@
+{
+  "scope": "format and provenance replay, not an efficacy backtest",
+  "replayOrigin": 1794081368,
+  "replayHours": 12,
+  "levelsReconstructed": false,
+  "platforms": {
+    "ps": {
+      "cycles": 64,
+      "quotes": 3024,
+      "rejected": 0,
+      "stats": {
+        "contract": 2,
+        "def": "p5-k3-a5-ema3-dt300-wiek7200-o24-t6-s1500-c2-measurement2-g600",
+        "platform": "ps",
+        "metric": "conditional-candidate-quoted-target-contact",
+        "closed": 0,
+        "open": 4,
+        "known": 0,
+        "cel": 0,
+        "poziom": 0,
+        "glebiej": 0,
+        "plasko": 0,
+        "urwane": 0,
+        "conditionalPct": null,
+        "scenarioLowerPct": null,
+        "scenarioUpperPct": null,
+        "medianMinutes": null,
+        "ready": false,
+        "minimumKnown": 15,
+        "legacyExcluded": false,
+        "executionsMeasured": false,
+        "rowsWithMissingCycles": 0,
+        "rowsWithLateLastPrice": 0
+      },
+      "openRows": [
+        {
+          "key": "[\"ps\",89,\"237288\",\"Mariona\"]",
+          "signalPrice": 23500,
+          "target": 28000,
+          "maxIncludingSignal": 24250,
+          "lastObservedAt": 1794124345,
+          "missingCycles": 0,
+          "confirmationCount": 0
+        },
+        {
+          "key": "[\"ps\",89,\"247635\",\"Kvaratskhelia\"]",
+          "signalPrice": 53500,
+          "target": 67000,
+          "maxIncludingSignal": 55000,
+          "lastObservedAt": 1794124345,
+          "missingCycles": 0,
+          "confirmationCount": 0
+        },
+        {
+          "key": "[\"ps\",89,\"248822\",\"Bühl\"]",
+          "signalPrice": 92500,
+          "target": 111000,
+          "maxIncludingSignal": 105000,
+          "lastObservedAt": 1794124345,
+          "missingCycles": 5,
+          "confirmationCount": 0
+        },
+        {
+          "key": "[\"ps\",89,\"241846\",\"Pajor\"]",
+          "signalPrice": 106000,
+          "target": 113000,
+          "maxIncludingSignal": 106000,
+          "lastObservedAt": 1794124345,
+          "missingCycles": 0,
+          "confirmationCount": 0
+        }
+      ]
+    },
+    "pc": {
+      "cycles": 64,
+      "quotes": 2590,
+      "rejected": 0,
+      "stats": {
+        "contract": 2,
+        "def": "p5-k3-a5-ema3-dt300-wiek7200-o24-t6-s1500-c2-measurement2-g600",
+        "platform": "pc",
+        "metric": "conditional-candidate-quoted-target-contact",
+        "closed": 0,
+        "open": 2,
+        "known": 0,
+        "cel": 0,
+        "poziom": 0,
+        "glebiej": 0,
+        "plasko": 0,
+        "urwane": 0,
+        "conditionalPct": null,
+        "scenarioLowerPct": null,
+        "scenarioUpperPct": null,
+        "medianMinutes": null,
+        "ready": false,
+        "minimumKnown": 15,
+        "legacyExcluded": false,
+        "executionsMeasured": false,
+        "rowsWithMissingCycles": 0,
+        "rowsWithLateLastPrice": 0
+      },
+      "openRows": [
+        {
+          "key": "[\"pc\",89,\"237288\",\"Mariona\"]",
+          "signalPrice": 23500,
+          "target": 28750,
+          "maxIncludingSignal": 23500,
+          "lastObservedAt": 1794124345,
+          "missingCycles": 0,
+          "confirmationCount": 0
+        },
+        {
+          "key": "[\"pc\",89,\"247635\",\"Kvaratskhelia\"]",
+          "signalPrice": 33750,
+          "target": 42250,
+          "maxIncludingSignal": 33750,
+          "lastObservedAt": 1794124345,
+          "missingCycles": 0,
+          "confirmationCount": 0
+        }
+      ]
+    }
+  },
+  "migration": {
+    "ps": {
+      "legacyOpen": 1,
+      "legacyClosed": 150,
+      "preservedSha256": "bbfd06945df49a2ba1744364710eee75f9b78d86e9fda5cc1a43189f7fd9acf2",
+      "byteEquivalentJson": true,
+      "v2Closed": 0,
+      "v2Open": 0,
+      "oldOpenPolicy": "frozen in archive; not relabeled or advanced"
+    },
+    "pc": {
+      "legacyOpen": 3,
+      "legacyClosed": 150,
+      "preservedSha256": "5bb66a8f9131a522d229bfed832b2cfc256a1060d6aeef7cf66a23a1f9064c9a",
+      "byteEquivalentJson": true,
+      "v2Closed": 0,
+      "v2Open": 0,
+      "oldOpenPolicy": "frozen in archive; not relabeled or advanced"
+    }
+  },
+  "momentumCoverage": {
+    "sourceCommit": "55d3b2e8ca0780448741bf0d5637796ae36c9d8c",
+    "cardsInLegacyCache": 30,
+    "legacyFreshProfileAliases": 17,
+    "quotesAcceptedByV2": 0,
+    "reason": "no explicit rating/name identity and observation contract in legacy momentum; no guessing",
+    "consequence": "console observations outside bands lose this fallback until source identity is proven; PC was already band-only"
+  }
+}
