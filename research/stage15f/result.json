@@ -1,0 +1,263 @@
+{
+  "protocol": {
+    "stage": "15F",
+    "date": "2026-11-09",
+    "scope": "read-only audit of production ledger contract, current immutable data snapshot and frontend consumers; no production edits",
+    "previousStageCommit": "4e680e14d7008df40e7bc50989f64206812f28c2",
+    "sourceCommit": "55d3b2e8ca0780448741bf0d5637796ae36c9d8c",
+    "sourceDataBlob": "4745969730b15d6cebfc3664bf778818cad56a72",
+    "ledgerBlob": "6d07c5bee519bc8ad439fc8258ab3cf31c811e68",
+    "uiBlob": "d4ad63455342f6aca068aef87eff5b471191dc4c",
+    "checks": [
+      "all candidates versus inReach and absence of purchase confirmation",
+      "frozen target and ID/rating routing",
+      "single touch versus two distinct fresh source observations",
+      "stale/future momentum and missing observations",
+      "verdict precedence and unknown denominator",
+      "independent recomputation of published statistics and medians",
+      "static frontend use of ledger statistics versus separate personal plan"
+    ],
+    "fixtures": "small isolated synthetic sequences using unchanged production exports; expected behaviors and counterexamples retained; no live scraping",
+    "metrics": "counts in frozen latest snapshot; percentages with explicit denominator; all rows are candidate observations, not executions",
+    "sourceReproduction": "git fetch --depth 1 origin 55d3b2e8ca0780448741bf0d5637796ae36c9d8c; audit.mjs reads pinned data via git show and validates hash; imported local source blobs must match production pin",
+    "exclusions": [
+      "rewriting historical outcomes",
+      "inferring frequency of synthetic defects in live data",
+      "reconciling 15E cohort counts with different ledger entry times",
+      "changing recommendation or refresh logic",
+      "GC or collector",
+      "publishing secrets"
+    ]
+  },
+  "sourceAt": 1794259107,
+  "sourceIso": "2026-11-09T21:18:27.000Z",
+  "sourceAwaria": null,
+  "tests": [
+    {
+      "id": "candidate-without-purchase",
+      "kind": "contract",
+      "evidence": {
+        "registeredAboveBuyLimit": true,
+        "purchaseEventRequired": false
+      }
+    },
+    {
+      "id": "frozen-target",
+      "kind": "pass",
+      "evidence": {
+        "target": 15000,
+        "newDailyLevel": 12000
+      }
+    },
+    {
+      "id": "two-quotes-and-reset",
+      "kind": "pass",
+      "evidence": {
+        "singleTouchDoesNotClose": true,
+        "belowTargetResets": true,
+        "timeMinutesFromFirstQualifyingTouch": 6
+      }
+    },
+    {
+      "id": "cross-rating-id-alias",
+      "kind": "confirmed-counterexample",
+      "evidence": {
+        "actual88Price": 12000,
+        "target88": 15000,
+        "aliasTakenFrom89": 30000,
+        "verdict": "cel",
+        "validatorAcceptsFalseTarget": true
+      }
+    },
+    {
+      "id": "reused-momentum-quote",
+      "kind": "confirmed-counterexample",
+      "evidence": {
+        "uniqueSourceTimes": 1,
+        "processingTimes": [
+          1794000120,
+          1794000240
+        ],
+        "verdict": "cel"
+      }
+    },
+    {
+      "id": "future-momentum-time",
+      "kind": "confirmed-counterexample",
+      "evidence": {
+        "sourceTime": 1794003600,
+        "processingTime": 1794000120,
+        "accepted": true
+      }
+    },
+    {
+      "id": "stale-momentum",
+      "kind": "pass",
+      "evidence": {
+        "ageSeconds": 601,
+        "rejected": true
+      }
+    },
+    {
+      "id": "gap-between-target-quotes",
+      "kind": "contract-limitation",
+      "evidence": {
+        "missingCycleResets": false,
+        "gapSeconds": 3480,
+        "verdict": "cel"
+      }
+    },
+    {
+      "id": "daily-ema-id-mismatch",
+      "kind": "confirmed-counterexample",
+      "evidence": {
+        "rowId": "900001",
+        "emaId": "900002",
+        "wrongIdentityUpdatedLevel": true
+      }
+    },
+    {
+      "id": "verdict-priority",
+      "kind": "contract",
+      "evidence": {
+        "noPrice": "urwane",
+        "noPriceAfterKnownLevelDecline": "poziom"
+      }
+    },
+    {
+      "id": "conditional-denominator-and-even-median",
+      "kind": "confirmed-counterexample",
+      "evidence": {
+        "allClosed": 4,
+        "known": 3,
+        "target": 2,
+        "conditionalPct": 67,
+        "scenarioBoundsPct": [
+          50,
+          75
+        ],
+        "reportedMedianMinutes": 10,
+        "conventionalMedianMinutes": 6
+      }
+    }
+  ],
+  "liveSnapshot": {
+    "ps": {
+      "retainedClosed": 150,
+      "open": 1,
+      "publishedMatchesRecomputation": true,
+      "groups": {
+        "current": {
+          "n": 19,
+          "known": 19,
+          "cel": 11,
+          "poziom": 6,
+          "glebiej": 2,
+          "plasko": 0,
+          "urwane": 0,
+          "conditionalPct": 58,
+          "lowerScenarioPct": 57.89473684210526,
+          "upperScenarioPct": 57.89473684210526,
+          "reportedMedianMinutes": 103,
+          "conventionalMedianMinutes": 103,
+          "observedEntryAboveBuyLimit": 14,
+          "withProfileId": 19
+        },
+        "older": {
+          "n": 131,
+          "known": 126,
+          "cel": 73,
+          "poziom": 3,
+          "glebiej": 40,
+          "plasko": 10,
+          "urwane": 5,
+          "conditionalPct": 58,
+          "lowerScenarioPct": 55.725190839694655,
+          "upperScenarioPct": 59.541984732824424,
+          "reportedMedianMinutes": 90,
+          "conventionalMedianMinutes": 90,
+          "observedEntryAboveBuyLimit": 84,
+          "withProfileId": 57
+        }
+      },
+      "warning": "retained last 150 per platform; not lifetime sample or trade execution record"
+    },
+    "pc": {
+      "retainedClosed": 150,
+      "open": 3,
+      "publishedMatchesRecomputation": true,
+      "groups": {
+        "current": {
+          "n": 26,
+          "known": 26,
+          "cel": 15,
+          "poziom": 8,
+          "glebiej": 3,
+          "plasko": 0,
+          "urwane": 0,
+          "conditionalPct": 58,
+          "lowerScenarioPct": 57.69230769230769,
+          "upperScenarioPct": 57.69230769230769,
+          "reportedMedianMinutes": 96,
+          "conventionalMedianMinutes": 96,
+          "observedEntryAboveBuyLimit": 15,
+          "withProfileId": 26
+        },
+        "older": {
+          "n": 124,
+          "known": 121,
+          "cel": 84,
+          "poziom": 5,
+          "glebiej": 27,
+          "plasko": 5,
+          "urwane": 3,
+          "conditionalPct": 69,
+          "lowerScenarioPct": 67.74193548387096,
+          "upperScenarioPct": 70.16129032258064,
+          "reportedMedianMinutes": 201,
+          "conventionalMedianMinutes": 198,
+          "observedEntryAboveBuyLimit": 75,
+          "withProfileId": 39
+        }
+      },
+      "warning": "retained last 150 per platform; not lifetime sample or trade execution record"
+    }
+  },
+  "priorRealMultiRatingIds": {
+    "ps": [
+      {
+        "id": "248822",
+        "rows": [
+          {
+            "rating": 88,
+            "name": "Bühl"
+          },
+          {
+            "rating": 89,
+            "name": "Bühl"
+          }
+        ]
+      }
+    ],
+    "pc": [
+      {
+        "id": "248822",
+        "rows": [
+          {
+            "rating": 88,
+            "name": "Bühl"
+          },
+          {
+            "rating": 89,
+            "name": "Bühl"
+          }
+        ]
+      }
+    ]
+  },
+  "frontendStatic": {
+    "ledgerStatsIdentifierPresent": false,
+    "personalPlanTargetLabelPresent": true,
+    "scope": "static source only; personal plan is separate from frozen ledger targets; no browser rendering or runtime proof"
+  }
+}

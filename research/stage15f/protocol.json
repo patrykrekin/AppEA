@@ -1,0 +1,15 @@
+{
+  "stage": "15F",
+  "date": "2026-11-09",
+  "scope": "read-only audit of production ledger contract, current immutable data snapshot and frontend consumers; no production edits",
+  "previousStageCommit": "4e680e14d7008df40e7bc50989f64206812f28c2",
+  "sourceCommit": "55d3b2e8ca0780448741bf0d5637796ae36c9d8c",
+  "sourceDataBlob": "4745969730b15d6cebfc3664bf778818cad56a72",
+  "ledgerBlob": "6d07c5bee519bc8ad439fc8258ab3cf31c811e68",
+  "uiBlob": "d4ad63455342f6aca068aef87eff5b471191dc4c",
+  "checks": ["all candidates versus inReach and absence of purchase confirmation", "frozen target and ID/rating routing", "single touch versus two distinct fresh source observations", "stale/future momentum and missing observations", "verdict precedence and unknown denominator", "independent recomputation of published statistics and medians", "static frontend use of ledger statistics versus separate personal plan"],
+  "fixtures": "small isolated synthetic sequences using unchanged production exports; expected behaviors and counterexamples retained; no live scraping",
+  "metrics": "counts in frozen latest snapshot; percentages with explicit denominator; all rows are candidate observations, not executions",
+  "sourceReproduction": "git fetch --depth 1 origin 55d3b2e8ca0780448741bf0d5637796ae36c9d8c; audit.mjs reads pinned data via git show and validates hash; imported local source blobs must match production pin",
+  "exclusions": ["rewriting historical outcomes", "inferring frequency of synthetic defects in live data", "reconciling 15E cohort counts with different ledger entry times", "changing recommendation or refresh logic", "GC or collector", "publishing secrets"]
+}
