@@ -1,7 +1,5 @@
 name: Stage15I one actual fast context (isolated)
 on:
-  push:
-    branches: [research/stage15i-live-context-20261109]
   workflow_dispatch:
     inputs:
       confirm:
