@@ -1,0 +1,23 @@
+{
+  "stage": "15D",
+  "date": "2026-11-09",
+  "scope": "retrospective descriptive comparison of one frozen cohort; no tuning or causal claims",
+  "sourceHistoryCommit": "67837b4a0833ea7f224693cb8fa32cfc9723d06b",
+  "sourceHistoryBlob": "dab4f4fe62c0ef99bf81aa4cbf36eb3700153cf1",
+  "decisionSnapshot": "research/stage15b/input/shadow-stage8.json",
+  "cohort": "all 154 original snapshot rows, preserve ps/pc and rating",
+  "priorHorizonSeconds": 7200,
+  "posteriorHorizonSeconds": 7200,
+  "toleranceSeconds": 900,
+  "horizonSource": "existing stage6 and stage15c 2h +/-15min protocol",
+  "priorMatching": "nearest point to t-7200 within inclusive +/-900 seconds; tie earlier; strictly before t",
+  "posteriorMatching": "same as 15C: nearest to t+7200 within inclusive +/-900 seconds; tie earlier",
+  "peers": "other cards present in original snapshot, same platform and rating, exclude own identity; retain original membership",
+  "minimumPeers": 3,
+  "minimumPeersRationale": "diagnostic guard against one or two peers, not a validated statistical sample size or production threshold; publish counts and ranges",
+  "priorPeerAvailability": "only earlier points; do not condition prior trend benchmark on future visibility",
+  "posteriorPeerAvailability": "endpoint available; report missing and survivor-selection limitation",
+  "metrics": ["prior and posterior price change percent", "leave-one-out median peer return", "card return minus peer median in percentage points", "gap from frozen pre-update fast and daily EMA", "peer return min/max"],
+  "missing": "null metric plus counts; no price imputation, no identity substitution",
+  "excluded": ["causal attribution", "new recommendation filter", "fitting beta or significance tests", "longer-window target scoring", "new network collection or R2 writes", "changes to production"]
+}

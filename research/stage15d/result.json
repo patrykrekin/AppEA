@@ -1,0 +1,317 @@
+{
+  "protocol": {
+    "stage": "15D",
+    "date": "2026-11-09",
+    "scope": "retrospective descriptive comparison of one frozen cohort; no tuning or causal claims",
+    "sourceHistoryCommit": "67837b4a0833ea7f224693cb8fa32cfc9723d06b",
+    "sourceHistoryBlob": "dab4f4fe62c0ef99bf81aa4cbf36eb3700153cf1",
+    "decisionSnapshot": "research/stage15b/input/shadow-stage8.json",
+    "cohort": "all 154 original snapshot rows, preserve ps/pc and rating",
+    "priorHorizonSeconds": 7200,
+    "posteriorHorizonSeconds": 7200,
+    "toleranceSeconds": 900,
+    "horizonSource": "existing stage6 and stage15c 2h +/-15min protocol",
+    "priorMatching": "nearest point to t-7200 within inclusive +/-900 seconds; tie earlier; strictly before t",
+    "posteriorMatching": "same as 15C: nearest to t+7200 within inclusive +/-900 seconds; tie earlier",
+    "peers": "other cards present in original snapshot, same platform and rating, exclude own identity; retain original membership",
+    "minimumPeers": 3,
+    "minimumPeersRationale": "diagnostic guard against one or two peers, not a validated statistical sample size or production threshold; publish counts and ranges",
+    "priorPeerAvailability": "only earlier points; do not condition prior trend benchmark on future visibility",
+    "posteriorPeerAvailability": "endpoint available; report missing and survivor-selection limitation",
+    "metrics": [
+      "prior and posterior price change percent",
+      "leave-one-out median peer return",
+      "card return minus peer median in percentage points",
+      "gap from frozen pre-update fast and daily EMA",
+      "peer return min/max"
+    ],
+    "missing": "null metric plus counts; no price imputation, no identity substitution",
+    "excluded": [
+      "causal attribution",
+      "new recommendation filter",
+      "fitting beta or significance tests",
+      "longer-window target scoring",
+      "new network collection or R2 writes",
+      "changes to production"
+    ]
+  },
+  "origin": 1794081368,
+  "platforms": {
+    "ps": {
+      "coverageByRating": {
+        "83": {
+          "cohort": 11,
+          "priorAvailable": 9,
+          "postAvailable": 9
+        },
+        "84": {
+          "cohort": 11,
+          "priorAvailable": 2,
+          "postAvailable": 5
+        },
+        "85": {
+          "cohort": 11,
+          "priorAvailable": 4,
+          "postAvailable": 8
+        },
+        "86": {
+          "cohort": 11,
+          "priorAvailable": 10,
+          "postAvailable": 10
+        },
+        "87": {
+          "cohort": 11,
+          "priorAvailable": 9,
+          "postAvailable": 9
+        },
+        "88": {
+          "cohort": 11,
+          "priorAvailable": 10,
+          "postAvailable": 11
+        },
+        "89": {
+          "cohort": 11,
+          "priorAvailable": 11,
+          "postAvailable": 11
+        }
+      },
+      "investments": [
+        {
+          "key": "89|237288|Mariona",
+          "rating": 89,
+          "investment": true,
+          "fast": false,
+          "inReach": true,
+          "price": 23500,
+          "priorAt": 1794073943,
+          "priorPrice": 27750,
+          "postAt": 1794088596,
+          "postPrice": 21750,
+          "priorReturnPct": -15.315315315315313,
+          "postReturnPct": -7.446808510638303,
+          "dailyEmaPremiumPct": 20.94994440746758,
+          "fastEmaPremiumPct": 10.422625004394126,
+          "priorPeersN": 10,
+          "priorPeersMedianPct": 1.8241758241758221,
+          "priorPeersMinPct": -10.833333333333329,
+          "priorPeersMaxPct": 8.860759493670889,
+          "priorExcessPp": -17.139491139491135,
+          "postPeersN": 10,
+          "postPeersMedianPct": -3.1460552053901303,
+          "postPeersMinPct": -9.433962264150942,
+          "postPeersMaxPct": 1.2048192771084265,
+          "postExcessPp": -4.300753305248173
+        },
+        {
+          "key": "89|247635|Kvaratskhelia",
+          "rating": 89,
+          "investment": true,
+          "fast": false,
+          "inReach": true,
+          "price": 53500,
+          "priorAt": 1794073943,
+          "priorPrice": 60000,
+          "postAt": 1794088596,
+          "postPrice": 52000,
+          "priorReturnPct": -10.833333333333329,
+          "postReturnPct": -2.8037383177570097,
+          "dailyEmaPremiumPct": 26.852304958443707,
+          "fastEmaPremiumPct": 10.672858274625941,
+          "priorPeersN": 10,
+          "priorPeersMedianPct": 1.8241758241758221,
+          "priorPeersMinPct": -15.315315315315313,
+          "priorPeersMaxPct": 8.860759493670889,
+          "priorExcessPp": -12.65750915750915,
+          "postPeersN": 10,
+          "postPeersMedianPct": -3.6360779384035147,
+          "postPeersMinPct": -9.433962264150942,
+          "postPeersMaxPct": 1.2048192771084265,
+          "postExcessPp": 0.832339620646505
+        },
+        {
+          "key": "89|248822|Bühl",
+          "rating": 89,
+          "investment": true,
+          "fast": false,
+          "inReach": true,
+          "price": 92500,
+          "priorAt": 1794073943,
+          "priorPrice": 91000,
+          "postAt": 1794088596,
+          "postPrice": 89000,
+          "priorReturnPct": 1.6483516483516425,
+          "postReturnPct": -3.7837837837837784,
+          "dailyEmaPremiumPct": 22.087229483327285,
+          "fastEmaPremiumPct": -0.20822106624260872,
+          "priorPeersN": 10,
+          "priorPeersMedianPct": 0.5327102803738326,
+          "priorPeersMinPct": -15.315315315315313,
+          "priorPeersMaxPct": 8.860759493670889,
+          "priorExcessPp": 1.1156413679778099,
+          "postPeersN": 10,
+          "postPeersMedianPct": -3.1460552053901303,
+          "postPeersMinPct": -9.433962264150942,
+          "postPeersMaxPct": 1.2048192771084265,
+          "postExcessPp": -0.6377285783936482
+        },
+        {
+          "key": "89|241846|Pajor",
+          "rating": 89,
+          "investment": true,
+          "fast": false,
+          "inReach": false,
+          "price": 106000,
+          "priorAt": 1794073943,
+          "priorPrice": 107000,
+          "postAt": 1794088596,
+          "postPrice": 96000,
+          "priorReturnPct": -0.9345794392523366,
+          "postReturnPct": -9.433962264150942,
+          "dailyEmaPremiumPct": 8.319510930450225,
+          "fastEmaPremiumPct": -1.2798198665631588,
+          "priorPeersN": 10,
+          "priorPeersMedianPct": 1.8241758241758221,
+          "priorPeersMinPct": -15.315315315315313,
+          "priorPeersMaxPct": 8.860759493670889,
+          "priorExcessPp": -2.7587552634281587,
+          "postPeersN": 10,
+          "postPeersMedianPct": -3.1460552053901303,
+          "postPeersMinPct": -7.8125,
+          "postPeersMaxPct": 1.2048192771084265,
+          "postExcessPp": -6.287907058760812
+        }
+      ],
+      "exploratorySinglePeerRemoval": [
+        {
+          "key": "89|237288|Mariona",
+          "minExcessPp": -4.643070192881293,
+          "maxExcessPp": -3.958436417615052
+        },
+        {
+          "key": "89|247635|Kvaratskhelia",
+          "minExcessPp": 0.6846337752662413,
+          "maxExcessPp": 0.9800454660267688
+        },
+        {
+          "key": "89|248822|Bühl",
+          "minExcessPp": -0.9800454660267688,
+          "maxExcessPp": -0.29541169076052753
+        },
+        {
+          "key": "89|241846|Pajor",
+          "minExcessPp": -6.630223946393933,
+          "maxExcessPp": -5.945590171127691
+        }
+      ],
+      "selectedPriorDown": 3,
+      "selectedPostExcessNegative": 3
+    },
+    "pc": {
+      "coverageByRating": {
+        "83": {
+          "cohort": 11,
+          "priorAvailable": 7,
+          "postAvailable": 8
+        },
+        "84": {
+          "cohort": 11,
+          "priorAvailable": 3,
+          "postAvailable": 8
+        },
+        "85": {
+          "cohort": 11,
+          "priorAvailable": 5,
+          "postAvailable": 6
+        },
+        "86": {
+          "cohort": 11,
+          "priorAvailable": 9,
+          "postAvailable": 10
+        },
+        "87": {
+          "cohort": 11,
+          "priorAvailable": 8,
+          "postAvailable": 10
+        },
+        "88": {
+          "cohort": 11,
+          "priorAvailable": 11,
+          "postAvailable": 11
+        },
+        "89": {
+          "cohort": 11,
+          "priorAvailable": 10,
+          "postAvailable": 10
+        }
+      },
+      "investments": [
+        {
+          "key": "89|237288|Mariona",
+          "rating": 89,
+          "investment": true,
+          "fast": false,
+          "inReach": true,
+          "price": 23500,
+          "priorAt": 1794073943,
+          "priorPrice": 26000,
+          "postAt": 1794088596,
+          "postPrice": 22000,
+          "priorReturnPct": -9.615384615384615,
+          "postReturnPct": -6.382978723404253,
+          "dailyEmaPremiumPct": 24.045854860236116,
+          "fastEmaPremiumPct": 6.858307669965535,
+          "priorPeersN": 9,
+          "priorPeersMedianPct": -0.7352941176470562,
+          "priorPeersMinPct": -5.47945205479452,
+          "priorPeersMaxPct": 4.430379746835444,
+          "priorExcessPp": -8.880090497737559,
+          "postPeersN": 9,
+          "postPeersMedianPct": -3.157894736842104,
+          "postPeersMinPct": -62.66666666666667,
+          "postPeersMaxPct": 8.108108108108114,
+          "postExcessPp": -3.2250839865621495
+        },
+        {
+          "key": "89|247635|Kvaratskhelia",
+          "rating": 89,
+          "investment": true,
+          "fast": false,
+          "inReach": true,
+          "price": 33750,
+          "priorAt": 1794073943,
+          "priorPrice": 34000,
+          "postAt": 1794088596,
+          "postPrice": 32000,
+          "priorReturnPct": -0.7352941176470562,
+          "postReturnPct": -5.185185185185182,
+          "dailyEmaPremiumPct": 26.175677130746177,
+          "fastEmaPremiumPct": 3.093336294141036,
+          "priorPeersN": 9,
+          "priorPeersMedianPct": -1.041666666666663,
+          "priorPeersMinPct": -9.615384615384615,
+          "priorPeersMaxPct": 4.430379746835444,
+          "priorExcessPp": 0.30637254901960675,
+          "postPeersN": 9,
+          "postPeersMedianPct": -3.157894736842104,
+          "postPeersMinPct": -62.66666666666667,
+          "postPeersMaxPct": 8.108108108108114,
+          "postExcessPp": -2.0272904483430776
+        }
+      ],
+      "exploratorySinglePeerRemoval": [
+        {
+          "key": "89|237288|Mariona",
+          "minExcessPp": -4.804031354983201,
+          "maxExcessPp": -2.2114387623906104
+        },
+        {
+          "key": "89|247635|Kvaratskhelia",
+          "minExcessPp": -3.6062378167641294,
+          "maxExcessPp": -0.5842597947861075
+        }
+      ],
+      "selectedPriorDown": 2,
+      "selectedPostExcessNegative": 2
+    }
+  }
+}
