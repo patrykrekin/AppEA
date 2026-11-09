@@ -1,0 +1,103 @@
+name: Stage15I one actual fast context (isolated)
+on:
+  push:
+    branches: [research/stage15i-live-context-20261109]
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: RUN_STAGE15I
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: stage15i-isolated-one-shot
+  cancel-in-progress: false
+jobs:
+  one-cycle:
+    if: github.ref == 'refs/heads/research/stage15i-live-context-20261109' && (github.event_name == 'push' || inputs.confirm == 'RUN_STAGE15I')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Verify offline before network acquisition
+        run: |
+          node research/stage15g/tests.mjs
+          node research/stage15h/tests.mjs
+          node research/stage15i/tests.mjs
+          cd scraper
+          node tkontrolki.mjs
+          node trefresh.mjs
+          node tstabilnosc.mjs
+      - name: Pin current input and require unchanged production runtime
+        run: |
+          git fetch --depth 1 origin main
+          STAGE15I_SOURCE="$(git rev-parse FETCH_HEAD)"
+          git diff --exit-code "$STAGE15I_SOURCE" "$GITHUB_SHA" -- scraper ':!scraper/tkontrolki.mjs'
+          echo "STAGE15I_SOURCE=$STAGE15I_SOURCE" >> "$GITHUB_ENV"
+          echo "STAGE15I_DIR=$RUNNER_TEMP/stage15i-evidence" >> "$GITHUB_ENV"
+          echo "STAGE15I_CODE=$RUNNER_TEMP/stage15i-code" >> "$GITHUB_ENV"
+          echo "FUT_DATA=$RUNNER_TEMP/stage15i-data/data.json" >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/stage15i-evidence" "$RUNNER_TEMP/stage15i-data"
+          git show "$STAGE15I_SOURCE:data.json" > "$RUNNER_TEMP/stage15i-data/data.json"
+          git show "$STAGE15I_SOURCE:historia.json" > "$RUNNER_TEMP/stage15i-data/historia.json"
+          git show "$STAGE15I_SOURCE:historia-kart.json" > "$RUNNER_TEMP/stage15i-data/historia-kart.json"
+      - name: Install library without downloading another browser
+        working-directory: scraper
+        run: npm install --no-audit --no-fund
+      - name: Prepare insertion-only temporary copy and manifest
+        run: |
+          node research/stage15i/prepare.mjs "$STAGE15I_CODE" "$STAGE15I_DIR"
+          node --input-type=module <<'NODE'
+          import {execFileSync} from 'node:child_process';
+          import {readFileSync,writeFileSync} from 'node:fs';
+          import {createHash} from 'node:crypto';
+          const sourceCommit=process.env.STAGE15I_SOURCE;
+          const files={};
+          for(const name of ['data.json','historia.json','historia-kart.json']){
+            const raw=readFileSync(process.env.FUT_DATA.replace(/data.json$/,name));
+            files[name]={bytes:raw.length,sha256:createHash('sha256').update(raw).digest('hex')};
+          }
+          writeFileSync(process.env.STAGE15I_DIR+'/input-manifest.json',JSON.stringify({sourceCommit,codeCommit:process.env.GITHUB_SHA,runId:process.env.GITHUB_RUN_ID,files},null,2));
+          NODE
+      - name: One normal fast cycle on temporary data only
+        run: |
+          STAGE15I_CHROME="$(command -v google-chrome || true)"
+          test -n "$STAGE15I_CHROME"
+          cd "$STAGE15I_CODE/scraper"
+          FUT_CHROMIUM="$STAGE15I_CHROME" timeout --signal=TERM --kill-after=10s 300s node scrape.mjs fast
+      - name: Verify captured receipts and original isolated publication
+        run: |
+          cp "$FUT_DATA" "$STAGE15I_DIR/data.json"
+          node research/stage15i/verify-run.mjs "$STAGE15I_DIR"
+          test "$(git hash-object scraper/scrape.mjs)" = 88912b6f7b8cdc679d1a94ba62510e465d7adac6
+          git diff --exit-code -- scraper/scrape.mjs .github/workflows/refresh.yml data.json historia.json historia-kart.json
+      - name: Bound evidence even when the live step failed
+        id: evidence
+        if: always()
+        run: |
+          node --input-type=module <<'NODE'
+          import {existsSync,readdirSync,statSync,appendFileSync} from 'node:fs';
+          const dir=process.env.RUNNER_TEMP+'/stage15i-evidence';
+          if(!existsSync(dir)) process.exit(0);
+          const files=readdirSync(dir).filter(n=>n.endsWith('.json'));
+          let total=0;
+          for(const name of files){
+            const size=statSync(dir+'/'+name).size;
+            if(size>1048576) throw new Error('evidence file exceeds cap');
+            total+=size;
+          }
+          if(total>2097152) throw new Error('total evidence exceeds cap');
+          if(files.length) appendFileSync(process.env.GITHUB_OUTPUT,'allowed=true\n');
+          NODE
+      - name: Upload bounded public-market evidence only
+        if: always() && steps.evidence.outputs.allowed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage15i-captured-context
+          path: ${{ runner.temp }}/stage15i-evidence/*.json
+          if-no-files-found: warn
+          retention-days: 3

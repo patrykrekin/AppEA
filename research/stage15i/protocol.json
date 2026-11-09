@@ -1,0 +1,14 @@
+{
+  "stage": "15I",
+  "date": "2026-11-09",
+  "previousStageCommit": "2510c34a04e34716eef0b88c2b7421107a05a979",
+  "scope": "one actual fast cycle on a temporary copy, capture actual source receipts and verify unchanged old publication output",
+  "limits": {"fastCycles":1,"fastWallSeconds":300,"jobMinutes":10,"frameBytes":524288,"eachOutputBytes":1048576,"totalOutputBytes":2097152,"goAttempts":24,"artifactRetentionDays":3},
+  "limitRationale": "hard experiment resource caps, not market parameters; 24 goto attempts is a conservative bound around existing retrying normal fast navigation, no extra profile requests",
+  "inputs": "data.json and both histories from one freshly pinned main commit; require unchanged scraper runtime versus research code before any scrape",
+  "instrumentation": "generate a temp-only source copy with exact source-hash guard; record actual bundle completion time and cookie per platform immediately after existing read; capture context immediately after normal decision/model calculation",
+  "time": "retain wall milliseconds and monotonic nanoseconds in receipts; adapter uses observedAt seconds from the actual read completion, never reconstructed offsets",
+  "checks": ["32 v2 and 24 adapter cases plus corrected controls before live step", "input immutability", "adapter decision/model parity", "final isolated data.json matches captured decisions and levels", "production script hash unchanged", "actual captured mode receipts and platform cookies", "bounded artifact and successful original fast validation"],
+  "isolation": "contents:read workflow, no main write/merge, temp FUT_DATA, no R2, no GC, no cron; disable one-shot push trigger after run is queued",
+  "exclusions": ["24h collector", "two-read success proof from one frame", "efficacy estimate", "legacy migration", "individual card requests", "automatic retry of live scrape"]
+}
