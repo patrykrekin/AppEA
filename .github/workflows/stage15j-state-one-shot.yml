@@ -1,7 +1,5 @@
 name: Stage15J two actual contexts and restart (isolated)
 on:
-  push:
-    branches: [research/stage15j-state-restart-20261109]
   workflow_dispatch:
     inputs:
       confirm:
@@ -15,7 +13,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   one-cycle:
-    if: github.ref == 'refs/heads/research/stage15j-state-restart-20261109' && (github.event_name == 'push' || inputs.confirm == 'RUN_STAGE15J')
+    if: github.ref == 'refs/heads/research/stage15j-state-restart-20261109' && inputs.confirm == 'RUN_STAGE15J'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
