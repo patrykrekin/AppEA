@@ -1,0 +1,12 @@
+{
+  "artifactId": 13716500344,
+  "runId": 42710787449,
+  "jobId": 129479442999,
+  "sha256": "fee03b10dc9a2f9670bfbcce00249076e9992287d7cd90de20401aba5e7ac2e3",
+  "bytes": 251113,
+  "createdAt": "2026-11-09T22:20:55Z",
+  "expiresAt": "2026-11-12T22:20:54Z",
+  "codeCommit": "f0f07e5206a58c8b8f31c2beab22142b36bc7192",
+  "retainedAs": "research/stage15j/evidence.zip",
+  "disabledTriggerCommit": "9ff75675e26bdfcc4d2d353e84ee62a9d572efe3"
+}
