@@ -1,0 +1,398 @@
+{
+  "stage": "15M",
+  "status": "PASS",
+  "sourceCommit": "8468f34afd6e3ef20e0c8711e148105d715c1acf",
+  "sourceSha256": "56d1f9513bc8232261e101329a70c46d7fae8b491a24b43890c4a79957199d99",
+  "sourceBytes": 1256201,
+  "archiveAt": 1794262349,
+  "firstObservation": 1794090049,
+  "lastObservation": 1794262349,
+  "spanSeconds": 172300,
+  "cutoff": 1794204915,
+  "embargoSeconds": 8100,
+  "origins": 64400,
+  "sides": {
+    "ps": {
+      "series": 333,
+      "points": 32460,
+      "snapshots": 261,
+      "firstSnapshot": 1794090049,
+      "lastSnapshot": 1794262349,
+      "maxSnapshotGapSeconds": 1013,
+      "origins": 32460,
+      "reasons": {
+        "too-few-points": 14727,
+        "historical-gap": 8766,
+        "too-short-span": 486,
+        "history-ready": 8471,
+        "historical-explicit-absence": 10
+      },
+      "split": {
+        "train": {
+          "origins": 20239,
+          "historyReady": 4754,
+          "endpointAvailable": 4752,
+          "continuousFollowup": 4660
+        },
+        "embargo": {
+          "origins": 1512,
+          "historyReady": 498,
+          "endpointAvailable": 498,
+          "continuousFollowup": 492
+        },
+        "test": {
+          "origins": 10709,
+          "historyReady": 3219,
+          "endpointAvailable": 2827,
+          "continuousFollowup": 2771
+        }
+      }
+    },
+    "pc": {
+      "series": 349,
+      "points": 31940,
+      "snapshots": 261,
+      "firstSnapshot": 1794090049,
+      "lastSnapshot": 1794262349,
+      "maxSnapshotGapSeconds": 1013,
+      "origins": 31940,
+      "reasons": {
+        "too-few-points": 16001,
+        "too-short-span": 427,
+        "historical-gap": 9422,
+        "history-ready": 6090
+      },
+      "split": {
+        "train": {
+          "origins": 19787,
+          "historyReady": 3382,
+          "endpointAvailable": 3365,
+          "continuousFollowup": 3247
+        },
+        "embargo": {
+          "origins": 1498,
+          "historyReady": 342,
+          "endpointAvailable": 342,
+          "continuousFollowup": 336
+        },
+        "test": {
+          "origins": 10655,
+          "historyReady": 2366,
+          "endpointAvailable": 2070,
+          "continuousFollowup": 2001
+        }
+      }
+    }
+  },
+  "ratingCounts": {
+    "ps/81": {
+      "origins": 2871,
+      "historyReady": 0,
+      "endpointAvailable": 0,
+      "continuousFollowup": 0
+    },
+    "ps/82": {
+      "origins": 2750,
+      "historyReady": 8,
+      "endpointAvailable": 8,
+      "continuousFollowup": 0
+    },
+    "ps/83": {
+      "origins": 2871,
+      "historyReady": 370,
+      "endpointAvailable": 368,
+      "continuousFollowup": 319
+    },
+    "ps/84": {
+      "origins": 2871,
+      "historyReady": 0,
+      "endpointAvailable": 0,
+      "continuousFollowup": 0
+    },
+    "ps/85": {
+      "origins": 2871,
+      "historyReady": 0,
+      "endpointAvailable": 0,
+      "continuousFollowup": 0
+    },
+    "ps/86": {
+      "origins": 2871,
+      "historyReady": 0,
+      "endpointAvailable": 0,
+      "continuousFollowup": 0
+    },
+    "ps/87": {
+      "origins": 2871,
+      "historyReady": 0,
+      "endpointAvailable": 0,
+      "continuousFollowup": 0
+    },
+    "ps/88": {
+      "origins": 2871,
+      "historyReady": 900,
+      "endpointAvailable": 860,
+      "continuousFollowup": 818
+    },
+    "ps/89": {
+      "origins": 2871,
+      "historyReady": 1985,
+      "endpointAvailable": 1893,
+      "continuousFollowup": 1848
+    },
+    "ps/90": {
+      "origins": 2871,
+      "historyReady": 2182,
+      "endpointAvailable": 2072,
+      "continuousFollowup": 2072
+    },
+    "ps/92": {
+      "origins": 2320,
+      "historyReady": 1880,
+      "endpointAvailable": 1780,
+      "continuousFollowup": 1780
+    },
+    "ps/93": {
+      "origins": 1551,
+      "historyReady": 1146,
+      "endpointAvailable": 1096,
+      "continuousFollowup": 1086
+    },
+    "pc/81": {
+      "origins": 2871,
+      "historyReady": 0,
+      "endpointAvailable": 0,
+      "continuousFollowup": 0
+    },
+    "pc/82": {
+      "origins": 2849,
+      "historyReady": 76,
+      "endpointAvailable": 66,
+      "continuousFollowup": 55
+    },
+    "pc/83": {
+      "origins": 2871,
+      "historyReady": 111,
+      "endpointAvailable": 111,
+      "continuousFollowup": 81
+    },
+    "pc/84": {
+      "origins": 2871,
+      "historyReady": 0,
+      "endpointAvailable": 0,
+      "continuousFollowup": 0
+    },
+    "pc/85": {
+      "origins": 2871,
+      "historyReady": 0,
+      "endpointAvailable": 0,
+      "continuousFollowup": 0
+    },
+    "pc/86": {
+      "origins": 2871,
+      "historyReady": 0,
+      "endpointAvailable": 0,
+      "continuousFollowup": 0
+    },
+    "pc/87": {
+      "origins": 2871,
+      "historyReady": 0,
+      "endpointAvailable": 0,
+      "continuousFollowup": 0
+    },
+    "pc/88": {
+      "origins": 2871,
+      "historyReady": 295,
+      "endpointAvailable": 283,
+      "continuousFollowup": 239
+    },
+    "pc/89": {
+      "origins": 2871,
+      "historyReady": 2188,
+      "endpointAvailable": 2088,
+      "continuousFollowup": 2078
+    },
+    "pc/90": {
+      "origins": 2871,
+      "historyReady": 2282,
+      "endpointAvailable": 2182,
+      "continuousFollowup": 2172
+    },
+    "pc/92": {
+      "origins": 2110,
+      "historyReady": 741,
+      "endpointAvailable": 670,
+      "continuousFollowup": 624
+    },
+    "pc/93": {
+      "origins": 1142,
+      "historyReady": 397,
+      "endpointAvailable": 377,
+      "continuousFollowup": 335
+    }
+  },
+  "productionBasket": {
+    "ps": {
+      "train": {
+        "origins": 12397,
+        "historyReady": 1766,
+        "endpointAvailable": 1764,
+        "continuousFollowup": 1684,
+        "uniqueSeriesWithContinuousFollowup": 21,
+        "followupMissingReasons": {
+          "explicit-absence": 80,
+          "endpoint-missing": 2
+        }
+      },
+      "embargo": {
+        "origins": 924,
+        "historyReady": 198,
+        "endpointAvailable": 198,
+        "continuousFollowup": 192,
+        "uniqueSeriesWithContinuousFollowup": 16,
+        "followupMissingReasons": {
+          "explicit-absence": 6
+        }
+      },
+      "test": {
+        "origins": 6776,
+        "historyReady": 1291,
+        "endpointAvailable": 1159,
+        "continuousFollowup": 1109,
+        "uniqueSeriesWithContinuousFollowup": 17,
+        "followupMissingReasons": {
+          "explicit-absence": 50,
+          "archive-tail": 130,
+          "endpoint-missing": 2
+        }
+      }
+    },
+    "pc": {
+      "train": {
+        "origins": 12397,
+        "historyReady": 1433,
+        "endpointAvailable": 1433,
+        "continuousFollowup": 1375,
+        "uniqueSeriesWithContinuousFollowup": 17,
+        "followupMissingReasons": {
+          "explicit-absence": 58
+        }
+      },
+      "embargo": {
+        "origins": 924,
+        "historyReady": 138,
+        "endpointAvailable": 138,
+        "continuousFollowup": 132,
+        "uniqueSeriesWithContinuousFollowup": 11,
+        "followupMissingReasons": {
+          "explicit-absence": 6
+        }
+      },
+      "test": {
+        "origins": 6776,
+        "historyReady": 1023,
+        "endpointAvailable": 911,
+        "continuousFollowup": 891,
+        "uniqueSeriesWithContinuousFollowup": 13,
+        "followupMissingReasons": {
+          "archive-tail": 112,
+          "explicit-absence": 20
+        }
+      }
+    }
+  },
+  "windowSanityChecks": 5,
+  "eligibilityDigestSha256": "ac28bde88a3cbf7666b54bfc3066d1101f6a904edd03ac0a3574be1e5cf6cb2f",
+  "historyReadyExamples": [
+    [
+      "ps",
+      "82|242187|Baumgartner",
+      1794119462,
+      "train",
+      null,
+      1794126876,
+      false,
+      "explicit-absence"
+    ],
+    [
+      "ps",
+      "82|242187|Baumgartner",
+      1794120147,
+      "train",
+      null,
+      1794127597,
+      false,
+      "explicit-absence"
+    ],
+    [
+      "ps",
+      "82|233556|Orsolini",
+      1794218792,
+      "test",
+      null,
+      1794226242,
+      false,
+      "followup-gap"
+    ],
+    [
+      "ps",
+      "82|233556|Orsolini",
+      1794219509,
+      "test",
+      null,
+      1794226848,
+      false,
+      "followup-gap"
+    ],
+    [
+      "ps",
+      "82|233556|Orsolini",
+      1794220112,
+      "test",
+      null,
+      1794227464,
+      false,
+      "followup-gap"
+    ],
+    [
+      "ps",
+      "82|233556|Orsolini",
+      1794220843,
+      "test",
+      null,
+      1794228145,
+      false,
+      "followup-gap"
+    ],
+    [
+      "ps",
+      "82|233556|Orsolini",
+      1794221446,
+      "test",
+      null,
+      1794228745,
+      false,
+      "followup-gap"
+    ],
+    [
+      "ps",
+      "82|233556|Orsolini",
+      1794222077,
+      "test",
+      null,
+      1794228745,
+      false,
+      "followup-gap"
+    ]
+  ],
+  "exactProductionReplayPossible": false,
+  "researchProxyAllowed": true,
+  "forecastScoresComputed": false,
+  "independentHoldout": false,
+  "limitations": [
+    "selected cheapest-by-rating offers, not all cards or trades",
+    "10 minute minimum sampling, irregular gaps and snapshot absences",
+    "past EMA summaries and exact fast stream absent",
+    "chronological partition of already examined data, not pristine validation",
+    "endpoint availability alone does not establish continuous followup or execution"
+  ]
+}

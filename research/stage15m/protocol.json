@@ -1,0 +1,22 @@
+{
+  "stage":"15M",
+  "scope":"archive readiness inventory, no forecast scoring or market collection",
+  "sourceCommit":"8468f34afd6e3ef20e0c8711e148105d715c1acf",
+  "sourceFile":"historia-kart.json",
+  "sourceSha256":"56d1f9513bc8232261e101329a70c46d7fae8b491a24b43890c4a79957199d99",
+  "cohort":"all valid archived observations with composite platform/rating/id/name, not the four selected 15K signals",
+  "windowSeconds":43200,
+  "minimumSpanSeconds":28800,
+  "minimumPoints":36,
+  "maximumGapSeconds":1200,
+  "windowSource":"existing eksperyment-historii-kart.mjs OKNO/MIN_CZAS/MIN_PROBEK/MAX_LUKA; not tuned here",
+  "origin":"each recorded card quote, using observations <= origin; require snapshot evidence for rating at origin and every training point",
+  "futureHorizonSeconds":7200,
+  "endpointToleranceSeconds":900,
+  "horizonSource":"existing stages 15C/15D 2h +/-15min; endpoint nearest, earlier tie, never substitute identity",
+  "followup":"report endpoint availability separately from continuous same-card followup; any gap >1200s or explicit snapshot absence breaks continuity",
+  "chronologicalSplit":"fixed two-thirds elapsed archive time; training origins end before cutoff-horizon-tolerance; origins in intervening 8100s embargo; test origins >= cutoff",
+  "splitStatus":"development split for readiness only; archive already used in earlier research, not a pristine holdout",
+  "models":"exact production EMA target cannot be rebuilt from downsampled prices without historical state; possible research-only EMA12 proxy and last observed price use the same past window including origin",
+  "exclusions":["profit or efficacy scores","parameter tuning","exact production replay claim","imputation of missing prices","new data acquisition","production changes"]
+}
