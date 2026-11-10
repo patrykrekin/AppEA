@@ -1,0 +1,16 @@
+{
+  "stage":"15J",
+  "date":"2026-11-09",
+  "previousStageCommit":"3ace645a078575ce8d3cc0aa9470cd0925a8f7ff",
+  "scope":"two actual fast processes on one isolated data copy, commit v2 state only after validated original output, restart and identical-frame replay",
+  "limits":{"fastCycles":2,"secondsPerFast":300,"jobMinutes":15,"minimumGapSeconds":60,"maxWaitSeconds":60,"frameBytes":524288,"eachArtifactFileBytes":1048576,"totalArtifactBytes":4194304,"goAttemptsPerCycle":24,"artifactRetentionDays":3},
+  "gapRationale":"60s is the existing minimum evidence interval, not a tuned investment parameter; wait until first frame completion+60s before starting second process",
+  "inputChain":"pin one main commit for initial data and histories; second cycle must use first validated isolated outputs, never refetch main between cycles",
+  "stateCommit":"temporary sibling file plus rename after full old-output validation; SHA256 expected-previous check; single writer in one concurrency job, not a distributed CAS or power-loss durability proof",
+  "retry":"a separate process reloads committed first state and replays exact first frame without browser; full state and file hash must remain unchanged",
+  "restart":"second actual fast is a new Node process, receipt sequence2, loads committed adapter state1; compare frozen initial fields of surviving rows",
+  "history":"production legacy not imported or relabeled; existing old ledger advances only inside temporary normal-fast output",
+  "sources":"reuse insertion-only reviewed 15I capture points, actual cookie/wall/monotonic receipts; no individual card requests",
+  "checks":["15I independent evidence proof","v2/adapter controls and local state faults before live","old publication parity for both cycles","exact replay idempotence after persisted restart","state/input SHA256 chain","independent sequential replay of both captured frames"],
+  "exclusions":["main merge or publication","24h collector","R2 or GC","automatic retry of failed fast","forcing a market target hit","investment efficacy or full machine-crash claim"]
+}

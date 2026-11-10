@@ -1,0 +1,22 @@
+{
+  "stage": "15E",
+  "date": "2026-11-09",
+  "scope": "retrospective descriptive 12h follow-up of same frozen cohort; no tuning or independent validation",
+  "historyCommit": "67837b4a0833ea7f224693cb8fa32cfc9723d06b",
+  "historyBlob": "dab4f4fe62c0ef99bf81aa4cbf36eb3700153cf1",
+  "snapshotSha256": "b5c5362f9be8da99d9f48de9e2f4aa89c7791f73853a22f4e3ae60a0e16f3b6e",
+  "horizonSeconds": 43200,
+  "endpointToleranceSeconds": 900,
+  "largeGapSeconds": 1200,
+  "parameterSources": "12h horizon, +/-900s endpoint and MAX_LUKA=1200 from existing jakosc-historii-kart.mjs; not fitted here",
+  "cohort": "all 154 original rows, separate ps/pc; target checks only six original investment flags; separately report five inReach",
+  "identity": "platform+rating+profileId+exactName, edition ambiguity remains",
+  "endpoint": "closest point to t+43200 within inclusive +/-900s; tie earlier; pending until entire window closes",
+  "path": "only actually observed prices at t < timestamp <= t+43200; exclude tolerance tail from path",
+  "target": "frozen original row[15], never current/revised target; observed price >= target",
+  "hitMeaning": "first recorded at-or-above-target observation, not true first passage, executed sale or guaranteed liquidity",
+  "nonHitMeaning": "target not observed in sampled prices; never conclude target was not reached between observations",
+  "coverage": "number of prices and valid rating snapshots in strict 12h path, valid rating snapshots without matching card price, max consecutive price gap including both boundaries, gaps >1200s",
+  "missing": "no imputation, no carry-forward, no replacing identity; endpoint absence separated from missing rating samples",
+  "excluded": ["collector or R2 writes", "GC", "production edits", "new recommendation filters", "optimization of targets or horizons", "realized profit claims", "confidence intervals from one dependent cohort"]
+}

@@ -1,0 +1,135 @@
+{
+  "contract": 2,
+  "signature": "p5-k3-a5-ema3-dt300-wiek7200-o24-t6-s1500-c2-measurement2-g600",
+  "passed": 32,
+  "tests": [
+    {
+      "name": "valid two distinct source observations preserve target evidence",
+      "result": "PASS"
+    },
+    {
+      "name": "15F: same ID under 89 cannot confirm 88 target",
+      "result": "PASS"
+    },
+    {
+      "name": "a unique ID in the wrong rating is not a safe fallback for a missing card",
+      "result": "PASS"
+    },
+    {
+      "name": "15F: cached momentum quote cannot count twice or renew last seen",
+      "result": "PASS"
+    },
+    {
+      "name": "15F: future momentum time is rejected",
+      "result": "PASS"
+    },
+    {
+      "name": "15F: mismatching EMA ID is rejected and frozen target survives",
+      "result": "PASS"
+    },
+    {
+      "name": "15F: conventional even median, empty and odd cases",
+      "result": "PASS"
+    },
+    {
+      "name": "same profile across platforms is isolated",
+      "result": "PASS"
+    },
+    {
+      "name": "momentum quote cannot leak from PC into console batch",
+      "result": "PASS"
+    },
+    {
+      "name": "below-target quote resets and a new valid chain still succeeds",
+      "result": "PASS"
+    },
+    {
+      "name": "missing cycle resets confirmation, duplicate does not count",
+      "result": "PASS"
+    },
+    {
+      "name": "gap >600 starts a new chain, exact 600 is accepted",
+      "result": "PASS"
+    },
+    {
+      "name": "same cycle retry is idempotent across JSON restart; backwards time rejected",
+      "result": "PASS"
+    },
+    {
+      "name": "out-of-order source time does not confirm target",
+      "result": "PASS"
+    },
+    {
+      "name": "same time with a different price cannot change accepted evidence",
+      "result": "PASS"
+    },
+    {
+      "name": "freshness includes 600, rejects 601; unknown observation time rejected",
+      "result": "PASS"
+    },
+    {
+      "name": "legacy momentum without rating/name/time is not guessed",
+      "result": "PASS"
+    },
+    {
+      "name": "conflicting exact quotes are blocked rather than picked by order",
+      "result": "PASS"
+    },
+    {
+      "name": "verified band quote has priority over matching momentum",
+      "result": "PASS"
+    },
+    {
+      "name": "new contract archives legacy open and closed rows byte-for-byte structurally",
+      "result": "PASS"
+    },
+    {
+      "name": "different/future contract or definition cannot be mixed",
+      "result": "PASS"
+    },
+    {
+      "name": "positive matching EMA updates diagnosis without moving target",
+      "result": "PASS"
+    },
+    {
+      "name": "future or stale EMA cannot change diagnosis",
+      "result": "PASS"
+    },
+    {
+      "name": "absence closes unknown, excludes it from conditional denominator but reports it",
+      "result": "PASS"
+    },
+    {
+      "name": "same evidence cannot resurrect a row after >2h outage",
+      "result": "PASS"
+    },
+    {
+      "name": "event after 24h cannot complete a chain begun before horizon",
+      "result": "PASS"
+    },
+    {
+      "name": "at least 60s after entry and 60s span are needed",
+      "result": "PASS"
+    },
+    {
+      "name": "candidate above buy limit is labeled candidate, never execution",
+      "result": "PASS"
+    },
+    {
+      "name": "unsupported candidate price cannot be registered against another quote",
+      "result": "PASS"
+    },
+    {
+      "name": "malformed state cannot silently erase history",
+      "result": "PASS"
+    },
+    {
+      "name": "statistics uses conventional median on two genuine v2 target results",
+      "result": "PASS"
+    },
+    {
+      "name": "tampered target evidence cannot be scored",
+      "result": "PASS"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "sourceCommit": "ff71cf2e962bba9309745421c6f15bf190c542fd",
+  "codeCommit": "6a1d3a132e38272c751d1fea552c3a01f6d375c9",
+  "runId": "42707700114",
+  "files": {
+    "data.json": {
+      "bytes": 347264,
+      "sha256": "086d791a934610ccdc5366197f1486dbc0fc0799c650d9ea74689b1b99cfef80"
+    },
+    "historia.json": {
+      "bytes": 59890,
+      "sha256": "25e140dc34d5c815fde11ca427e4ca35631dacc9ec81d4299fdb9dee76c32a17"
+    },
+    "historia-kart.json": {
+      "bytes": 1257001,
+      "sha256": "02c8fe2db6442c4e5130ae9302165a12551eb6f3c22a21ec13cda54da32853e2"
+    }
+  }
+}

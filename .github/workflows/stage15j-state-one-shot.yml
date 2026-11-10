@@ -1,0 +1,117 @@
+name: Stage15J two actual contexts and restart (isolated)
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: RUN_STAGE15J
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: stage15j-isolated-two-cycles
+  cancel-in-progress: false
+jobs:
+  one-cycle:
+    if: github.ref == 'refs/heads/research/stage15j-state-restart-20261109' && inputs.confirm == 'RUN_STAGE15J'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Verify offline before network acquisition
+        run: |
+          node research/stage15g/tests.mjs
+          node research/stage15h/tests.mjs
+          node research/stage15j/tests.mjs
+          cd scraper
+          node tkontrolki.mjs
+          node trefresh.mjs
+          node tstabilnosc.mjs
+      - name: Pin current input and require unchanged production runtime
+        run: |
+          git fetch --depth 1 origin main
+          STAGE15J_SOURCE="$(git rev-parse FETCH_HEAD)"
+          git diff --exit-code "$STAGE15J_SOURCE" "$GITHUB_SHA" -- scraper ':!scraper/tkontrolki.mjs'
+          echo "STAGE15J_SOURCE=$STAGE15J_SOURCE" >> "$GITHUB_ENV"
+          echo "STAGE15J_ROOT=$RUNNER_TEMP/stage15j-evidence" >> "$GITHUB_ENV"
+          echo "STAGE15J_CODE=$RUNNER_TEMP/stage15j-code" >> "$GITHUB_ENV"
+          echo "STAGE15J_STATE=$RUNNER_TEMP/stage15j-state/committed.json" >> "$GITHUB_ENV"
+          echo "FUT_DATA=$RUNNER_TEMP/stage15j-data/data.json" >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/stage15j-evidence/cycle1" "$RUNNER_TEMP/stage15j-evidence/cycle2" "$RUNNER_TEMP/stage15j-data" "$RUNNER_TEMP/stage15j-state"
+          git show "$STAGE15J_SOURCE:data.json" > "$RUNNER_TEMP/stage15j-data/data.json"
+          git show "$STAGE15J_SOURCE:historia.json" > "$RUNNER_TEMP/stage15j-data/historia.json"
+          git show "$STAGE15J_SOURCE:historia-kart.json" > "$RUNNER_TEMP/stage15j-data/historia-kart.json"
+      - name: Install library without downloading another browser
+        working-directory: scraper
+        run: npm install --no-audit --no-fund
+      - name: Prepare reviewed temporary code copy
+        run: node research/stage15j/prepare.mjs "$STAGE15J_CODE" "$STAGE15J_ROOT/cycle1"
+      - name: Actual fast process 1
+        env:
+          STAGE15J_CYCLE: "1"
+          STAGE15J_DIR: ${{ runner.temp }}/stage15j-evidence/cycle1
+        run: |
+          node research/stage15j/manifest.mjs input 1
+          STAGE15J_CHROME="$(command -v google-chrome)"
+          cd "$STAGE15J_CODE/scraper"
+          FUT_CHROMIUM="$STAGE15J_CHROME" timeout --signal=TERM --kill-after=10s 300s node scrape.mjs fast
+      - name: Validate original output 1 then commit state
+        env:
+          STAGE15J_DIR: ${{ runner.temp }}/stage15j-evidence/cycle1
+        run: |
+          node research/stage15j/manifest.mjs output 1
+          node research/stage15i/verify-run.mjs "$STAGE15J_DIR"
+          node research/stage15j/commit-cycle.mjs "$STAGE15J_DIR" "$STAGE15J_STATE" 1
+      - name: Restart reader and replay exact first frame without browser
+        run: node research/stage15j/retry.mjs "$STAGE15J_STATE" "$STAGE15J_ROOT/cycle1/frame.json" "$STAGE15J_ROOT/retry.json"
+      - name: Bounded wait for existing 60 second evidence interval
+        run: node research/stage15j/wait.mjs "$STAGE15J_ROOT/cycle1/capture.json" "$STAGE15J_ROOT/wait.json"
+      - name: Actual fast process 2 with persisted state and isolated output 1
+        env:
+          STAGE15J_CYCLE: "2"
+          STAGE15J_DIR: ${{ runner.temp }}/stage15j-evidence/cycle2
+        run: |
+          node research/stage15j/manifest.mjs input 2
+          STAGE15J_CHROME="$(command -v google-chrome)"
+          cd "$STAGE15J_CODE/scraper"
+          FUT_CHROMIUM="$STAGE15J_CHROME" timeout --signal=TERM --kill-after=10s 300s node scrape.mjs fast
+      - name: Validate original output 2 then commit state and series proof
+        env:
+          STAGE15J_DIR: ${{ runner.temp }}/stage15j-evidence/cycle2
+        run: |
+          node research/stage15j/manifest.mjs output 2
+          node research/stage15i/verify-run.mjs "$STAGE15J_DIR"
+          node research/stage15j/commit-cycle.mjs "$STAGE15J_DIR" "$STAGE15J_STATE" 2
+          cp "$STAGE15J_STATE" "$STAGE15J_ROOT/state-final.json"
+          node research/stage15j/verify-series.mjs "$STAGE15J_ROOT"
+          test "$(git hash-object scraper/scrape.mjs)" = 88912b6f7b8cdc679d1a94ba62510e465d7adac6
+          git diff --exit-code -- scraper/scrape.mjs .github/workflows/refresh.yml data.json historia.json historia-kart.json
+      - name: Bound evidence even when the live step failed
+        id: evidence
+        if: always()
+        run: |
+          node --input-type=module <<'NODE'
+          import {existsSync,readdirSync,statSync,appendFileSync} from 'node:fs';
+          const dir=process.env.RUNNER_TEMP+'/stage15j-evidence';
+          if(!existsSync(dir)) process.exit(0);
+          const files=readdirSync(dir,{recursive:true}).filter(n=>n.endsWith('.json'));
+          let total=0;
+          for(const name of files){
+            const size=statSync(dir+'/'+name).size;
+            if(size>1048576) throw new Error('evidence file exceeds cap');
+            total+=size;
+          }
+          if(total>4194304) throw new Error('total evidence exceeds cap');
+          if(files.length) appendFileSync(process.env.GITHUB_OUTPUT,'allowed=true\n');
+          NODE
+      - name: Upload bounded public-market evidence only
+        if: always() && steps.evidence.outputs.allowed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage15j-two-contexts-restart
+          path: ${{ runner.temp }}/stage15j-evidence/**/*.json
+          if-no-files-found: warn
+          retention-days: 3

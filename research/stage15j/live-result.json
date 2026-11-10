@@ -1,0 +1,205 @@
+{
+  "status": "PASS",
+  "sourceCommit": "8468f34afd6e3ef20e0c8711e148105d715c1acf",
+  "codeCommit": "f0f07e5206a58c8b8f31c2beab22142b36bc7192",
+  "normalFastCycles": 2,
+  "twoDistinctFastProcesses": true,
+  "processIds": [
+    2470,
+    4669
+  ],
+  "persistedStateReloaded": true,
+  "oldOutputInputChainMatches": true,
+  "exactFrameReplayUnchanged": true,
+  "noNetworkForReplay": true,
+  "sourceIntervalMs": {
+    "ps": 70226,
+    "pc": 70268
+  },
+  "frozenRowsPreserved": {
+    "ps": 2,
+    "pc": 2
+  },
+  "decisions": {
+    "cycle1": {
+      "ps": {
+        "quotes": 77,
+        "decisions": 2,
+        "derivedLevels": 77,
+        "retainedModelsNotRestamped": 128,
+        "decisionParity": true,
+        "postModelParity": true
+      },
+      "pc": {
+        "quotes": 77,
+        "decisions": 2,
+        "derivedLevels": 77,
+        "retainedModelsNotRestamped": 147,
+        "decisionParity": true,
+        "postModelParity": true
+      }
+    },
+    "cycle2": {
+      "ps": {
+        "quotes": 77,
+        "decisions": 2,
+        "derivedLevels": 77,
+        "retainedModelsNotRestamped": 128,
+        "decisionParity": true,
+        "postModelParity": true
+      },
+      "pc": {
+        "quotes": 77,
+        "decisions": 2,
+        "derivedLevels": 77,
+        "retainedModelsNotRestamped": 147,
+        "decisionParity": true,
+        "postModelParity": true
+      }
+    }
+  },
+  "statisticsAfterTwo": {
+    "ps": {
+      "contract": 2,
+      "def": "p5-k3-a5-ema3-dt300-wiek7200-o24-t6-s1500-c2-measurement2-g600",
+      "platform": "ps",
+      "metric": "conditional-candidate-quoted-target-contact",
+      "closed": 0,
+      "open": 2,
+      "known": 0,
+      "cel": 0,
+      "poziom": 0,
+      "glebiej": 0,
+      "plasko": 0,
+      "urwane": 0,
+      "conditionalPct": null,
+      "scenarioLowerPct": null,
+      "scenarioUpperPct": null,
+      "medianMinutes": null,
+      "ready": false,
+      "minimumKnown": 15,
+      "legacyExcluded": false,
+      "executionsMeasured": false,
+      "rowsWithMissingCycles": 0,
+      "rowsWithLateLastPrice": 0
+    },
+    "pc": {
+      "contract": 2,
+      "def": "p5-k3-a5-ema3-dt300-wiek7200-o24-t6-s1500-c2-measurement2-g600",
+      "platform": "pc",
+      "metric": "conditional-candidate-quoted-target-contact",
+      "closed": 0,
+      "open": 2,
+      "known": 0,
+      "cel": 0,
+      "poziom": 0,
+      "glebiej": 0,
+      "plasko": 0,
+      "urwane": 0,
+      "conditionalPct": null,
+      "scenarioLowerPct": null,
+      "scenarioUpperPct": null,
+      "medianMinutes": null,
+      "ready": false,
+      "minimumKnown": 15,
+      "legacyExcluded": false,
+      "executionsMeasured": false,
+      "rowsWithMissingCycles": 0,
+      "rowsWithLateLastPrice": 0
+    }
+  },
+  "oldPublicationParity": true,
+  "legacyImported": false,
+  "totalBytesBeforeSummary": 1434545,
+  "files": {
+    "cycle1/capture.json": {
+      "bytes": 2762,
+      "sha256": "0316eb3e870139eb76c26ad5983d359f848a23f3ac40115180a4c89df66e4084"
+    },
+    "cycle1/data.json": {
+      "bytes": 349695,
+      "sha256": "baf9a693e1e0b5eb63e5a16f283c12c8d71ed2741aa1b54b434bd1ce84ceed79"
+    },
+    "cycle1/frame.json": {
+      "bytes": 244931,
+      "sha256": "f71fe88319c6676d1708165fa6caa8b4ad97b3152e6559bf93b782801168e2e8"
+    },
+    "cycle1/input-manifest.json": {
+      "bytes": 655,
+      "sha256": "c41a1c572fda932ce58b5545ce6ce2ceff5bcdb4a4a51330a95861894f05f3b2"
+    },
+    "cycle1/navigation.json": {
+      "bytes": 457,
+      "sha256": "fa5957cd0e32170351a7e4d7308d62b5cc8ed0620b031e035cbd7c5ce694a4ae"
+    },
+    "cycle1/output-manifest.json": {
+      "bytes": 659,
+      "sha256": "ff971d2be844075dee90e12388804c8b9443b3b36af7f0c60914aeeb49d90fc7"
+    },
+    "cycle1/result.json": {
+      "bytes": 5053,
+      "sha256": "cff013804766a211eef779b95edbdee532996cdd01e35ef7ab010ff2660babb1"
+    },
+    "cycle1/shadow.json": {
+      "bytes": 73089,
+      "sha256": "12566732479e8d09e99a18d1d77335e241dd97e277a7082468bcec3e17f51e24"
+    },
+    "cycle1/state-commit.json": {
+      "bytes": 164,
+      "sha256": "8183661f8fbf639b44f0c198510f40ef5baa490c48412d9cdfa6b7dc024ad194"
+    },
+    "cycle2/capture.json": {
+      "bytes": 2827,
+      "sha256": "ec415ab6650def88db287c77057d0f0f0f1f6e01928607fb7b2b56abcd8ca1bb"
+    },
+    "cycle2/data.json": {
+      "bytes": 349664,
+      "sha256": "734d0fdd04d08f0285945dd27e63740c2d8bce060cf6a24651d6e9eac95c04f8"
+    },
+    "cycle2/frame.json": {
+      "bytes": 245867,
+      "sha256": "a2581c3370a4deabb748f53b85780fc920a59ea6d223fc954d08f256f89a73d7"
+    },
+    "cycle2/input-manifest.json": {
+      "bytes": 730,
+      "sha256": "9f8707b79d1d7f69e356c2bea6247464579b6a4da5e90d85256340a722ecd7e8"
+    },
+    "cycle2/navigation.json": {
+      "bytes": 457,
+      "sha256": "fa5957cd0e32170351a7e4d7308d62b5cc8ed0620b031e035cbd7c5ce694a4ae"
+    },
+    "cycle2/output-manifest.json": {
+      "bytes": 659,
+      "sha256": "519c5cbfd4504cb79cc371086cef539093e10b0133abcba1ede261738cf0f126"
+    },
+    "cycle2/result.json": {
+      "bytes": 5055,
+      "sha256": "63d122e0c1d7dcf96f4753151d70ba63a00718063b1a36350ae50151cad15a6e"
+    },
+    "cycle2/shadow.json": {
+      "bytes": 73148,
+      "sha256": "95da96badaab3794752e881f74ae00ef8ccbf105b6af2f60236ebf0aa30b002f"
+    },
+    "cycle2/state-commit.json": {
+      "bytes": 226,
+      "sha256": "de660f1e2b14d4202850439f387837b359becf0fd1878fd8745b8906fc4e4f02"
+    },
+    "retry.json": {
+      "bytes": 300,
+      "sha256": "a802116ba39c5fbd5de7f07fb5964badbfaa0712933d73aa10c8b386df3144e9"
+    },
+    "state-final.json": {
+      "bytes": 77984,
+      "sha256": "64c4f56805c6fd7d111cd189eec7305ee1febfc81b4fb7a43f3ae678ea95665c"
+    },
+    "wait.json": {
+      "bytes": 163,
+      "sha256": "fc86a466520070d4a709cb8bf09e2dac79212b53b38b3fb0127023d83bfa2e70"
+    }
+  },
+  "limitations": [
+    "process restart, not runner loss or distributed CAS",
+    "two frames do not guarantee two eligible target touches",
+    "no investment efficacy measured"
+  ]
+}

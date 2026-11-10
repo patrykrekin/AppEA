@@ -1,0 +1,10 @@
+import {readFileSync,writeFileSync} from 'node:fs';
+import assert from 'node:assert/strict';
+import {adaptFrame,fingerprint} from '../stage15h/adapter.mjs';
+import {sha256} from './state.mjs';
+const [file,frameFile,outFile]=process.argv.slice(2),raw=readFileSync(file),record=JSON.parse(raw),frame=JSON.parse(readFileSync(frameFile));
+assert.equal(record.cycle,1);assert.equal(frame.mode,'captured');
+const repeated=adaptFrame(record.adapter,frame);assert.deepEqual(repeated,record.adapter);
+assert.equal(sha256(readFileSync(file)),sha256(raw));
+writeFileSync(outFile,JSON.stringify({pass:true,processId:process.pid,originalCycle:1,stateFileDigest:sha256(raw),stateFingerprint:fingerprint(record.adapter),fullStateUnchanged:true,newBrowserOrRead:false},null,2)+'\n');
+console.log('PASS: exact persisted-frame replay is idempotent, no network');

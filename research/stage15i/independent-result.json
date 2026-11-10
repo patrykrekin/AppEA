@@ -1,0 +1,16 @@
+{
+  "pass": true,
+  "sourceCommit": "ff71cf2e962bba9309745421c6f15bf190c542fd",
+  "codeCommit": "6a1d3a132e38272c751d1fea552c3a01f6d375c9",
+  "allEvidenceFileHashesMatch": true,
+  "allPinnedInputFileHashesMatch": true,
+  "originalPreFastAndSlowModelsMatch": true,
+  "originalPersistenceAfterMatches": true,
+  "actualSelectedBandHashesMatch": true,
+  "cookieAndMonotonicOrderMatch": true,
+  "adapterOutputRecomputedExactly": true,
+  "isolatedOldPublicationMatches": true,
+  "frameMode": "captured",
+  "liveFrames": 1,
+  "efficacyAssessed": false
+}

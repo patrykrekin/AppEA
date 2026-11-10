@@ -1,0 +1,75 @@
+{
+  "sourceSha256": "b5c5362f9be8da99d9f48de9e2f4aa89c7791f73853a22f4e3ae60a0e16f3b6e",
+  "at": 1794081368,
+  "platforms": {
+    "ps": {
+      "rows": 77,
+      "fast": 4,
+      "investments": 4,
+      "inReach": 3,
+      "details": [
+        {
+          "key": "Bühl 89",
+          "price": 92500,
+          "target": 111000,
+          "buyLimit": 100000,
+          "inReach": true,
+          "conditionalNetAtObservedPrice": 12950
+        },
+        {
+          "key": "Mariona 89",
+          "price": 23500,
+          "target": 28000,
+          "buyLimit": 25250,
+          "inReach": true,
+          "conditionalNetAtObservedPrice": 3100
+        },
+        {
+          "key": "Kvaratskhelia 89",
+          "price": 53500,
+          "target": 67000,
+          "buyLimit": 60500,
+          "inReach": true,
+          "conditionalNetAtObservedPrice": 10150
+        },
+        {
+          "key": "Pajor 89",
+          "price": 106000,
+          "target": 113000,
+          "buyLimit": 102000,
+          "inReach": false,
+          "conditionalNetAtObservedPrice": 1350
+        }
+      ]
+    },
+    "pc": {
+      "rows": 77,
+      "fast": 1,
+      "investments": 2,
+      "inReach": 2,
+      "details": [
+        {
+          "key": "Kvaratskhelia 89",
+          "price": 33750,
+          "target": 42250,
+          "buyLimit": 38000,
+          "inReach": true,
+          "conditionalNetAtObservedPrice": 6387.5
+        },
+        {
+          "key": "Mariona 89",
+          "price": 23500,
+          "target": 28750,
+          "buyLimit": 26000,
+          "inReach": true,
+          "conditionalNetAtObservedPrice": 3812.5
+        }
+      ]
+    }
+  },
+  "limitations": [
+    "One historical snapshot; no outcome or execution evidence",
+    "Persistence last-update time is absent; replay uses decision time for that unused field",
+    "Publication data.json absent from artifact; no independent publication parity check"
+  ]
+}

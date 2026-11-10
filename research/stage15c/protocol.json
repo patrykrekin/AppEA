@@ -1,0 +1,16 @@
+{
+  "stage": "15C",
+  "scope": "retrospective descriptive follow-up, not independent out-of-sample validation",
+  "decisionSnapshot": "../stage15b/input/shadow-stage8.json",
+  "historyCommit": "67837b4a0833ea7f224693cb8fa32cfc9723d06b",
+  "historyPath": "historia-kart.json",
+  "horizonSeconds": 7200,
+  "toleranceSeconds": 900,
+  "parameterSource": "existing stage6 2h protocol and scraper/lib/jakosc-historii-kart.mjs",
+  "cohort": "all 154 rows, split ps/pc and investment flag; inReach separately",
+  "identity": "platform+rating+profileId+exactName",
+  "matching": "closest observation to t+7200 within inclusive +/-900s; tie earlier",
+  "missing": "pending before window closes; absent-in-sampled-slice only if valid rating snapshots exist; otherwise unobserved; never impute prices",
+  "metrics": ["endpoint price change vs observed decision price", "conditional net return after existing 5% tax", "endpoint at or above frozen target for selected investments", "availability of endpoints across all rows"],
+  "excluded": ["intrawindow target hit inference", "executed sale claims", "parameter tuning", "new collector", "GC", "production edits"]
+}

@@ -1,0 +1,12 @@
+{
+  "pass": true,
+  "checks": [
+    "reviewed original hash",
+    "unique capture anchors",
+    "insertion-only reversible instrumentation",
+    "both platform receipts",
+    "no original source mutation",
+    "generated module syntax"
+  ],
+  "liveCyclesExecuted": 0
+}

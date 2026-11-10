@@ -1,0 +1,51 @@
+{
+  "passed": 11,
+  "tests": [
+    {
+      "name": "first state is absent and commit reloads exactly",
+      "result": "PASS"
+    },
+    {
+      "name": "new process reloads committed JSON rather than sharing memory",
+      "result": "PASS"
+    },
+    {
+      "name": "wrong expected hash cannot overwrite first state",
+      "result": "PASS"
+    },
+    {
+      "name": "second cycle cannot start with no state",
+      "result": "PASS"
+    },
+    {
+      "name": "first cycle cannot reuse an existing state file",
+      "result": "PASS"
+    },
+    {
+      "name": "malformed/truncated JSON is rejected without rewriting it",
+      "result": "PASS"
+    },
+    {
+      "name": "wrong version and noncaptured state are rejected",
+      "result": "PASS"
+    },
+    {
+      "name": "pending leftover does not replace last committed state",
+      "result": "PASS"
+    },
+    {
+      "name": "oversized state is rejected before commit",
+      "result": "PASS"
+    },
+    {
+      "name": "second verified commit creates a distinct explicit cycle record",
+      "result": "PASS"
+    },
+    {
+      "name": "insertion-only instrumentation remains source-guarded and syntactically valid",
+      "result": "PASS"
+    }
+  ],
+  "syntheticTransportFixtures": true,
+  "liveCyclesExecuted": 0
+}
