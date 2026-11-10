@@ -1,0 +1,34 @@
+{
+  "status": "PASS",
+  "baselineCommit": "5082cbca3689862b229a692bd9a496fb185ff0f7",
+  "baselineHtmlSha256": "c5470fa65035c1d5d474986f513a69d92de0bf6412e66fbc1e7d4d387bdbb164",
+  "afterHtmlSha256": "4fa92ec901288fbf33caeb5f406989267853f318cb54415fa64f31cbde3b4be8",
+  "mathFunctionsUnchanged": [
+    "obsPlan",
+    "obsTrend",
+    "wGoreSiatki"
+  ],
+  "fixture": "synthetic watchlist on archived 15J data envelope; not actual 15K signals",
+  "results": [
+    {
+      "viewport": 1280,
+      "cases": 3,
+      "valuesAndOrderUnchanged": true,
+      "explicitLimitVisible": true,
+      "noOverflow": true,
+      "platformIsolation": true,
+      "pageErrors": []
+    },
+    {
+      "viewport": 390,
+      "cases": 3,
+      "valuesAndOrderUnchanged": true,
+      "explicitLimitVisible": true,
+      "noOverflow": true,
+      "platformIsolation": true,
+      "pageErrors": []
+    }
+  ],
+  "externalRequestsBlocked": true,
+  "scope": "presentation only; no efficacy or full accessibility claim"
+}

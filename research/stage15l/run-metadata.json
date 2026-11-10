@@ -1,0 +1,16 @@
+{
+  "runId": 42816626893,
+  "jobId": 129831229701,
+  "runCommit": "8ce9296e382c84943697d76180f0bc0ce808cd29",
+  "disabledTriggerCommit": "750d870393e45c0d10a36a80a85cf69efdc081e8",
+  "checkedMain": "f99ca8bb3988b081406f70c753ca7065f8d73d59",
+  "artifactId": 13765855737,
+  "artifactSha256": "sha256:4023aa0d98dd444093433ed3be91d414356267aafb1a38a68acf39a94c390d0f",
+  "artifactBytes": 106784,
+  "createdAt": "2026-11-10T12:32:39Z",
+  "expiresAt": "2026-11-13T12:32:38Z",
+  "retainedImageHashes": {
+    "research/stage15l/preview-1280.png": "356fac6ab9e9c379e6216301d8f5ff0bd66bcb511039bbbcfea9001b8e4e5351",
+    "research/stage15l/preview-390.png": "8296460857df274685978a12861ae52d44593814173b85699bab5481b652a1cb"
+  }
+}
