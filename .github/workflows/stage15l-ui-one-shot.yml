@@ -1,7 +1,5 @@
 name: Stage15L isolated UI condition check
 on:
-  push:
-    branches: [research/stage15l-ui-limit-20261110]
   workflow_dispatch:
     inputs:
       confirm:
@@ -12,7 +10,7 @@ permissions:
   contents: read
 jobs:
   ui:
-    if: github.ref == 'refs/heads/research/stage15l-ui-limit-20261110' && (github.event_name == 'push' || inputs.confirm == 'RUN_STAGE15L')
+    if: github.ref == 'refs/heads/research/stage15l-ui-limit-20261110' && inputs.confirm == 'RUN_STAGE15L'
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
