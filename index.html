@@ -123,6 +123,8 @@
   .obs-val small{display:block;font:11px "IBM Plex Mono",monospace;color:var(--soft);white-space:nowrap}
   .obs-val.gora{color:var(--green)}
   .obs-val.dol{color:var(--red)}
+  .obs-val small.netto-limit{white-space:normal;overflow-wrap:anywhere}
+  .obs-note{font-size:12px;color:var(--muted);margin:0 0 10px;line-height:1.5}
   .obs-val small.ok{color:var(--green)}
   .obs-val small.zle{color:var(--red)}
   .obs-row.poza{opacity:.45}
@@ -277,6 +279,7 @@
   <section class="moves" id="obs-box">
     <div class="section-head"><h3>Ruch na drogich kartach</h3><span id="obs-caption"></span></div>
     <label class="obs-filter"><input id="obs-affordable" type="checkbox" checked aria-controls="obs-list"> Tylko karty w limicie 10% mojego budżetu</label>
+    <p class="obs-note">Netto zakłada zakup po limicie i sprzedaż po celu, po podatku 5%. To scenariusz, nie wynik transakcji.</p>
     <div id="obs-list"><div class="empty-moves">Szereg rusza przy najbliższym odczycie.</div></div>
     <details class="method"><summary>Źródło i ograniczenia szeregu</summary><p><strong>To jest szereg momentum z fut.gg i nie zawiera fodderu.</strong> Pokazuje nastrój droższych kart; ceny są zaokrąglane, a „wczoraj" jest odtworzone z dzisiejszej ceny i zmiany dobowej. „Kupno do" i cena wyjścia odnoszą się do powrotu do wczorajszego poziomu, więc traktuj je jako granicę opłacalności, nie prognozę ani pełną rekomendację.</p></details>
   </section>
@@ -724,7 +727,7 @@
     var head = document.createElement("div"); head.className = "obs-row head";
     var hNaz = document.createElement("span"); hNaz.className = "obs-nazwa"; hNaz.textContent = "Karta";
     var hLicz = document.createElement("span"); hLicz.className = "obs-liczby";
-    ["Cena ≈", "Limit przy odbiciu", "Cel warunkowy"].forEach(function(t){
+    ["Cena ≈", "Limit zakupu", "Cel warunkowy"].forEach(function(t){
       var x = document.createElement("span"); x.className = "obs-val"; x.textContent = t; hLicz.appendChild(x);
     });
     head.append(hNaz, hLicz);
@@ -810,9 +813,13 @@
 
         sprz.append(document.createTextNode(coins(plan.cel)));
         var zysk = document.createElement("small");
-        zysk.className = "ok";
-        zysk.textContent = "+" + coins(plan.netto) + " netto warunkowo";
+        zysk.className = plan.wzasiegu ? "ok" : "";
+        zysk.textContent = "+" + coins(plan.netto) + " netto";
         sprz.appendChild(zysk);
+        var warunek = document.createElement("small");
+        warunek.className = "netto-limit";
+        warunek.textContent = "przy zakupie za " + coins(plan.kupnoDo);
+        sprz.appendChild(warunek);
         sprz.title = "Po dzisiejszej cenie wyjście na zero to " + coins(plan.naZero) + ".";
       }
 

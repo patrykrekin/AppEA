@@ -1,0 +1,42 @@
+name: Stage15L isolated UI condition check
+on:
+  push:
+    branches: [research/stage15l-ui-limit-20261110]
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: RUN_STAGE15L
+        type: string
+        required: true
+permissions:
+  contents: read
+jobs:
+  ui:
+    if: github.ref == 'refs/heads/research/stage15l-ui-limit-20261110' && (github.event_name == 'push' || inputs.confirm == 'RUN_STAGE15L')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Fetch baseline code and install test browser library
+        run: |
+          git fetch --depth 1 origin 5082cbca3689862b229a692bd9a496fb185ff0f7
+          npm --prefix scraper install --no-audit --no-fund
+      - name: Test local fixture only, no market requests
+        run: |
+          export CODEX_PRIMARY_RUNTIME_NODE_MODULES="$GITHUB_WORKSPACE/scraper/node_modules"
+          export FUT_CHROMIUM="$(command -v google-chrome)"
+          node research/stage15l/check-ui.mjs
+          node research/stage15k/audit.mjs
+          git diff --exit-code -- data.json historia.json historia-kart.json scraper
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: stage15l-ui-evidence
+          path: |
+            research/stage15l/ui-result.json
+            research/stage15l/preview-*.png
+          if-no-files-found: warn
+          retention-days: 3
